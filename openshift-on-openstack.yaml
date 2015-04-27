@@ -46,9 +46,30 @@ resources:
       networks:
        - port: {get_resource: port}
       admin_user: cloud-user
-      user_data: |
+      user_data_format: RAW
+      user_data: {get_resource: init}
+
+  init:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: script}
+      - config: {get_resource: file}
+
+  script:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config: |
         #!/bin/bash
         echo "HELLO WORLD" > /var/lib/hello.txt
+
+  file:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        write_files:
+        - path: /var/lib/included.txt
+          content: "Hello world."
 
   port:
     type: OS::Neutron::Port
