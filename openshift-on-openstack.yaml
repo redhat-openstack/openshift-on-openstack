@@ -1,0 +1,67 @@
+heat_template_version: 2014-10-16
+
+
+description: >
+  Deploy OpenShift leveraging the OpenStack APIs and the Atomic Host images.
+
+
+parameters:
+
+  key_name:
+    type: string
+    description: Name of the SSH keypair registered with Nova
+    default: default
+    constraints:
+    - custom_constraint: nova.keypair
+
+  atomic_image:
+    type: string
+    description: Name or ID of the Atomic Host image registered with Glance
+    constraints:
+    - custom_constraint: glance.image
+
+  flavor:
+    type: string
+    description: The Nova flavor to use for the Atomic Host servers
+    default: m1.medium
+    constraints:
+    - custom_constraint: nova.flavor
+
+  external_network:
+    type: string
+    description: >
+      The external network that provides floating IP addresses for the Atomic
+      Host servers
+    default: external
+
+
+resources:
+
+  atomic_hosts:
+    type: OS::Nova::Server
+    properties:
+      image: {get_param: atomic_image}
+      flavor: {get_param: flavor}
+      key_name: {get_param: key_name}
+      networks:
+       - port: {get_resource: port}
+      admin_user: cloud-user
+      user_data: |
+        #!/bin/bash
+        echo "HELLO WORLD" > /var/lib/hello.txt
+
+  port:
+    type: OS::Neutron::Port
+    properties:
+      # TODO(shadower): we probably want to parametrise this or even create a
+      # new network on the fly:
+      network: default
+
+  floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: {get_param: external_network}
+      port_id: {get_resource: port}
+
+
+outputs:
