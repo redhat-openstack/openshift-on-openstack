@@ -10,6 +10,20 @@ that's necessary to deploy OpenShift Origin (v3) on an OpenStack-backed
 infrastructure using Atomic Host images.
 
 
+Prerequisities
+==============
+
+1. OpenStack version Juno or later with the Heat, Neutron, Ceilometer services
+running
+
+2. Atomic Host cloud image (we leverage cloud-init) loaded in Glance
+
+3. An SSH keypair loaded to Nova
+
+4. A (Neutron) network with a pool of floating IP addresses available
+
+
+
 Copyright
 =========
 
