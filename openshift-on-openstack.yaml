@@ -34,55 +34,28 @@ parameters:
       Host servers
     default: external
 
+  node_count:
+    type: number
+    description: >
+      Number of Atomic Hosts to create.
 
 resources:
 
   atomic_hosts:
-    type: OS::Nova::Server
+    type: OS::Heat::AutoScalingGroup
     properties:
-      image: {get_param: atomic_image}
-      flavor: {get_param: flavor}
-      key_name: {get_param: key_name}
-      networks:
-       - port: {get_resource: port}
-      admin_user: cloud-user
-      user_data_format: RAW
-      user_data: {get_resource: init}
-
-  init:
-    type: OS::Heat::MultipartMime
-    properties:
-      parts:
-      - config: {get_resource: script}
-      - config: {get_resource: file}
-
-  script:
-    type: OS::Heat::SoftwareConfig
-    properties:
-      config: |
-        #!/bin/bash
-        echo "HELLO WORLD" > /var/lib/hello.txt
-
-  file:
-    type: OS::Heat::CloudConfig
-    properties:
-      cloud_config:
-        write_files:
-        - path: /var/lib/included.txt
-          content: "Hello world."
-
-  port:
-    type: OS::Neutron::Port
-    properties:
-      # TODO(shadower): we probably want to parametrise this or even create a
-      # new network on the fly:
-      network: default
-
-  floating_ip:
-    type: OS::Neutron::FloatingIP
-    properties:
-      floating_network: {get_param: external_network}
-      port_id: {get_resource: port}
-
+      desired_capacity: {get_param: node_count}
+      min_size: 0
+      max_size: 100
+      resource:
+        type: host.yaml
+        properties:
+          image: {get_param: atomic_image}
+          flavor: {get_param: flavor}
+          key_name: {get_param: key_name}
+          external_network: {get_param: external_network}
 
 outputs:
+  host_ips:
+    description: Addresses of all the Atomic Hosts
+    value: {get_attr: [atomic_hosts, outputs_list, ip_address]}

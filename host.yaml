@@ -1,0 +1,83 @@
+heat_template_version: 2014-10-16
+
+
+description: >
+  A single Atomic Host with the necessary resources for access and
+  configuration.
+
+
+parameters:
+
+  key_name:
+    type: string
+    constraints:
+    - custom_constraint: nova.keypair
+
+  image:
+    type: string
+    constraints:
+    - custom_constraint: glance.image
+
+  flavor:
+    type: string
+    constraints:
+    - custom_constraint: nova.flavor
+
+  external_network:
+    type: string
+
+
+resources:
+
+  host:
+    type: OS::Nova::Server
+    properties:
+      image: {get_param: image}
+      flavor: {get_param: flavor}
+      key_name: {get_param: key_name}
+      networks:
+       - port: {get_resource: port}
+      admin_user: cloud-user
+      user_data_format: RAW
+      user_data: {get_resource: init}
+
+  init:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: script}
+      - config: {get_resource: file}
+
+  script:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config: |
+        #!/bin/bash
+        echo "HELLO WORLD" > /var/lib/hello.txt
+
+  file:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        write_files:
+        - path: /var/lib/included.txt
+          content: "Hello world."
+
+  port:
+    type: OS::Neutron::Port
+    properties:
+      # TODO(shadower): we probably want to parametrise this or even create a
+      # new network on the fly:
+      network: default
+
+  floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: {get_param: external_network}
+      port_id: {get_resource: port}
+
+
+outputs:
+  ip_address:
+    description: IP address of the Atomic Host
+    value: {get_attr: [floating_ip, floating_ip_address]}
