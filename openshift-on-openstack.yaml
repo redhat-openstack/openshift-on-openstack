@@ -39,6 +39,22 @@ parameters:
     description: >
       Number of Atomic Hosts to create.
 
+  rhn_username:
+    type: string
+    description: >
+      The username for registering the hosts with RHN. If empty, they will not
+      be registered.
+    default: ''
+
+  rhn_password:
+    type: string
+    description: >
+      The password for registering the hosts with RHN. If empty, they will not
+      be registered.
+    hidden: true
+    default: ''
+
+
 resources:
 
   atomic_hosts:
@@ -54,6 +70,8 @@ resources:
           flavor: {get_param: flavor}
           key_name: {get_param: key_name}
           external_network: {get_param: external_network}
+          rhn_username: {get_param: rhn_username}
+          rhn_password: {get_param: rhn_password}
 
 outputs:
   host_ips:

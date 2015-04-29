@@ -26,6 +26,12 @@ parameters:
   external_network:
     type: string
 
+  rhn_username:
+    type: string
+
+  rhn_password:
+    type: string
+    hidden: true
 
 resources:
 
@@ -38,6 +44,13 @@ resources:
       networks:
        - port: {get_resource: port}
       admin_user: cloud-user
+      # TODO(shadower): using SOFTWARE_CONFIG here fails with:
+      #     Forbidden: You are not authorized to perform the requested action: identity:list_roles (HTTP 403)
+      # Even if we don't actually use any software deployments.
+      # We should be able to work around this by just using cloud-init &
+      # user_data now but it still sucks.
+      #
+      # user_data_format: SOFTWARE_CONFIG
       user_data_format: RAW
       user_data: {get_resource: init}
 
@@ -45,16 +58,10 @@ resources:
     type: OS::Heat::MultipartMime
     properties:
       parts:
-      - config: {get_resource: script}
+      - config: {get_resource: RHN_registration}
       - config: {get_resource: file}
 
-  script:
-    type: OS::Heat::SoftwareConfig
-    properties:
-      config: |
-        #!/bin/bash
-        echo "HELLO WORLD" > /var/lib/hello.txt
-
+  # A config that demonstrates uploading a file:
   file:
     type: OS::Heat::CloudConfig
     properties:
@@ -62,6 +69,24 @@ resources:
         write_files:
         - path: /var/lib/included.txt
           content: "Hello world."
+
+  RHN_registration:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            $rhn_username$: {get_param: rhn_username}
+            $rhn_password$: {get_param: rhn_password}
+          template: |
+            #!/bin/bash
+            set -eu
+            set -o pipefail
+            RHN_USERNAME=$rhn_username$
+            RHN_PASSWORD=$rhn_password$
+            if [ -n "$RHN_USERNAME" -a -n "$RHN_PASSWORD" ]; then
+                subscription-manager register --username="$RHN_USERNAME" --password="$RHN_PASSWORD" --auto-attach
+            fi
 
   port:
     type: OS::Neutron::Port
