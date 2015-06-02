@@ -106,6 +106,7 @@ resources:
       network: {get_param: fixed_network}
       fixed_ips:
       - subnet: {get_param: fixed_subnet}
+      replacement_policy: AUTO
 
   floating_ip:
     type: OS::Neutron::FloatingIP

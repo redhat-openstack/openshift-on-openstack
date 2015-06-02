@@ -32,7 +32,6 @@ parameters:
     description: >
       The external network that provides floating IP addresses for the Atomic
       Host servers
-    default: external
     constraints:
     - custom_constraint: neutron.network
 
@@ -81,6 +80,7 @@ resources:
       subnet: {get_resource: fixed_subnet}
 
   atomic_hosts:
+    depends_on: external_router_interface
     type: OS::Heat::AutoScalingGroup
     properties:
       desired_capacity: {get_param: node_count}
