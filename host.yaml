@@ -25,6 +25,18 @@ parameters:
 
   external_network:
     type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  fixed_network:
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  fixed_subnet:
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
 
   rhn_username:
     type: string
@@ -42,7 +54,7 @@ resources:
       flavor: {get_param: flavor}
       key_name: {get_param: key_name}
       networks:
-       - port: {get_resource: port}
+      - port: {get_resource: port}
       admin_user: cloud-user
       # TODO(shadower): using SOFTWARE_CONFIG here fails with:
       #     Forbidden: You are not authorized to perform the requested action: identity:list_roles (HTTP 403)
@@ -91,9 +103,9 @@ resources:
   port:
     type: OS::Neutron::Port
     properties:
-      # TODO(shadower): we probably want to parametrise this or even create a
-      # new network on the fly:
-      network: default
+      network: {get_param: fixed_network}
+      fixed_ips:
+      - subnet: {get_param: fixed_subnet}
 
   floating_ip:
     type: OS::Neutron::FloatingIP
