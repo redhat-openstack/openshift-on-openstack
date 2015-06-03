@@ -35,6 +35,11 @@ parameters:
     constraints:
     - custom_constraint: neutron.network
 
+  dns_nameserver:
+    type: comma_delimited_list
+    description: address of a dns nameserver reachable in your environment
+    default: 8.8.8.8
+
   node_count:
     type: number
     description: >
@@ -66,6 +71,7 @@ resources:
     properties:
       cidr: 192.168.0.0/24
       network: {get_resource: fixed_network}
+      dns_nameservers: {get_param: dns_nameserver}
 
   external_router:
     type: OS::Neutron::Router
