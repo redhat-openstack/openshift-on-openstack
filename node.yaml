@@ -2,8 +2,7 @@ heat_template_version: 2014-10-16
 
 
 description: >
-  A single Atomic Host with the necessary resources for access and
-  configuration.
+  OpenShift Node
 
 
 parameters:
@@ -38,6 +37,10 @@ parameters:
     constraints:
     - custom_constraint: neutron.subnet
 
+  dns_ip:
+    type: string
+    description: IP address of the DNS server
+
   rhn_username:
     type: string
 
@@ -55,14 +58,6 @@ resources:
       key_name: {get_param: key_name}
       networks:
       - port: {get_resource: port}
-      admin_user: cloud-user
-      # TODO(shadower): using SOFTWARE_CONFIG here fails with:
-      #     Forbidden: You are not authorized to perform the requested action: identity:list_roles (HTTP 403)
-      # Even if we don't actually use any software deployments.
-      # We should be able to work around this by just using cloud-init &
-      # user_data now but it still sucks.
-      #
-      # user_data_format: SOFTWARE_CONFIG
       user_data_format: RAW
       user_data: {get_resource: init}
 
@@ -70,35 +65,17 @@ resources:
     type: OS::Heat::MultipartMime
     properties:
       parts:
-      - config: {get_resource: RHN_registration}
-      - config: {get_resource: file}
+      - config: {get_resource: rhn_register}
 
-  # A config that demonstrates uploading a file:
-  file:
-    type: OS::Heat::CloudConfig
-    properties:
-      cloud_config:
-        write_files:
-        - path: /var/lib/included.txt
-          content: "Hello world."
-
-  RHN_registration:
+  rhn_register:
     type: OS::Heat::SoftwareConfig
     properties:
       config:
         str_replace:
           params:
-            $rhn_username$: {get_param: rhn_username}
-            $rhn_password$: {get_param: rhn_password}
-          template: |
-            #!/bin/bash
-            set -eu
-            set -o pipefail
-            RHN_USERNAME=$rhn_username$
-            RHN_PASSWORD=$rhn_password$
-            if [ -n "$RHN_USERNAME" -a -n "$RHN_PASSWORD" ]; then
-                subscription-manager register --username="$RHN_USERNAME" --password="$RHN_PASSWORD" --auto-attach
-            fi
+            $RHN_USERNAME: {get_param: rhn_username}
+            $RHN_PASSWORD: {get_param: rhn_password}
+          template: {get_file: fragments/rhn-register.sh}
 
   port:
     type: OS::Neutron::Port

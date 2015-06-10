@@ -1,0 +1,105 @@
+heat_template_version: 2014-10-16
+
+
+description: >
+  A host providing the DNS server for the OpenShift nodes.
+
+
+parameters:
+
+  key_name:
+    type: string
+    constraints:
+    - custom_constraint: nova.keypair
+
+  image:
+    type: string
+    constraints:
+    - custom_constraint: glance.image
+
+  flavor:
+    type: string
+    constraints:
+    - custom_constraint: nova.flavor
+
+  external_network:
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  fixed_network:
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  fixed_subnet:
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  master_ip_address:
+    type: string
+
+  master_hostname:
+    type: string
+
+  port:
+    description: Neutron port (with a floating IP address) to assign to the DNS Nova Server
+    type: string
+
+resources:
+
+  host:
+    type: OS::Nova::Server
+    properties:
+      image: {get_param: image}
+      flavor: {get_param: flavor}
+      key_name: {get_param: key_name}
+      networks:
+      - port: {get_param: port}
+      user_data_format: RAW
+      user_data: {get_resource: init}
+
+  init:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: included_files}
+      - config: {get_resource: boot_config}
+
+  included_files:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        write_files:
+        - path: /etc/hosts
+          content:
+            str_replace:
+              params:
+                $MASTER_IP: {get_param: master_ip_address}
+                $MASTER_HOSTNAME: {get_param: master_hostname}
+              template:
+                {get_file: fragments/etc-hosts}
+        - path: /root/dnsmasq.conf
+          content:
+            str_replace:
+              params:
+                $MASTER_IP: {get_param: master_ip_address}
+              template: {get_file: fragments/dnsmasq.conf}
+        - path: /usr/bin/retry
+          permissions: 0755
+          content: {get_file: fragments/retry.sh}
+
+  boot_config:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config: {get_file: fragments/dnsmasq.sh}
+
+
+
+
+
+# outputs:
+#   ip_address:
+#     description: IP address of the Atomic Host
+#     value: {get_attr: [floating_ip, floating_ip_address]}

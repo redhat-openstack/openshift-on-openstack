@@ -1,0 +1,173 @@
+heat_template_version: 2014-10-16
+
+
+description: >
+  OpenShift Master
+
+
+parameters:
+
+  key_name:
+    type: string
+    constraints:
+    - custom_constraint: nova.keypair
+
+  image:
+    type: string
+    constraints:
+    - custom_constraint: glance.image
+
+  flavor:
+    type: string
+    constraints:
+    - custom_constraint: nova.flavor
+
+  external_network:
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  fixed_network:
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  fixed_subnet:
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  dns_ip:
+    type: string
+    description: IP address of the DNS server
+
+  rhn_username:
+    type: string
+
+  rhn_password:
+    type: string
+    hidden: true
+
+  rhn_pool:
+    type: string
+    hidden: true
+
+  port:
+    description: >
+      Neutron port (with a floating IP address) to assign to the OpenShift
+      Master Nova Server
+    type: string
+
+  hostname:
+    type: string
+
+  floating_ip:
+    type: string
+
+  ansible_public_key:
+    type: string
+
+  ansible_private_key:
+    type: string
+
+resources:
+
+  host:
+    type: OS::Nova::Server
+    properties:
+      name: {get_param: hostname}
+      admin_user: cloud-user
+      image: {get_param: image}
+      flavor: {get_param: flavor}
+      key_name: {get_param: key_name}
+      networks:
+      - port: {get_param: port}
+      user_data_format: SOFTWARE_CONFIG
+      user_data: {get_resource: init}
+
+  init:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: set_hostname}
+      - config: {get_resource: included_files}
+      - config: {get_resource: rhn_register}
+      - config: {get_resource: master_boot}
+
+  set_hostname:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        hostname: {get_param: hostname}
+        fqdn: {get_param: hostname}
+
+  # TODO: is /etc/hosts necessary? DNS should be providing this.
+  included_files:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        write_files:
+        - path: /etc/hosts
+          content:
+            str_replace:
+              params:
+                $MASTER_IP: {get_param: floating_ip}
+                $MASTER_HOSTNAME: {get_param: hostname}
+              template: {get_file: fragments/etc-hosts}
+        - path: /var/lib/ansible-inventory
+          content:
+            str_replace:
+              params:
+                $MASTER_HOSTNAME: {get_param: hostname}
+              template: {get_file: fragments/ansible-inventory}
+        - path: /root/.ssh/id_rsa
+          permissions: 0600
+          content: {get_param: ansible_private_key}
+        - path: /root/.ssh/id_rsa.pub
+          permissions: 0600
+          content: {get_param: ansible_public_key}
+        - path: /usr/bin/retry
+          permissions: 0755
+          content: {get_file: fragments/retry.sh}
+        ssh_authorized_keys:
+        - {get_param: ansible_public_key}
+
+  rhn_register:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            $RHN_USERNAME: {get_param: rhn_username}
+            $RHN_PASSWORD: {get_param: rhn_password}
+            $POOL_ID: {get_param: rhn_pool}
+          template: {get_file: fragments/rhn-register.sh}
+
+  master_boot:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            $DNS_IP: {get_param: dns_ip}
+            $MASTER_IP: {get_param: floating_ip}
+          template: {get_file: fragments/master-boot.sh}
+
+  ansible_installer:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config: {get_file: fragments/ansible_installer.sh}
+
+outputs:
+  console_url:
+    value:
+      str_replace:
+        params:
+          HOSTNAME: {get_param: hostname}
+        template: "https://HOSTNAME:8443/console/"
+  api_url:
+    value:
+      str_replace:
+        params:
+          HOSTNAME: {get_param: hostname}
+        template: "https://HOSTNAME:8443/"

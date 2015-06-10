@@ -1,0 +1,261 @@
+heat_template_version: 2014-10-16
+
+
+description: >
+  Deploy OpenShift leveraging the OpenStack APIs and the Atomic Host images.
+
+
+parameters:
+
+  ssh_key_name:
+    type: string
+    description: Name of the SSH keypair registered with Nova
+    constraints:
+    - custom_constraint: nova.keypair
+
+  server_image:
+    type: string
+    description: Name or ID of the host image registered with Glance
+    constraints:
+    - custom_constraint: glance.image
+
+  flavor:
+    type: string
+    description: The Nova flavor to use for the Atomic Host servers
+    default: m1.medium
+    constraints:
+    - custom_constraint: nova.flavor
+
+  external_network:
+    type: string
+    description: >
+      The external network that provides floating IP addresses for the Atomic
+      Host servers
+    constraints:
+    - custom_constraint: neutron.network
+
+  dns_nameserver:
+    type: comma_delimited_list
+    description: address of a dns nameserver reachable in your environment
+    default: 8.8.8.8
+
+  # node_count:
+  #   type: number
+  #   description: >
+  #     Number of Atomic Hosts to create.
+
+  rhn_username:
+    type: string
+    description: >
+      The username for registering the hosts with RHN. If empty, they will not
+      be registered.
+    default: ''
+
+  rhn_password:
+    type: string
+    description: >
+      The password for registering the hosts with RHN. If empty, they will not
+      be registered.
+    hidden: true
+    default: ''
+
+  rhn_pool:
+    type: string
+    description: >
+      The pool to attach. Will use `subscription-manager attach --auto` if left
+      blank.
+    hidden: true
+    default: ''
+
+  master_fqdn:
+    type: string
+    description: >
+      The fully qualified domain name that is going to be set as the hostname
+      of the OpenShift master.
+    default: "openshift-master.example.com"
+
+resources:
+
+  fixed_network:
+    type: OS::Neutron::Net
+
+  fixed_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      cidr: 192.168.0.0/24
+      network: {get_resource: fixed_network}
+      dns_nameservers: {get_param: dns_nameserver}
+
+  external_router:
+    type: OS::Neutron::Router
+    properties:
+      external_gateway_info:
+        network: {get_param: external_network}
+
+  external_router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: {get_resource: external_router}
+      subnet: {get_resource: fixed_subnet}
+
+  dns_host:
+    type: dns.yaml
+    properties:
+      image: {get_param: server_image}
+      flavor: {get_param: flavor}
+      key_name: {get_param: ssh_key_name}
+      external_network: {get_param: external_network}
+      fixed_network: {get_resource: fixed_network}
+      fixed_subnet: {get_resource: fixed_subnet}
+      master_ip_address: {get_attr: [master_floating_ip, floating_ip_address]}
+      master_hostname: {get_param: master_fqdn}
+      port: {get_resource: dnsmasq_port}
+
+  openshift_master:
+    depends_on: dns_host
+    type: master.yaml
+    properties:
+      image: {get_param: server_image}
+      flavor: {get_param: flavor}
+      key_name: {get_param: ssh_key_name}
+      external_network: {get_param: external_network}
+      dns_ip: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
+      port: {get_resource: master_port}
+      fixed_network: {get_resource: fixed_network}
+      fixed_subnet: {get_resource: fixed_subnet}
+      rhn_username: {get_param: rhn_username}
+      rhn_password: {get_param: rhn_password}
+      rhn_pool: {get_param: rhn_pool}
+      floating_ip: {get_attr: [master_floating_ip, floating_ip_address]}
+      hostname: {get_param: master_fqdn}
+      ansible_public_key: {get_attr: [ansible_keys, public_key]}
+      ansible_private_key: {get_attr: [ansible_keys, private_key]}
+
+  openshift_nodes:
+    depends_on: external_router_interface
+    type: OS::Heat::AutoScalingGroup
+    properties:
+      # desired_capacity: {get_param: node_count}
+      desired_capacity: 0
+      min_size: 0
+      max_size: 100
+      resource:
+        type: node.yaml
+        properties:
+          image: {get_param: server_image}
+          flavor: {get_param: flavor}
+          key_name: {get_param: ssh_key_name}
+          external_network: {get_param: external_network}
+          fixed_network: {get_resource: fixed_network}
+          fixed_subnet: {get_resource: fixed_subnet}
+          rhn_username: {get_param: rhn_username}
+          rhn_password: {get_param: rhn_password}
+
+  # scale_up:
+  #   type: OS::Heat::ScalingPolicy
+  #   properties:
+  #     auto_scaling_group_id: {get_resource: atomic_hosts}
+  #     adjustment_type: change_in_capacity
+  #     scaling_adjustment: 1
+
+  # scale_down:
+  #   type: OS::Heat::ScalingPolicy
+  #   properties:
+  #     auto_scaling_group_id: {get_resource: atomic_hosts}
+  #     adjustment_type: change_in_capacity
+  #     scaling_adjustment: -1
+
+  dnsmasq_port:
+    type: OS::Neutron::Port
+    properties:
+      security_groups:
+      - {get_resource: dnsmasq_security_group}
+      network: {get_resource: fixed_network}
+      fixed_ips:
+      - subnet: {get_resource: fixed_subnet}
+      replacement_policy: AUTO
+
+  dnsmasq_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+      - protocol: icmp
+      - protocol: tcp
+        port_range_min: 22
+        port_range_max: 22
+      - protocol: tcp
+        port_range_min: 53
+        port_range_max: 53
+      - protocol: udp
+        port_range_min: 53
+        port_range_max: 53
+
+  dnsmasq_floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: {get_param: external_network}
+      port_id: {get_resource: dnsmasq_port}
+
+  master_port:
+    type: OS::Neutron::Port
+    properties:
+      security_groups:
+      - {get_resource: master_security_group}
+      network: {get_resource: fixed_network}
+      fixed_ips:
+      - subnet: {get_resource: fixed_subnet}
+      replacement_policy: AUTO
+
+  master_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+      - protocol: icmp
+      # Just open everything for now:
+      - protocol: tcp
+        port_range_min: 0
+        port_range_max: 65535
+      - protocol: udp
+        port_range_min: 0
+        port_range_max: 65535
+
+  master_floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: {get_param: external_network}
+      port_id: {get_resource: master_port}
+
+
+  ansible_keys:
+    type: OS::Nova::KeyPair
+    properties:
+      name: ansible_keys
+      save_private_key: True
+
+
+
+outputs:
+  # TODO: return the master's certificate authority here so we can use the CLI
+  # outside of the host.
+  # It's stored at `/etc/openshift/master/ca.crt`
+  master_ip:
+    description: IP address of the OpenShift master node
+    value: {get_attr: [master_floating_ip, floating_ip_address]}
+  dns_ip:
+    description: IP address of the DNS server OpenShift relies on
+    value: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
+  console_url:
+    description: URL of the OpenShift web console
+    value: {get_attr: [openshift_master, console_url]}
+  api_url:
+    description: URL entrypoint to the OpenShift API
+    value: {get_attr: [openshift_master, api_url]}
+  # host_ips:
+  #   description: IP addresses of all the Atomic Hosts
+  #   value: {get_attr: [atomic_hosts, outputs_list, ip_address]}
+  # scale_up_url:
+  #   description: A URL that triggers a scale up event on HTTP POST
+  #   value: {get_attr: [scale_up, alarm_url]}
+  # scale_down_url:
+  #   description: A URL that triggers a scale down event on HTTP POST
+  #   value: {get_attr: [scale_down, alarm_url]}
