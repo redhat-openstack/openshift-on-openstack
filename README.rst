@@ -33,6 +33,7 @@ Assuming your external network is called ``ext_net``, your SSH key is
 deploy OpenShift:
 
 ::
+
    git clone https://github.com/redhat-openstack/openshift-on-openstack.git
    heat stack-create my_openshift -f openshift-on-openstack/openshift.yaml \
        -P server_image=centos71 -P external_network=ext_net -P ssh_key_name=default
@@ -45,6 +46,7 @@ To check that everything is indeed ready, look for ``OpenShift has been
 installed.`` in the console log for the OpenShift master node:
 
 ::
+
    openstack console log show openshift-master.example.com| grep "OpenShift.*installed."
 
 
@@ -59,6 +61,7 @@ You can get the IP address of the OpenShift master node with ``heat output-show
 my_openshift master_ip``.
 
 ::
+
    ssh cloud-user@MASTER_NODE_IP
    sudo -i
 
