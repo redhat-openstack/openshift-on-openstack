@@ -112,7 +112,7 @@ resources:
       port: {get_resource: dnsmasq_port}
 
   openshift_master:
-    depends_on: dns_host
+    depends_on: [dns_host, openshift_nodes]
     type: master.yaml
     properties:
       image: {get_param: server_image}
@@ -130,6 +130,14 @@ resources:
       hostname: {get_param: master_fqdn}
       ansible_public_key: {get_attr: [ansible_keys, public_key]}
       ansible_private_key: {get_attr: [ansible_keys, private_key]}
+      node_hostnames:
+        list_join:
+        - '\n'
+        - {get_attr: [openshift_nodes, outputs_list, hostname]}
+      node_etc_hosts:
+        list_join:
+        - '\n'
+        - {get_attr: [openshift_nodes, outputs_list, etc_hosts]}
 
   openshift_nodes:
     depends_on: external_router_interface

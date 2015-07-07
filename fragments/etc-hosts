@@ -2,3 +2,4 @@
 ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
 
 $MASTER_IP $MASTER_HOSTNAME
+$NODE_ETC_HOSTS
