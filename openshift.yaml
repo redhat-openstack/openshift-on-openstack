@@ -136,7 +136,7 @@ resources:
     type: OS::Heat::AutoScalingGroup
     properties:
       # desired_capacity: {get_param: node_count}
-      desired_capacity: 0
+      desired_capacity: 1
       min_size: 0
       max_size: 100
       resource:
@@ -146,10 +146,13 @@ resources:
           flavor: {get_param: flavor}
           key_name: {get_param: ssh_key_name}
           external_network: {get_param: external_network}
+          dns_ip: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
           fixed_network: {get_resource: fixed_network}
           fixed_subnet: {get_resource: fixed_subnet}
           rhn_username: {get_param: rhn_username}
           rhn_password: {get_param: rhn_password}
+          hostname_prefix: "openshift-node"
+          ansible_public_key: {get_attr: [ansible_keys, public_key]}
 
   # scale_up:
   #   type: OS::Heat::ScalingPolicy
@@ -250,9 +253,9 @@ outputs:
   api_url:
     description: URL entrypoint to the OpenShift API
     value: {get_attr: [openshift_master, api_url]}
-  # host_ips:
-  #   description: IP addresses of all the Atomic Hosts
-  #   value: {get_attr: [atomic_hosts, outputs_list, ip_address]}
+  host_ips:
+    description: IP addresses of the OpenShift nodes
+    value: {get_attr: [openshift_nodes, outputs_list, ip_address]}
   # scale_up_url:
   #   description: A URL that triggers a scale up event on HTTP POST
   #   value: {get_attr: [scale_up, alarm_url]}

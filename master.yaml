@@ -92,7 +92,7 @@ resources:
       - config: {get_resource: set_hostname}
       - config: {get_resource: included_files}
       - config: {get_resource: rhn_register}
-      - config: {get_resource: master_boot}
+      # - config: {get_resource: master_boot}
 
   set_hostname:
     type: OS::Heat::CloudConfig

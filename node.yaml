@@ -48,24 +48,73 @@ parameters:
     type: string
     hidden: true
 
+  hostname_prefix:
+    type: string
+
+  ansible_public_key:
+    type: string
+
 resources:
+
+  random_hostname_suffix:
+    type: OS::Heat::RandomString
+    properties:
+      length: 5
 
   host:
     type: OS::Nova::Server
     properties:
+      name:
+        str_replace:
+          template: "HOST-SUFFIX.example.com"
+          params:
+            HOST: {get_param: hostname_prefix}
+            SUFFIX: {get_attr: [random_hostname_suffix, value]}
+      admin_user: cloud-user
       image: {get_param: image}
       flavor: {get_param: flavor}
       key_name: {get_param: key_name}
       networks:
       - port: {get_resource: port}
-      user_data_format: RAW
+      user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
 
   init:
     type: OS::Heat::MultipartMime
     properties:
       parts:
+      - config: {get_resource: set_hostname}
+      - config: {get_resource: included_files}
       - config: {get_resource: rhn_register}
+      - config: {get_resource: node_boot}
+
+  set_hostname:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        hostname:
+          str_replace:
+            template: "HOST-SUFFIX.example.com"
+            params:
+              HOST: {get_param: hostname_prefix}
+              SUFFIX: {get_attr: [random_hostname_suffix, value]}
+        fqdn:
+          str_replace:
+            template: "HOST-SUFFIX.example.com"
+            params:
+              HOST: {get_param: hostname_prefix}
+              SUFFIX: {get_attr: [random_hostname_suffix, value]}
+
+  included_files:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        write_files:
+        - path: /usr/bin/retry
+          permissions: 0755
+          content: {get_file: fragments/retry.sh}
+        ssh_authorized_keys:
+        - {get_param: ansible_public_key}
 
   rhn_register:
     type: OS::Heat::SoftwareConfig
@@ -77,13 +126,38 @@ resources:
             $RHN_PASSWORD: {get_param: rhn_password}
           template: {get_file: fragments/rhn-register.sh}
 
+  node_boot:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            $DNS_IP: {get_param: dns_ip}
+            $MASTER_IP: {get_attr: [floating_ip, floating_ip_address]}
+          template: {get_file: fragments/node-boot.sh}
+
   port:
     type: OS::Neutron::Port
     properties:
+      security_groups:
+      - {get_resource: security_group}
       network: {get_param: fixed_network}
       fixed_ips:
       - subnet: {get_param: fixed_subnet}
       replacement_policy: AUTO
+
+  security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+      - protocol: icmp
+      # Just open everything for now:
+      - protocol: tcp
+        port_range_min: 0
+        port_range_max: 65535
+      - protocol: udp
+        port_range_min: 0
+        port_range_max: 65535
 
   floating_ip:
     type: OS::Neutron::FloatingIP
@@ -93,6 +167,14 @@ resources:
 
 
 outputs:
+  hostname:
+    description: Hostname of this OpenShift node
+    value:
+      str_replace:
+        template: "HOST-SUFFIX.example.com"
+        params:
+          HOST: {get_param: hostname_prefix}
+          SUFFIX: {get_attr: [random_hostname_suffix, value]}
   ip_address:
     description: IP address of the Atomic Host
     value: {get_attr: [floating_ip, floating_ip_address]}
