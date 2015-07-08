@@ -5,9 +5,12 @@ OpenShift on OpenStack
 About
 =====
 
-A collection of documentation, Heat templates, Dockerfiles and everything else
-that's necessary to deploy OpenShift Origin (v3) on an OpenStack-backed
-infrastructure.
+A collection of documentation, Heat_ templates, configuration and everything
+else that's necessary to deploy `OpenShift Origin 3`_ on OpenStack_.
+
+.. _Heat: https://wiki.openstack.org/wiki/Heat
+.. _OpenShift Origin 3: http://www.openshift.org/
+.. _OpenStack: http://www.openstack.org/
 
 
 Prerequisities
@@ -16,7 +19,7 @@ Prerequisities
 1. OpenStack version Juno or later with the Heat, Neutron, Ceilometer services
 running
 
-2. CentOS 7.1 cloud image (we leverage cloud-init) loaded in Glance
+2. CentOS_ 7.1 cloud image (we leverage cloud-init) loaded in Glance
 
 3. An SSH keypair loaded to Nova
 
@@ -24,6 +27,7 @@ running
 
 CentOS is the only tested distro for now.
 
+.. _CentOS: http://www.centos.org/
 
 Deployment
 ==========
