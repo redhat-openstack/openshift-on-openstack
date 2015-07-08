@@ -39,10 +39,10 @@ parameters:
     description: address of a dns nameserver reachable in your environment
     default: 8.8.8.8
 
-  # node_count:
-  #   type: number
-  #   description: >
-  #     Number of Atomic Hosts to create.
+  node_count:
+    type: number
+    description: >
+      Number of Atomic Hosts to create.
 
   rhn_username:
     type: string
@@ -143,8 +143,7 @@ resources:
     depends_on: external_router_interface
     type: OS::Heat::AutoScalingGroup
     properties:
-      # desired_capacity: {get_param: node_count}
-      desired_capacity: 1
+      desired_capacity: {get_param: node_count}
       min_size: 0
       max_size: 100
       resource:

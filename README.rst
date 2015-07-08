@@ -36,7 +36,11 @@ deploy OpenShift:
 
    git clone https://github.com/redhat-openstack/openshift-on-openstack.git
    heat stack-create my_openshift -f openshift-on-openstack/openshift.yaml \
-       -P server_image=centos71 -P external_network=ext_net -P ssh_key_name=default
+       -P server_image=centos71 -P external_network=ext_net \
+       -P ssh_key_name=default -P node_count=2
+
+The ``node_count`` parameter specifies how many non-master OpenShift nodes you
+want to deploy. In the example above, we will deploy one master and two nodes.
 
 The templates are not robust enough to report to Heat when everything
 finishes yet. That means that ``heat stack-show my_openshift`` will report a
@@ -98,13 +102,10 @@ its IP address instead of the hostname.
 Current Status
 ==============
 
-1. We only deploy the OpenShift master for now (which acts as a node, too).
-   We'll want to be able to deploy more nodes.
-
-2. The CA certificate used with OpenShift is currently not configurable and
+1. The CA certificate used with OpenShift is currently not configurable and
    not available from the outside.
 
-3. The hostnames for all the OpenShift nodes as well as the apps cloud domain
+2. The hostnames for all the OpenShift nodes as well as the apps cloud domain
    are hardcoded for now. We need to make these configurable.
 
 
