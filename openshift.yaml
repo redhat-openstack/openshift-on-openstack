@@ -2,7 +2,7 @@ heat_template_version: 2014-10-16
 
 
 description: >
-  Deploy OpenShift leveraging the OpenStack APIs and the Atomic Host images.
+  Deploy OpenShift Origin 3 on OpenStack.
 
 
 parameters:
@@ -21,7 +21,7 @@ parameters:
 
   flavor:
     type: string
-    description: The Nova flavor to use for the Atomic Host servers
+    description: The Nova flavor to use for the OpenShift nodes
     default: m1.medium
     constraints:
     - custom_constraint: nova.flavor
@@ -29,8 +29,7 @@ parameters:
   external_network:
     type: string
     description: >
-      The external network that provides floating IP addresses for the Atomic
-      Host servers
+      The external network that provides floating IP addresses for the nodes
     constraints:
     - custom_constraint: neutron.network
 
@@ -42,7 +41,7 @@ parameters:
   node_count:
     type: number
     description: >
-      Number of Atomic Hosts to create.
+      Number of non-master nodes to create.
 
   rhn_username:
     type: string
@@ -160,20 +159,6 @@ resources:
           rhn_password: {get_param: rhn_password}
           hostname_prefix: "openshift-node"
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
-
-  # scale_up:
-  #   type: OS::Heat::ScalingPolicy
-  #   properties:
-  #     auto_scaling_group_id: {get_resource: atomic_hosts}
-  #     adjustment_type: change_in_capacity
-  #     scaling_adjustment: 1
-
-  # scale_down:
-  #   type: OS::Heat::ScalingPolicy
-  #   properties:
-  #     auto_scaling_group_id: {get_resource: atomic_hosts}
-  #     adjustment_type: change_in_capacity
-  #     scaling_adjustment: -1
 
   dnsmasq_port:
     type: OS::Neutron::Port

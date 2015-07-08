@@ -7,7 +7,7 @@ About
 
 A collection of documentation, Heat templates, Dockerfiles and everything else
 that's necessary to deploy OpenShift Origin (v3) on an OpenStack-backed
-infrastructure using Atomic Host images.
+infrastructure.
 
 
 Prerequisities

@@ -94,12 +94,3 @@ resources:
     type: OS::Heat::SoftwareConfig
     properties:
       config: {get_file: fragments/dnsmasq.sh}
-
-
-
-
-
-# outputs:
-#   ip_address:
-#     description: IP address of the Atomic Host
-#     value: {get_attr: [floating_ip, floating_ip_address]}
