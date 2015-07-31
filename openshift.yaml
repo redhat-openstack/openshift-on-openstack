@@ -131,11 +131,11 @@ resources:
       ansible_private_key: {get_attr: [ansible_keys, private_key]}
       node_hostnames:
         list_join:
-        - '\n'
+        - "\n"
         - {get_attr: [openshift_nodes, outputs_list, hostname]}
       node_etc_hosts:
         list_join:
-        - '\n'
+        - "\n"
         - {get_attr: [openshift_nodes, outputs_list, etc_hosts]}
 
   openshift_nodes:
