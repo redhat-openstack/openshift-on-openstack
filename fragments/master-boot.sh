@@ -23,15 +23,15 @@ retry yum install -y git httpd-tools
 
 # TODO; Docker 1.6.2-14 is now in the repos, just do `yum install docker` here
 # Centos 7.1: We need docker >= 1.6.2
-yum install -y http://cbs.centos.org/kojifiles/packages/docker/1.6.2/4.gitc3ca5bb.el7/x86_64/docker-1.6.2-4.gitc3ca5bb.el7.x86_64.rpm
+retry yum install -y http://cbs.centos.org/kojifiles/packages/docker/1.6.2/4.gitc3ca5bb.el7/x86_64/docker-1.6.2-4.gitc3ca5bb.el7.x86_64.rpm
 echo "INSECURE_REGISTRY='--insecure-registry 0.0.0.0/0'" >> /etc/sysconfig/docker
 systemctl enable docker
 
 # NOTE: install the right Ansible version on RHEL7.1 and Centos 7.1:
-yum -y install \
+retry yum -y install \
     http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
 sed -i -e "s/^enabled=1/enabled=0/" /etc/yum.repos.d/epel.repo
-yum -y --enablerepo=epel install ansible
+retry yum -y --enablerepo=epel install ansible
 
 
 git clone https://github.com/openshift/openshift-ansible.git
