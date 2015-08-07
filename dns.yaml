@@ -61,7 +61,7 @@ resources:
       key_name: {get_param: key_name}
       networks:
       - port: {get_param: port}
-      user_data_format: RAW
+      user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
 
   init:
