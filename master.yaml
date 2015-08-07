@@ -76,13 +76,16 @@ parameters:
   node_etc_hosts:
     type: string
 
+  ssh_user:
+    type: string
+
 resources:
 
   host:
     type: OS::Nova::Server
     properties:
       name: {get_param: hostname}
-      admin_user: cloud-user
+      admin_user: {get_param: ssh_user}
       image: {get_param: image}
       flavor: {get_param: flavor}
       key_name: {get_param: key_name}
@@ -127,6 +130,7 @@ resources:
               params:
                 $MASTER_HOSTNAME: {get_param: hostname}
                 $NODE_HOSTNAMES: {get_param: node_hostnames}
+                $SSH_USER: {get_param: ssh_user}
               template: {get_file: fragments/ansible-inventory}
         - path: /root/.ssh/id_rsa
           permissions: 0600

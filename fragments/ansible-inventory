@@ -6,7 +6,7 @@ nodes
 # Set variables common for all OSEv3 hosts
 [OSv3:vars]
 # SSH user, this user should allow ssh based auth without requiring a password
-ansible_ssh_user=cloud-user
+ansible_ssh_user=$SSH_USER
 
 ansible_sudo=true
 

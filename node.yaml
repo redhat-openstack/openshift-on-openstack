@@ -54,6 +54,9 @@ parameters:
   ansible_public_key:
     type: string
 
+  ssh_user:
+    type: string
+
 resources:
 
   random_hostname_suffix:
@@ -70,7 +73,7 @@ resources:
           params:
             HOST: {get_param: hostname_prefix}
             SUFFIX: {get_attr: [random_hostname_suffix, value]}
-      admin_user: cloud-user
+      admin_user: {get_param: ssh_user}
       image: {get_param: image}
       flavor: {get_param: flavor}
       key_name: {get_param: key_name}

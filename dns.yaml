@@ -47,11 +47,15 @@ parameters:
     description: Neutron port (with a floating IP address) to assign to the DNS Nova Server
     type: string
 
+  ssh_user:
+    type: string
+
 resources:
 
   host:
     type: OS::Nova::Server
     properties:
+      admin_user: {get_param: ssh_user}
       image: {get_param: image}
       flavor: {get_param: flavor}
       key_name: {get_param: key_name}

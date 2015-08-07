@@ -73,6 +73,12 @@ parameters:
       of the OpenShift master.
     default: "openshift-master.example.com"
 
+  ssh_user:
+    type: string
+    description: >
+      The SSH user available on all nodes.
+    default: 'cloud-user'
+
 resources:
 
   fixed_network:
@@ -103,6 +109,7 @@ resources:
       image: {get_param: server_image}
       flavor: {get_param: flavor}
       key_name: {get_param: ssh_key_name}
+      ssh_user: {get_param: ssh_user}
       external_network: {get_param: external_network}
       fixed_network: {get_resource: fixed_network}
       fixed_subnet: {get_resource: fixed_subnet}
@@ -117,6 +124,7 @@ resources:
       image: {get_param: server_image}
       flavor: {get_param: flavor}
       key_name: {get_param: ssh_key_name}
+      ssh_user: {get_param: ssh_user}
       external_network: {get_param: external_network}
       dns_ip: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
       port: {get_resource: master_port}
@@ -151,6 +159,7 @@ resources:
           image: {get_param: server_image}
           flavor: {get_param: flavor}
           key_name: {get_param: ssh_key_name}
+          ssh_user: {get_param: ssh_user}
           external_network: {get_param: external_network}
           dns_ip: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
           fixed_network: {get_resource: fixed_network}
