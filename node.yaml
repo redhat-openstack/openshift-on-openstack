@@ -41,10 +41,21 @@ parameters:
     type: string
     description: IP address of the DNS server
 
+  docker_volume_size:
+    type: number
+    description: >
+      size of a cinder volume to allocate to docker for container/image
+      storage
+    default: 25
+
   rhn_username:
     type: string
 
   rhn_password:
+    type: string
+    hidden: true
+  
+  rhn_pool:
     type: string
     hidden: true
 
@@ -65,8 +76,8 @@ resources:
   random_hostname_suffix:
     type: OS::Heat::RandomString
     properties:
-      character_classes: [{"min": 5, "class": "lowercase"}]
-      length: 5
+      character_classes: [{"class": lowercase}, {"class": digits}]
+      length: 8
 
   host:
     type: OS::Nova::Server
@@ -86,6 +97,17 @@ resources:
       - port: {get_resource: port}
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
+
+  docker_volume:
+    type: OS::Cinder::Volume
+    properties:
+      size: {get_param: docker_volume_size}
+
+  docker_volume_attach:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      instance_uuid: {get_resource: host}
+      volume_id: {get_resource: docker_volume}
 
   init:
     type: OS::Heat::MultipartMime
@@ -145,6 +167,7 @@ resources:
           params:
             $RHN_USERNAME: {get_param: rhn_username}
             $RHN_PASSWORD: {get_param: rhn_password}
+            $POOL_ID: {get_param: rhn_pool}
           template: {get_file: fragments/rhn-register.sh}
 
   node_boot:
@@ -184,7 +207,6 @@ resources:
     properties:
       floating_network: {get_param: external_network}
       port_id: {get_resource: port}
-
 
 outputs:
   hostname:

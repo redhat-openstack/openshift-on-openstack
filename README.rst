@@ -6,10 +6,10 @@ About
 =====
 
 A collection of documentation, Heat_ templates, configuration and everything
-else that's necessary to deploy `OpenShift Origin 3`_ on OpenStack_.
+else that's necessary to deploy OpenShift_ on OpenStack_.
 
 .. _Heat: https://wiki.openstack.org/wiki/Heat
-.. _OpenShift Origin 3: http://www.openshift.org/
+.. _OpenShift: http://www.openshift.org/
 .. _OpenStack: http://www.openstack.org/
 
 
@@ -19,29 +19,47 @@ Prerequisities
 1. OpenStack version Juno or later with the Heat, Neutron, Ceilometer services
 running
 
-2. CentOS_ 7.1 cloud image (we leverage cloud-init) loaded in Glance
+2. CentOS_ 7.1 cloud image (we leverage cloud-init) loaded in Glance for OpenShift Origin Deployments.  RHEL_ 7.1 cloud image if doing Atomic Enterprise or OpenShift Enterprise
 
 3. An SSH keypair loaded to Nova
 
 4. A (Neutron) network with a pool of floating IP addresses available
 
-CentOS is the only tested distro for now.
+CentOS and RHEL are the only tested distros for now.
 
 .. _CentOS: http://www.centos.org/
+.. _RHEL: https://access.redhat.com/downloads
 
 Deployment
 ==========
 
-Assuming your external network is called ``ext_net``, your SSH key is
-``default``, your CentOS 7.1 image is ``centos71`` and your domain
-name is ``example.com``, this is how you deploy OpenShift:
+You can pass all environment variables to heat on command line.  However, two example environment files have been given.  
+
+* ``env_origin.yaml`` is an example of the variables to deploy an OpenShift Origin 3 environment.  
+* ``env_aop.yaml`` is an example of the variables to deploy an Atomic Enterprise or OpenShift Enterprise 3 environment.  Note deployment type should be *enterprise* for OpenShift or *atomic-enterprise* for Atomic Enterprise.  Also, a valid RHN subscription is required for deployment. 
+
+Assuming your external network is called ``ext_net``, your SSH key is ``default`` and your CentOS 7.1 image is ``centos71`` and your domain name is ``example.com``, this is how you deploy OpenShift Origin:
 
 ::
+   
+  cat << EOF > env.yaml
+  parameters:
+    ssh_key_name: default
+    server_image: centos71
+    flavor: m1.medium
+    external_network: ext_net
+    dns_nameserver: 8.8.4.4,8.8.8.8
+    node_count: 2
+    rhn_username: ""
+    rhn_password: ""
+    rhn_pool: ''
+    deployment_type: origin
+    domain_name: example.com
+    ssh_user: cloud-user
+  EOF
 
    git clone https://github.com/redhat-openstack/openshift-on-openstack.git
-   heat stack-create my_openshift -f openshift-on-openstack/openshift.yaml \
-       -P server_image=centos71 -P external_network=ext_net \
-       -P ssh_key_name=default -P domain_name=example.com -P node_count=2
+   heat stack-create my_openshift -e env.yaml -f openshift-on-openstack/openshift.yaml 
 
 The ``node_count`` parameter specifies how many non-master OpenShift nodes you
 want to deploy. In the example above, we will deploy one master and two nodes.
@@ -73,19 +91,40 @@ my_openshift master_ip``.
    ssh cloud-user@MASTER_NODE_IP
    sudo -i
 
-   # Create default router
+   # Change the master node to allow scheduling pods to it
+   # By default the master has SchedulingDisabled
+   oc edit node openshift-master.example.com
+   ### Remove the line: unschedulable: true
+
+   # Create the router
    CA=/etc/openshift/master
-   oadm create-server-cert --signer-cert=$CA/ca.crt --signer-key=$CA/ca.key \
-       --signer-serial=$CA/ca.serial.txt --hostnames='*.cloudapps.example.com' --cert=cloudapps.crt --key=cloudapps.key
+
+   ### NOTE: If origin, this should be CA=/etc/origin/master
+   oadm ca create-server-cert --signer-cert=$CA/ca.crt --signer-key=$CA/ca.key \
+      --signer-serial=$CA/ca.serial.txt --hostnames='*.cloudapps.example.com' --cert=cloudapps.crt --key=cloudapps.key
    cat cloudapps.crt cloudapps.key $CA/ca.crt > cloudapps.router.pem
-   oadm router router --credentials=/etc/openshift/master/openshift-router.kubeconfig \
-       --service-account=router
+
+   ### NOTE: If origin, credentials should be /etc/origin/master/openshift-router.kubeconfig
+   oadm router --replicas=1 --default-cert=cloudapps.router.pem \
+     --credentials=/etc/openshift/master/openshift-router.kubeconfig \
+     --selector='region=infra' --service-account=router
+
+     # Note - you will want to capture your stats user password
    iptables -I OS_FIREWALL_ALLOW -p tcp -m tcp --dport 1936 -j ACCEPT
+   service iptables save; service iptables restart
+
+   # Validate the router is running 
+   oc get pods
+   oc describe pod <router name>
 
    # Create the resource registry
-   oadm registry --config=/etc/openshift/master/admin.kubeconfig \
-       --credentials=/etc/openshift/master/openshift-registry.kubeconfig
+   ### NOTE: On Origin this will be /etc/origin/master/openshift-registry.kubeconfig
+   oadm registry --create --config=/etc/openshift/master/admin.kubeconfig \
+      --credentials=/etc/openshift/master/openshift-registry.kubeconfig \
+      --selector="region=infra"
 
+   # Validate the registry is running
+   oc get pods 
 
 Accessing the Web UI
 ====================
