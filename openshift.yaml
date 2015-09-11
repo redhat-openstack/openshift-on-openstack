@@ -229,11 +229,19 @@ resources:
       floating_network: {get_param: external_network}
       port_id: {get_resource: master_port}
 
+  ansible_keys_name_suffix:
+    type: OS::Heat::RandomString
+    properties:
+      length: 10
 
   ansible_keys:
     type: OS::Nova::KeyPair
     properties:
-      name: ansible_keys
+      name:
+        str_replace:
+          template: "ansible_keys_SUFFIX"
+          params:
+            SUFFIX: {get_attr: [ansible_keys_name_suffix, value]}
       save_private_key: True
 
 
