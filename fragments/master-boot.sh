@@ -37,7 +37,7 @@ retry yum -y --enablerepo=epel install ansible
 git clone https://github.com/openshift/openshift-ansible.git
 cd openshift-ansible
 # Known working version on Centos 7 + Origin
-git checkout a7ac3f7b513fe57ddccad15bdb6c7e9091f16bcd
+git checkout ee97dd9be30d3d818cf4b8e86ace6e34ae5405ca
 
 # NOTE: the first ansible run hangs during the "Start and enable iptables
 # service" task. Doing it explicitly seems to fix that:
@@ -53,10 +53,6 @@ ansible-playbook --inventory /var/lib/ansible-inventory playbooks/byo/config.yml
 # https://github.com/openshift/openshift-ansible/issues/282
 echo 'routingConfig:' >> /etc/openshift/master/master-config.yaml
 echo '  subdomain: cloudapps.example.com' >> /etc/openshift/master/master-config.yaml
-
-# NOTE: this should be added by ansible but for some reason isn't:
-cd /root
-retry oc label node $HOSTNAME region=infra zone=default
 systemctl restart openshift-master
 
 echo "OpenShift has been installed."
