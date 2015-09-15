@@ -1,6 +1,13 @@
 127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
 ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
 
+10.3.8.9 buildvm-devops.usersys.redhat.com
+10.16.36.64 download.eng.bos.redhat.com
+10.16.36.64 download.lab.bos.redhat.com
+10.19.60.37 ayanami.boston.devel.redhat.com
+10.18.57.220 rhos-release.virt.bos.redhat.com
+
+
 $NODE_IP $NODE_HOSTNAME.$NODE_DOMAIN $NODE_HOSTNAME
 $MASTER_IP $MASTER_HOSTNAME.$NODE_DOMAIN $MASTER_HOSTNAME
 $NODE_ETC_HOSTS

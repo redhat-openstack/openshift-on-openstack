@@ -37,6 +37,19 @@ parameters:
     constraints:
     - custom_constraint: neutron.subnet
 
+  container_network:
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  container_subnet:
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  container_security_group:
+    type: string
+
   dns_ip:
     type: string
     description: IP address of the DNS server
@@ -85,6 +98,12 @@ parameters:
   openshift_ansible_git_rev:
     type: string
 
+  container_network_cidr:
+    type: string
+
+  container_subnet_length:
+    type: number
+
 resources:
 
   host:
@@ -102,8 +121,20 @@ resources:
       key_name: {get_param: key_name}
       networks:
       - port: {get_param: port}
+      - port: {get_resource: container_port}
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
+
+  container_port:
+    type: OS::Neutron::Port
+    properties:
+      network: {get_param: container_network}
+      fixed_ips:
+      - subnet: {get_param: container_subnet}
+      replacement_policy: AUTO
+      value_specs:
+        port_security_enabled: false
+
 
   init:
     type: OS::Heat::MultipartMime
@@ -139,6 +170,12 @@ resources:
                 $NODE_HOSTNAME: {get_param: hostname}
                 $NODE_DOMAIN: {get_param: domain_name}
               template: {get_file: fragments/etc-node-hosts}
+        - path: /usr/bin/docker-bridge-setup
+          permissions: 0755
+          content: {get_file: fragments/docker-bridge-setup.sh}
+        - path: /usr/bin/flannel-subnet-min
+          permissions: 0755
+          content: {get_file: fragments/flannel-subnet-min.sh}
         - path: /var/lib/ansible-inventory
           content:
             str_replace:
@@ -147,10 +184,40 @@ resources:
                 $DOMAINNAME: {get_param: domain_name}
                 $NODE_HOSTNAMES: {get_param: node_hostnames}
                 $SSH_USER: {get_param: ssh_user}
+                $CONTAINER_NETWORK_CIDR: {get_param: container_network_cidr}
+                $CONTAINER_SUBNET_LENGTH: {get_param: container_subnet_length}
               template: {get_file: fragments/ansible-inventory}
         - path: /root/.ssh/id_rsa
           permissions: 0600
           content: {get_param: ansible_private_key}
+        - path: /root/flannel-config.json
+          permissions: 0644
+          content:
+            str_replace:
+              params:
+                $NETWORK: {get_param: container_network_cidr}
+              template: {get_file: fragments/flannel-config.json}
+        - path: /root/flannel-sysconfig
+          permissions: 0644
+          content:
+            str_replace:
+              params:
+                $MASTER_HOSTNAME: {get_param: hostname}
+                $NODE_DOMAIN: {get_param: domain_name}
+                $HOSTNAME:
+                  str_replace:
+                    template: "HOST.DOMAIN"
+                    params:
+                      HOST: {get_param: hostname}
+                      DOMAIN: {get_param: domain_name}
+              template: {get_file: fragments/flannel-sysconfig}
+        - path: /etc/sysconfig/network-scripts/ifcfg-eth1
+          content:
+            str_replace:
+              params:
+                $IPADDR: {get_attr: [container_port, fixed_ips, 0, ip_address]}
+                $HWADDR: {get_attr: [container_port, mac_address]}
+              template: {get_file: fragments/ifcfg-eth1}
         - path: /root/.ssh/id_rsa.pub
           permissions: 0600
           content: {get_param: ansible_public_key}
@@ -181,6 +248,9 @@ resources:
             $MASTER_IP: {get_param: floating_ip}
             $OPENSHIFT_ANSIBLE_GIT_URL: {get_param: openshift_ansible_git_url}
             $OPENSHIFT_ANSIBLE_GIT_REV: {get_param: openshift_ansible_git_rev}
+            $CONTAINER_NETWORK_CIDR: {get_param: container_network_cidr}
+            $HOSTNAME: {get_param: hostname}
+            $DOMAIN: {get_param: domain_name}
           template: {get_file: fragments/master-boot.sh}
 
   ansible_installer:

@@ -37,6 +37,19 @@ parameters:
     constraints:
     - custom_constraint: neutron.subnet
 
+  container_network:
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  container_subnet:
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  container_security_group:
+    type: string
+
   dns_ip:
     type: string
     description: IP address of the DNS server
@@ -47,6 +60,9 @@ parameters:
   rhn_password:
     type: string
     hidden: true
+
+  rhn_pool:
+    type: string
 
   hostname_prefix:
     type: string
@@ -59,6 +75,10 @@ parameters:
 
   ssh_user:
     type: string
+
+  master_hostname:
+    type: string
+
 
 resources:
 
@@ -84,8 +104,19 @@ resources:
       key_name: {get_param: key_name}
       networks:
       - port: {get_resource: port}
+      - port: {get_resource: container_port}
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
+
+  container_port:
+    type: OS::Neutron::Port
+    properties:
+      network: {get_param: container_network}
+      fixed_ips:
+      - subnet: {get_param: container_subnet}
+      replacement_policy: AUTO
+      value_specs:
+        port_security_enabled: false
 
   init:
     type: OS::Heat::MultipartMime
@@ -118,7 +149,30 @@ resources:
     type: OS::Heat::CloudConfig
     properties:
       cloud_config:
+        ssh_authorized_keys:
+        - {get_param: ansible_public_key}
         write_files:
+        - path: /usr/bin/docker-bridge-setup
+          permissions: 0755
+          content: {get_file: fragments/docker-bridge-setup.sh}
+        - path: /root/flannel-sysconfig
+          permissions: 0644
+          content:
+            str_replace:
+              params:
+                $MASTER_HOSTNAME: {get_param: master_hostname}
+                $NODE_DOMAIN: {get_param: domain_name}
+                $HOSTNAME:
+                  str_replace:
+                    template: "HOST-SUFFIX.DOMAIN"
+                    params:
+                      HOST: {get_param: hostname_prefix}
+                      SUFFIX: {get_attr: [random_hostname_suffix, value]}
+                      DOMAIN: {get_param: domain_name}
+              template: {get_file: fragments/flannel-sysconfig}
+        - path: /usr/bin/retry
+          permissions: 0755
+          content: {get_file: fragments/retry.sh}
         - path: /etc/hosts
           content:
             str_replace:
@@ -132,11 +186,16 @@ resources:
                       SUFFIX: {get_attr: [random_hostname_suffix, value]}
                 $NODE_DOMAIN: {get_param: domain_name}
               template: {get_file: fragments/etc-node-hosts}
-        - path: /usr/bin/retry
-          permissions: 0755
-          content: {get_file: fragments/retry.sh}
+        - path: /etc/sysconfig/network-scripts/ifcfg-eth1
+          content:
+            str_replace:
+              params:
+                $IPADDR: {get_attr: [container_port, fixed_ips, 0, ip_address]}
+                $HWADDR: {get_attr: [container_port, mac_address]}
+              template: {get_file: fragments/ifcfg-eth1}
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
+
   rhn_register:
     type: OS::Heat::SoftwareConfig
     properties:
@@ -145,6 +204,7 @@ resources:
           params:
             $RHN_USERNAME: {get_param: rhn_username}
             $RHN_PASSWORD: {get_param: rhn_password}
+            $POOL_ID: {get_param: rhn_pool}
           template: {get_file: fragments/rhn-register.sh}
 
   node_boot:

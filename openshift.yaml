@@ -109,6 +109,19 @@ parameters:
     # Known working version on Centos 7 + Origin:
     default: "8f6c6824073dff0cea3cd793db2745fb6cf52931"
 
+  container_network_cidr:
+    type: string
+    description: >
+      The IP address range for the container network.
+    default: 172.16.0.0/16
+
+  container_subnet_length:
+    type: number
+    description: >
+      The number of bits per subnet associated with each node.
+    default: 8
+
+
 resources:
 
   fixed_network:
@@ -119,6 +132,16 @@ resources:
     properties:
       cidr: 192.168.0.0/24
       network: {get_resource: fixed_network}
+      dns_nameservers: {get_param: dns_nameserver}
+
+  container_network:
+    type: OS::Neutron::Net
+
+  container_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      cidr: {get_param: container_network_cidr}
+      network: {get_resource: container_network}
       dns_nameservers: {get_param: dns_nameserver}
 
   external_router:
@@ -145,6 +168,9 @@ resources:
       fixed_network: {get_resource: fixed_network}
       fixed_subnet: {get_resource: fixed_subnet}
       hostname: {get_param: dns_hostname}
+      rhn_username: {get_param: rhn_username}
+      rhn_password: {get_param: rhn_password}
+      rhn_pool: {get_param: rhn_pool}
       master_ip_address: {get_attr: [master_floating_ip, floating_ip_address]}
       master_hostname: {get_param: master_hostname}
       node_etc_hosts:
@@ -168,6 +194,9 @@ resources:
       port: {get_resource: master_port}
       fixed_network: {get_resource: fixed_network}
       fixed_subnet: {get_resource: fixed_subnet}
+      container_network: {get_resource: container_network}
+      container_subnet: {get_resource: container_subnet}
+      container_security_group: {get_resource: container_security_group}
       rhn_username: {get_param: rhn_username}
       rhn_password: {get_param: rhn_password}
       rhn_pool: {get_param: rhn_pool}
@@ -182,6 +211,8 @@ resources:
         list_join:
         - "\n"
         - {get_attr: [openshift_nodes, outputs_list, ansible_entry]}
+      container_network_cidr: {get_param: container_network_cidr}
+      container_subnet_length: {get_param: container_subnet_length}
 
   openshift_nodes:
     depends_on: external_router_interface
@@ -201,8 +232,13 @@ resources:
           dns_ip: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
           fixed_network: {get_resource: fixed_network}
           fixed_subnet: {get_resource: fixed_subnet}
+          master_hostname: {get_param: master_hostname}
+          container_network: {get_resource: container_network}
+          container_subnet: {get_resource: container_subnet}
+          container_security_group: {get_resource: container_security_group}
           rhn_username: {get_param: rhn_username}
           rhn_password: {get_param: rhn_password}
+          rhn_pool: {get_param: rhn_pool}
           hostname_prefix: {get_param: node_hostname_prefix}
           domain_name: {get_param: domain_name}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
@@ -249,6 +285,19 @@ resources:
       replacement_policy: AUTO
 
   master_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+      - protocol: icmp
+      # Just open everything for now:
+      - protocol: tcp
+        port_range_min: 0
+        port_range_max: 65535
+      - protocol: udp
+        port_range_min: 0
+        port_range_max: 65535
+
+  container_security_group:
     type: OS::Neutron::SecurityGroup
     properties:
       rules:

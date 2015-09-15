@@ -10,10 +10,19 @@ ansible_ssh_user=$SSH_USER
 
 ansible_sudo=true
 
-deployment_type=origin
+deployment_type=openshift-enterprise
 
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/openshift/openshift-passwd'}]
 osm_default_subdomain=cloudapps.$DOMAINNAME
+
+osm_cluster_network_cidr=$CONTAINER_NETWORK_CIDR
+osm_host_subnet_length=$CONTAINER_SUBNET_LENGTH
+openshift_master_portal_net=$CONTAINER_NETWORK_CIDR
+
+openshift_use_openshift_sdn=false
+
+
+osm_use_cockpit=false
 
 # host group for masters
 [masters]
