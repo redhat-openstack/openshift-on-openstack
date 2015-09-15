@@ -105,6 +105,16 @@ resources:
       network: {get_resource: fixed_network}
       dns_nameservers: {get_param: dns_nameserver}
 
+  container_network:
+    type: OS::Neutron::Net
+
+  container_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      cidr: 192.168.25.0/24
+      network: {get_resource: container_network}
+      dns_nameservers: {get_param: dns_nameserver}
+
   external_router:
     type: OS::Neutron::Router
     properties:
@@ -144,6 +154,9 @@ resources:
       port: {get_resource: master_port}
       fixed_network: {get_resource: fixed_network}
       fixed_subnet: {get_resource: fixed_subnet}
+      container_network: {get_resource: container_network}
+      container_subnet: {get_resource: container_subnet}
+      container_security_group: {get_resource: container_security_group}
       rhn_username: {get_param: rhn_username}
       rhn_password: {get_param: rhn_password}
       rhn_pool: {get_param: rhn_pool}
@@ -227,6 +240,19 @@ resources:
       replacement_policy: AUTO
 
   master_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+      - protocol: icmp
+      # Just open everything for now:
+      - protocol: tcp
+        port_range_min: 0
+        port_range_max: 65535
+      - protocol: udp
+        port_range_min: 0
+        port_range_max: 65535
+
+  container_security_group:
     type: OS::Neutron::SecurityGroup
     properties:
       rules:
