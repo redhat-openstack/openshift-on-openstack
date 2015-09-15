@@ -37,6 +37,19 @@ parameters:
     constraints:
     - custom_constraint: neutron.subnet
 
+  container_network:
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  container_subnet:
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  container_security_group:
+    type: string
+
   dns_ip:
     type: string
     description: IP address of the DNS server
@@ -91,8 +104,20 @@ resources:
       key_name: {get_param: key_name}
       networks:
       - port: {get_param: port}
+      - port: {get_resource: container_port}
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
+
+  container_port:
+    type: OS::Neutron::Port
+    properties:
+      security_groups:
+      - {get_param: container_security_group}
+      network: {get_param: container_network}
+      fixed_ips:
+      - subnet: {get_param: container_subnet}
+      replacement_policy: AUTO
+
 
   init:
     type: OS::Heat::MultipartMime
@@ -116,6 +141,13 @@ resources:
     properties:
       cloud_config:
         write_files:
+        - path: /etc/sysconfig/network-scripts/ifcfg-eth1
+          content:
+            str_replace:
+              params:
+                $IPADDR: {get_attr: [container_port, fixed_ips, 0, ip_address]}
+                $HWADDR: {get_attr: [container_port, mac_address]}
+              template: {get_file: fragments/ifcfg-eth1}
         - path: /etc/hosts
           content:
             str_replace:

@@ -4,7 +4,8 @@ set -eu
 set -x
 set -o pipefail
 
-# master and nodes
+ifup eth1
+
 # Set the DNS to the one provided
 sed -i 's/search openstacklocal/&\nnameserver $DNS_IP/' /etc/resolv.conf
 
