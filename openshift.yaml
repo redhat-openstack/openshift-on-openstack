@@ -152,7 +152,7 @@ resources:
         list_join:
         - "\n"
         - {get_attr: [openshift_nodes, outputs_list, etc_hosts]}
-      domainname: {get_param: domainname}
+      domainname: {get_param: domain_name}
       floating_ip: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
       port: {get_resource: dnsmasq_port}
 
@@ -174,7 +174,7 @@ resources:
       rhn_pool: {get_param: rhn_pool}
       floating_ip: {get_attr: [master_floating_ip, floating_ip_address]}
       hostname: {get_param: master_hostname}
-      domainname: {get_param: domainname}
+      domainname: {get_param: domain_name}
       ansible_public_key: {get_attr: [ansible_keys, public_key]}
       ansible_private_key: {get_attr: [ansible_keys, private_key]}
       openshift_ansible_git_url: {get_param: openshift_ansible_git_url}
@@ -205,7 +205,7 @@ resources:
           rhn_username: {get_param: rhn_username}
           rhn_password: {get_param: rhn_password}
           hostname_prefix: {get_param: node_hostname_prefix}
-          domainname: {get_param: domainname}
+          domainname: {get_param: domain_name}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
 
   dnsmasq_port:

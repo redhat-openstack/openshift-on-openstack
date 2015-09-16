@@ -112,8 +112,7 @@ Current Status
 1. The CA certificate used with OpenShift is currently not configurable and
    not available from the outside.
 
-2. The hostnames for all the OpenShift nodes as well as the apps cloud domain
-   are hardcoded for now. We need to make these configurable.
+2. The apps cloud domain is hardcoded for now. We need to make this configurable.
 
 
 Copyright
