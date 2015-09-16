@@ -17,7 +17,7 @@ osm_default_subdomain=cloudapps.$DOMAINNAME
 
 # host group for masters
 [masters]
-$MASTER_HOSTNAME.$DOMAINNAME
+$MASTER_HOSTNAME.$DOMAINNAME openshift_hostname=$MASTER_HOSTNAME.$DOMAINNAME openshit_public_hostname=$MASTER_HOSTNAME.$DOMAINNAME
 
 # host group for nodes
 [nodes]
