@@ -43,6 +43,9 @@ parameters:
   master_hostname:
     type: string
 
+  domainname:
+    type: string
+
   port:
     description: Neutron port (with a floating IP address) to assign to the DNS Nova Server
     type: string
@@ -82,6 +85,7 @@ resources:
               params:
                 $MASTER_IP: {get_param: master_ip_address}
                 $MASTER_HOSTNAME: {get_param: master_hostname}
+                $DOMAINNAME: {get_param: domainname}
               template:
                 {get_file: fragments/etc-hosts}
         - path: /root/dnsmasq.conf
@@ -89,6 +93,7 @@ resources:
             str_replace:
               params:
                 $MASTER_IP: {get_param: master_ip_address}
+                $DOMAINNAME: {get_param: domainname}
               template: {get_file: fragments/dnsmasq.conf}
         - path: /usr/bin/retry
           permissions: 0755

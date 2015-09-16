@@ -51,6 +51,9 @@ parameters:
   hostname_prefix:
     type: string
 
+  domainname:
+    type: string
+
   ansible_public_key:
     type: string
 
@@ -69,10 +72,11 @@ resources:
     properties:
       name:
         str_replace:
-          template: "HOST-SUFFIX.example.com"
+          template: "HOST-SUFFIX.DOMAIN"
           params:
             HOST: {get_param: hostname_prefix}
             SUFFIX: {get_attr: [random_hostname_suffix, value]}
+            DOMAIN: {get_param: domainname}
       admin_user: {get_param: ssh_user}
       image: {get_param: image}
       flavor: {get_param: flavor}
@@ -97,27 +101,22 @@ resources:
       cloud_config:
         hostname:
           str_replace:
-            template: "HOST-SUFFIX.example.com"
+            template: "HOST-SUFFIX"
             params:
               HOST: {get_param: hostname_prefix}
               SUFFIX: {get_attr: [random_hostname_suffix, value]}
         fqdn:
           str_replace:
-            template: "HOST-SUFFIX.example.com"
+            template: "HOST-SUFFIX.DOMAIN"
             params:
               HOST: {get_param: hostname_prefix}
               SUFFIX: {get_attr: [random_hostname_suffix, value]}
+              DOMAIN: {get_param: domainname}
 
   included_files:
     type: OS::Heat::CloudConfig
     properties:
       cloud_config:
-        write_files:
-        - path: /usr/bin/retry
-          permissions: 0755
-          content: {get_file: fragments/retry.sh}
-        ssh_authorized_keys:
-        - {get_param: ansible_public_key}
         write_files:
         - path: /etc/hosts
           content:
@@ -126,12 +125,17 @@ resources:
                 $NODE_IP: {get_attr: [floating_ip, floating_ip_address]}
                 $NODE_HOSTNAME:
                   str_replace:
-                    template: "HOST-SUFFIX.example.com"
+                    template: "HOST-SUFFIX"
                     params:
                       HOST: {get_param: hostname_prefix}
                       SUFFIX: {get_attr: [random_hostname_suffix, value]}
+                $NODE_DOMAIN: {get_param: domainname}
               template: {get_file: fragments/etc-node-hosts}
-
+        - path: /usr/bin/retry
+          permissions: 0755
+          content: {get_file: fragments/retry.sh}
+        ssh_authorized_keys:
+        - {get_param: ansible_public_key}
   rhn_register:
     type: OS::Heat::SoftwareConfig
     properties:
@@ -186,19 +190,30 @@ outputs:
     description: Hostname of this OpenShift node
     value:
       str_replace:
-        template: "HOST-SUFFIX.example.com"
+        template: "HOST-SUFFIX.DOMAIN"
         params:
           HOST: {get_param: hostname_prefix}
           SUFFIX: {get_attr: [random_hostname_suffix, value]}
+          DOMAIN: {get_param: domainname}
+  ansible_entry:
+    description: Ansible inventory line for this OpenShift node
+    value:
+      str_replace:
+        template: "HOST-SUFFIX.DOMAIN openshift_hostname=HOST-SUFFIX.DOMAIN openshift_public_hostname=HOST-SUFFIX.DOMAIN"
+        params:
+          HOST: {get_param: hostname_prefix}
+          SUFFIX: {get_attr: [random_hostname_suffix, value]}
+          DOMAIN: {get_param: domainname}
   etc_hosts:
     description: A hostname/IP entry for /etc/hosts
     value:
       str_replace:
-        template: "IP HOST-SUFFIX.example.com"
+        template: "IP HOST-SUFFIX.DOMAIN"
         params:
           IP: {get_attr: [floating_ip, floating_ip_address]}
           HOST: {get_param: hostname_prefix}
           SUFFIX: {get_attr: [random_hostname_suffix, value]}
+          DOMAIN: {get_param: domainname}
   ip_address:
     description: IP address of the node
     value: {get_attr: [floating_ip, floating_ip_address]}

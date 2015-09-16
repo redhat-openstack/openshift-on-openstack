@@ -13,13 +13,13 @@ ansible_sudo=true
 deployment_type=origin
 
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/openshift/openshift-passwd'}]
-osm_default_subdomain=cloudapps.example.com
+osm_default_subdomain=cloudapps.$DOMAINNAME
 
 # host group for masters
 [masters]
-$MASTER_HOSTNAME
+$MASTER_HOSTNAME.$DOMAINNAME
 
 # host group for nodes
 [nodes]
-$MASTER_HOSTNAME openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+$MASTER_HOSTNAME.$DOMAINNAME openshift_hostname=$MASTER_HOSTNAME.$DOMAINNAME openshit_public_hostname=$MASTER_HOSTNAME.$DOMAINNAME openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
 $NODE_HOSTNAMES

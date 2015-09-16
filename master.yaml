@@ -61,6 +61,9 @@ parameters:
   hostname:
     type: string
 
+  domainname:
+    type: string
+
   floating_ip:
     type: string
 
@@ -90,7 +93,12 @@ resources:
   host:
     type: OS::Nova::Server
     properties:
-      name: {get_param: hostname}
+      name:
+        str_replace:
+          template: "HOST.DOMAIN"
+          params:
+            HOST: {get_param: hostname}
+            DOMAIN: {get_param: domainname}
       admin_user: {get_param: ssh_user}
       image: {get_param: image}
       flavor: {get_param: flavor}
@@ -114,7 +122,12 @@ resources:
     properties:
       cloud_config:
         hostname: {get_param: hostname}
-        fqdn: {get_param: hostname}
+        fqdn:
+          str_replace:
+            template: "HOST.DOMAIN"
+            params:
+              HOST: {get_param: hostname}
+              DOMAIN: {get_param: domainname}
 
   # TODO: is /etc/hosts necessary? DNS should be providing this.
   included_files:
@@ -128,6 +141,7 @@ resources:
               params:
                 $MASTER_IP: {get_param: floating_ip}
                 $MASTER_HOSTNAME: {get_param: hostname}
+                $DOMAINNAME: {get_param: domainname}
                 $NODE_ETC_HOSTS: {get_param: node_etc_hosts}
               template: {get_file: fragments/etc-hosts}
         - path: /var/lib/ansible-inventory
@@ -135,6 +149,7 @@ resources:
             str_replace:
               params:
                 $MASTER_HOSTNAME: {get_param: hostname}
+                $DOMAINNAME: {get_param: domainname}
                 $NODE_HOSTNAMES: {get_param: node_hostnames}
                 $SSH_USER: {get_param: ssh_user}
               template: {get_file: fragments/ansible-inventory}
@@ -184,10 +199,12 @@ outputs:
       str_replace:
         params:
           HOSTNAME: {get_param: hostname}
-        template: "https://HOSTNAME:8443/console/"
+          DOMAINNAME: {get_param: domainname}
+        template: "https://HOSTNAME.DOMAINNAME:8443/console/"
   api_url:
     value:
       str_replace:
         params:
           HOSTNAME: {get_param: hostname}
-        template: "https://HOSTNAME:8443/"
+          DOMAINNAME: {get_param: domainname}
+        template: "https://HOSTNAME.DOMAINNAME:8443/"
