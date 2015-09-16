@@ -76,9 +76,6 @@ parameters:
   node_hostnames:
     type: string
 
-  node_etc_hosts:
-    type: string
-
   ssh_user:
     type: string
 
@@ -129,7 +126,6 @@ resources:
               HOST: {get_param: hostname}
               DOMAIN: {get_param: domainname}
 
-  # TODO: is /etc/hosts necessary? DNS should be providing this.
   included_files:
     type: OS::Heat::CloudConfig
     properties:
@@ -139,11 +135,10 @@ resources:
           content:
             str_replace:
               params:
-                $MASTER_IP: {get_param: floating_ip}
-                $MASTER_HOSTNAME: {get_param: hostname}
-                $DOMAINNAME: {get_param: domainname}
-                $NODE_ETC_HOSTS: {get_param: node_etc_hosts}
-              template: {get_file: fragments/etc-hosts}
+                $NODE_IP: {get_param: floating_ip}
+                $NODE_HOSTNAME: {get_param: hostname}
+                $NODE_DOMAIN: {get_param: domainname}
+              template: {get_file: fragments/etc-node-hosts}
         - path: /var/lib/ansible-inventory
           content:
             str_replace:

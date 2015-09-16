@@ -37,13 +37,22 @@ parameters:
     constraints:
     - custom_constraint: neutron.subnet
 
+  hostname:
+    type: string
+
   master_ip_address:
     type: string
 
   master_hostname:
     type: string
 
+  node_etc_hosts:
+    type: string
+
   domainname:
+    type: string
+
+  floating_ip:
     type: string
 
   port:
@@ -58,6 +67,12 @@ resources:
   host:
     type: OS::Nova::Server
     properties:
+      name:
+        str_replace:
+          template: "HOST.DOMAIN"
+          params:
+            HOST: {get_param: hostname}
+            DOMAIN: {get_param: domainname}
       admin_user: {get_param: ssh_user}
       image: {get_param: image}
       flavor: {get_param: flavor}
@@ -71,8 +86,21 @@ resources:
     type: OS::Heat::MultipartMime
     properties:
       parts:
+      - config: {get_resource: set_hostname}
       - config: {get_resource: included_files}
       - config: {get_resource: boot_config}
+
+  set_hostname:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        hostname: {get_param: hostname}
+        fqdn:
+          str_replace:
+            template: "HOST.DOMAIN"
+            params:
+              HOST: {get_param: hostname}
+              DOMAIN: {get_param: domainname}
 
   included_files:
     type: OS::Heat::CloudConfig
@@ -83,9 +111,12 @@ resources:
           content:
             str_replace:
               params:
+                $NODE_IP: {get_param: floating_ip}
+                $NODE_HOSTNAME: {get_param: hostname}
+                $NODE_DOMAIN: {get_param: domainname}
                 $MASTER_IP: {get_param: master_ip_address}
                 $MASTER_HOSTNAME: {get_param: master_hostname}
-                $DOMAINNAME: {get_param: domainname}
+                $NODE_ETC_HOSTS: {get_param: node_etc_hosts}
               template:
                 {get_file: fragments/etc-hosts}
         - path: /root/dnsmasq.conf

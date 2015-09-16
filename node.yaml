@@ -65,6 +65,7 @@ resources:
   random_hostname_suffix:
     type: OS::Heat::RandomString
     properties:
+      character_classes: [{"min": 5, "class": "lowercase"}]
       length: 5
 
   host:
@@ -208,7 +209,7 @@ outputs:
     description: A hostname/IP entry for /etc/hosts
     value:
       str_replace:
-        template: "IP HOST-SUFFIX.DOMAIN"
+        template: "IP HOST-SUFFIX.DOMAIN HOST-SUFFIX"
         params:
           IP: {get_attr: [floating_ip, floating_ip_address]}
           HOST: {get_param: hostname_prefix}

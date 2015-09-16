@@ -27,7 +27,7 @@ retry yum -y install \
 sed -i -e "s/^enabled=1/enabled=0/" /etc/yum.repos.d/epel.repo
 retry yum -y --enablerepo=epel install ansible
 
-
+cd /root/
 git clone "$OPENSHIFT_ANSIBLE_GIT_URL" openshift-ansible
 cd openshift-ansible
 git checkout "$OPENSHIFT_ANSIBLE_GIT_REV"

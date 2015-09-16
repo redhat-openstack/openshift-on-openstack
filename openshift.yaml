@@ -72,6 +72,12 @@ parameters:
       The domain name that is going to be used as the base for all hostnames.
     default: "example.com"
 
+  dns_hostname:
+    type: string
+    description: >
+      The hostname that is going to be set for the DNS server.
+    default: "ns"
+
   master_hostname:
     type: string
     description: >
@@ -129,6 +135,7 @@ resources:
       subnet: {get_resource: fixed_subnet}
 
   dns_host:
+    depends_on: [openshift_nodes]
     type: dns.yaml
     properties:
       image: {get_param: server_image}
@@ -138,9 +145,15 @@ resources:
       external_network: {get_param: external_network}
       fixed_network: {get_resource: fixed_network}
       fixed_subnet: {get_resource: fixed_subnet}
+      hostname: {get_param: dns_hostname}
       master_ip_address: {get_attr: [master_floating_ip, floating_ip_address]}
       master_hostname: {get_param: master_hostname}
+      node_etc_hosts:
+        list_join:
+        - "\n"
+        - {get_attr: [openshift_nodes, outputs_list, etc_hosts]}
       domainname: {get_param: domainname}
+      floating_ip: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
       port: {get_resource: dnsmasq_port}
 
   openshift_master:
@@ -170,10 +183,6 @@ resources:
         list_join:
         - "\n"
         - {get_attr: [openshift_nodes, outputs_list, ansible_entry]}
-      node_etc_hosts:
-        list_join:
-        - "\n"
-        - {get_attr: [openshift_nodes, outputs_list, etc_hosts]}
 
   openshift_nodes:
     depends_on: external_router_interface
