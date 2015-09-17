@@ -17,7 +17,7 @@ osm_default_subdomain=cloudapps.$DOMAINNAME
 
 # host group for masters
 [masters]
-$MASTER_HOSTNAME.$DOMAINNAME openshift_hostname=$MASTER_HOSTNAME.$DOMAINNAME openshit_public_hostname=$MASTER_HOSTNAME.$DOMAINNAME
+$MASTER_HOSTNAME.$DOMAINNAME openshift_hostname=$MASTER_HOSTNAME.$DOMAINNAME openshit_public_hostname=$MASTER_HOSTNAME.$DOMAINNAME openshift_master_public_console_url=https://$MASTER_HOSTNAME.$DOMAINNAME:8443/console openshift_master_public_api_url=https://$MASTER_HOSTNAME.$DOMAINNAME:8443
 
 # host group for nodes
 [nodes]
