@@ -75,13 +75,16 @@ my_openshift master_ip``.
 
    # Create default router
    CA=/etc/openshift/master
-   oadm create-server-cert --signer-cert=$CA/ca.crt --signer-key=$CA/ca.key --signer-serial=$CA/ca.serial.txt --hostnames='*.cloudapps.example.com' --cert=cloudapps.crt --key=cloudapps.key
+   oadm create-server-cert --signer-cert=$CA/ca.crt --signer-key=$CA/ca.key \
+       --signer-serial=$CA/ca.serial.txt --hostnames='*.cloudapps.example.com' --cert=cloudapps.crt --key=cloudapps.key
    cat cloudapps.crt cloudapps.key $CA/ca.crt > cloudapps.router.pem
-   oadm router --default-cert=cloudapps.router.pem --credentials=/etc/openshift/master/openshift-router.kubeconfig --selector='region=infra'
+   oadm router router --credentials=/etc/openshift/master/openshift-router.kubeconfig \
+       --service-account=router
    iptables -I OS_FIREWALL_ALLOW -p tcp -m tcp --dport 1936 -j ACCEPT
 
    # Create the resource registry
-   oadm registry --create --credentials=/etc/openshift/master/openshift-registry.kubeconfig --selector="region=infra"
+   oadm registry --config=/etc/openshift/master/admin.kubeconfig \
+       --credentials=/etc/openshift/master/openshift-registry.kubeconfig
 
 
 Accessing the Web UI
