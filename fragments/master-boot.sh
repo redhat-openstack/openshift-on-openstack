@@ -43,10 +43,4 @@ systemctl restart iptables
 export ANSIBLE_HOST_KEY_CHECKING=False
 ansible-playbook --inventory /var/lib/ansible-inventory playbooks/byo/config.yml
 
-# TODO: we should set this through ansible once this gets implemented:
-# https://github.com/openshift/openshift-ansible/issues/282
-echo 'routingConfig:' >> /etc/openshift/master/master-config.yaml
-echo '  subdomain: cloudapps.example.com' >> /etc/openshift/master/master-config.yaml
-systemctl restart openshift-master
-
 echo "OpenShift has been installed."
