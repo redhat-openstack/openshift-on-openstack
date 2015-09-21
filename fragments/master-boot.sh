@@ -31,7 +31,7 @@ retry yum -y --enablerepo=epel install ansible
 git clone https://github.com/openshift/openshift-ansible.git
 cd openshift-ansible
 # Known working version on Centos 7 + Origin
-git checkout ee97dd9be30d3d818cf4b8e86ace6e34ae5405ca
+git checkout 8f6c6824073dff0cea3cd793db2745fb6cf52931
 
 # NOTE: the first ansible run hangs during the "Start and enable iptables
 # service" task. Doing it explicitly seems to fix that:
