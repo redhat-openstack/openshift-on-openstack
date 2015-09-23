@@ -121,6 +121,8 @@ resources:
       fixed_ips:
       - subnet: {get_param: container_subnet}
       replacement_policy: AUTO
+      value_specs:
+       port_security_enabled: false
 
 
   init:
