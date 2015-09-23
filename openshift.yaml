@@ -33,6 +33,14 @@ parameters:
     constraints:
     - custom_constraint: neutron.network
 
+  external_container_network:
+    type: string
+    description: >
+      The external network that provides container traffic. It should have
+      `port_security` set to `False`.
+    constraints:
+    - custom_constraint: neutron.network
+
   dns_nameserver:
     type: comma_delimited_list
     description: address of a dns nameserver reachable in your environment
@@ -105,14 +113,11 @@ resources:
       network: {get_resource: fixed_network}
       dns_nameservers: {get_param: dns_nameserver}
 
-  container_network:
-    type: OS::Neutron::Net
-
   container_subnet:
     type: OS::Neutron::Subnet
     properties:
       cidr: 192.168.25.0/24
-      network: {get_resource: container_network}
+      network: {get_param: external_container_network}
       dns_nameservers: {get_param: dns_nameserver}
 
   external_router:
@@ -154,7 +159,7 @@ resources:
       port: {get_resource: master_port}
       fixed_network: {get_resource: fixed_network}
       fixed_subnet: {get_resource: fixed_subnet}
-      container_network: {get_resource: container_network}
+      container_network: {get_param: external_container_network}
       container_subnet: {get_resource: container_subnet}
       container_security_group: {get_resource: container_security_group}
       rhn_username: {get_param: rhn_username}
@@ -193,7 +198,7 @@ resources:
           dns_ip: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
           fixed_network: {get_resource: fixed_network}
           fixed_subnet: {get_resource: fixed_subnet}
-          container_network: {get_resource: container_network}
+          container_network: {get_param: external_container_network}
           container_subnet: {get_resource: container_subnet}
           container_security_group: {get_resource: container_security_group}
           rhn_username: {get_param: rhn_username}
