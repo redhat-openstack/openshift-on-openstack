@@ -246,8 +246,6 @@ resources:
   master_port:
     type: OS::Neutron::Port
     properties:
-      security_groups:
-      - {get_resource: master_security_group}
       network: {get_resource: fixed_network}
       fixed_ips:
       - subnet: {get_resource: fixed_subnet}
