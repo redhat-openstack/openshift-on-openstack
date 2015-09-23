@@ -79,6 +79,12 @@ parameters:
   ssh_user:
     type: string
 
+  openshift_ansible_git_url:
+    type: string
+
+  openshift_ansible_git_rev:
+    type: string
+
 resources:
 
   host:
@@ -163,6 +169,8 @@ resources:
           params:
             $DNS_IP: {get_param: dns_ip}
             $MASTER_IP: {get_param: floating_ip}
+            $OPENSHIFT_ANSIBLE_GIT_URL: {get_param: openshift_ansible_git_url}
+            $OPENSHIFT_ANSIBLE_GIT_REV: {get_param: openshift_ansible_git_rev}
           template: {get_file: fragments/master-boot.sh}
 
   ansible_installer:
