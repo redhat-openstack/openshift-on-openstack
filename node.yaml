@@ -104,7 +104,7 @@ resources:
       - subnet: {get_param: container_subnet}
       replacement_policy: AUTO
       value_specs:
-       port_security_enabled: false
+        port_security_enabled: false
 
   init:
     type: OS::Heat::MultipartMime
@@ -184,6 +184,8 @@ resources:
   port:
     type: OS::Neutron::Port
     properties:
+      security_groups:
+      - {get_resource: security_group}
       network: {get_param: fixed_network}
       fixed_ips:
       - subnet: {get_param: fixed_subnet}
