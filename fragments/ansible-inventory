@@ -15,6 +15,9 @@ deployment_type=origin
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/openshift/openshift-passwd'}]
 osm_default_subdomain=cloudapps.example.com
 
+osm_cluster_network_cidr=$CONTAINER_NETWORK_CIDR
+osm_host_subnet_length=$CONTAINER_SUBNET_LENGTH
+
 # host group for masters
 [masters]
 $MASTER_HOSTNAME

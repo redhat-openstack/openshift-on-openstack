@@ -99,6 +99,13 @@ parameters:
       The IP address range for the container network.
     default: 172.16.1.1/16
 
+  container_subnet_length:
+    type: number
+    description: >
+      The number of bits per subnet associated with each node.
+    default: 8
+
+
 resources:
 
   fixed_network:
@@ -180,6 +187,8 @@ resources:
         list_join:
         - "\n"
         - {get_attr: [openshift_nodes, outputs_list, etc_hosts]}
+      container_network_cidr: {get_param: container_network_cidr}
+      container_subnet_length: {get_param: container_subnet_length}
 
   openshift_nodes:
     depends_on: external_router_interface

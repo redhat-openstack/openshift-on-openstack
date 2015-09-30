@@ -98,6 +98,12 @@ parameters:
   openshift_ansible_git_rev:
     type: string
 
+  container_network_cidr:
+    type: string
+
+  container_subnet_length:
+    type: number
+
 resources:
 
   host:
@@ -162,6 +168,8 @@ resources:
                 $MASTER_HOSTNAME: {get_param: hostname}
                 $NODE_HOSTNAMES: {get_param: node_hostnames}
                 $SSH_USER: {get_param: ssh_user}
+                $CONTAINER_NETWORK_CIDR: {get_param: container_network_cidr}
+                $CONTAINER_SUBNET_LENGTH: {get_param: container_subnet_length}
               template: {get_file: fragments/ansible-inventory}
         - path: /root/.ssh/id_rsa
           permissions: 0600
