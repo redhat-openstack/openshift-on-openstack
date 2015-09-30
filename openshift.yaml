@@ -97,7 +97,7 @@ parameters:
     type: string
     description: >
       The IP address range for the container network.
-    default: 192.168.25.0/24
+    default: 172.16.1.1/16
 
 resources:
 
