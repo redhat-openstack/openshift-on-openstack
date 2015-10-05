@@ -49,7 +49,7 @@ parameters:
   node_etc_hosts:
     type: string
 
-  domainname:
+  domain_name:
     type: string
 
   floating_ip:
@@ -72,7 +72,7 @@ resources:
           template: "HOST.DOMAIN"
           params:
             HOST: {get_param: hostname}
-            DOMAIN: {get_param: domainname}
+            DOMAIN: {get_param: domain_name}
       admin_user: {get_param: ssh_user}
       image: {get_param: image}
       flavor: {get_param: flavor}
@@ -100,7 +100,7 @@ resources:
             template: "HOST.DOMAIN"
             params:
               HOST: {get_param: hostname}
-              DOMAIN: {get_param: domainname}
+              DOMAIN: {get_param: domain_name}
 
   included_files:
     type: OS::Heat::CloudConfig
@@ -113,7 +113,7 @@ resources:
               params:
                 $NODE_IP: {get_param: floating_ip}
                 $NODE_HOSTNAME: {get_param: hostname}
-                $NODE_DOMAIN: {get_param: domainname}
+                $NODE_DOMAIN: {get_param: domain_name}
                 $MASTER_IP: {get_param: master_ip_address}
                 $MASTER_HOSTNAME: {get_param: master_hostname}
                 $NODE_ETC_HOSTS: {get_param: node_etc_hosts}
@@ -124,7 +124,7 @@ resources:
             str_replace:
               params:
                 $MASTER_IP: {get_param: master_ip_address}
-                $DOMAINNAME: {get_param: domainname}
+                $DOMAINNAME: {get_param: domain_name}
               template: {get_file: fragments/dnsmasq.conf}
         - path: /usr/bin/retry
           permissions: 0755

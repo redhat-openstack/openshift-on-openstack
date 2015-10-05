@@ -61,7 +61,7 @@ parameters:
   hostname:
     type: string
 
-  domainname:
+  domain_name:
     type: string
 
   floating_ip:
@@ -95,7 +95,7 @@ resources:
           template: "HOST.DOMAIN"
           params:
             HOST: {get_param: hostname}
-            DOMAIN: {get_param: domainname}
+            DOMAIN: {get_param: domain_name}
       admin_user: {get_param: ssh_user}
       image: {get_param: image}
       flavor: {get_param: flavor}
@@ -124,7 +124,7 @@ resources:
             template: "HOST.DOMAIN"
             params:
               HOST: {get_param: hostname}
-              DOMAIN: {get_param: domainname}
+              DOMAIN: {get_param: domain_name}
 
   included_files:
     type: OS::Heat::CloudConfig
@@ -137,14 +137,14 @@ resources:
               params:
                 $NODE_IP: {get_param: floating_ip}
                 $NODE_HOSTNAME: {get_param: hostname}
-                $NODE_DOMAIN: {get_param: domainname}
+                $NODE_DOMAIN: {get_param: domain_name}
               template: {get_file: fragments/etc-node-hosts}
         - path: /var/lib/ansible-inventory
           content:
             str_replace:
               params:
                 $MASTER_HOSTNAME: {get_param: hostname}
-                $DOMAINNAME: {get_param: domainname}
+                $DOMAINNAME: {get_param: domain_name}
                 $NODE_HOSTNAMES: {get_param: node_hostnames}
                 $SSH_USER: {get_param: ssh_user}
               template: {get_file: fragments/ansible-inventory}
@@ -194,12 +194,12 @@ outputs:
       str_replace:
         params:
           HOSTNAME: {get_param: hostname}
-          DOMAINNAME: {get_param: domainname}
+          DOMAINNAME: {get_param: domain_name}
         template: "https://HOSTNAME.DOMAINNAME:8443/console/"
   api_url:
     value:
       str_replace:
         params:
           HOSTNAME: {get_param: hostname}
-          DOMAINNAME: {get_param: domainname}
+          DOMAINNAME: {get_param: domain_name}
         template: "https://HOSTNAME.DOMAINNAME:8443/"
