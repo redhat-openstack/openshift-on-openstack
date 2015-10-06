@@ -2,6 +2,8 @@
 
 set -x
 
+retry yum -y install bridge-utils
+
 retry yum -y install \
     http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
 sed -i -e "s/^enabled=1/enabled=0/" /etc/yum.repos.d/epel.repo
