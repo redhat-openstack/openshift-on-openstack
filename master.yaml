@@ -161,6 +161,9 @@ resources:
                 $MASTER_HOSTNAME: {get_param: hostname}
                 $NODE_ETC_HOSTS: {get_param: node_etc_hosts}
               template: {get_file: fragments/etc-hosts}
+        - path: /usr/bin/docker-bridge-setup
+          permissions: 0755
+          content: {get_file: fragments/docker-bridge-setup.sh}
         - path: /var/lib/ansible-inventory
           content:
             str_replace:

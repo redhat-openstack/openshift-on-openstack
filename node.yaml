@@ -139,6 +139,9 @@ resources:
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
         write_files:
+        - path: /usr/bin/docker-bridge-setup
+          permissions: 0755
+          content: {get_file: fragments/docker-bridge-setup.sh}
         - path: /usr/bin/retry
           permissions: 0755
           content: {get_file: fragments/retry.sh}
