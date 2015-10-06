@@ -41,4 +41,6 @@ systemctl restart iptables
 export ANSIBLE_HOST_KEY_CHECKING=False
 ansible-playbook --inventory /var/lib/ansible-inventory playbooks/byo/config.yml
 
+ansible -i /var/lib/ansible-inventory all -a 'docker-bridge-setup'
+
 echo "OpenShift has been installed."
