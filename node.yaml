@@ -70,11 +70,15 @@ parameters:
   ssh_user:
     type: string
 
+  container_network_cidr:
+    type: string
+
 resources:
 
   random_hostname_suffix:
     type: OS::Heat::RandomString
     properties:
+      character_classes: [{"min": 5, "class": "lowercase"}]
       length: 5
 
   host:
@@ -142,6 +146,25 @@ resources:
         - path: /usr/bin/docker-bridge-setup
           permissions: 0755
           content: {get_file: fragments/docker-bridge-setup.sh}
+        - path: /root/flannel-config.json
+          permissions: 0644
+          content:
+            str_replace:
+              params:
+                $NETWORK: {get_param: container_network_cidr}
+              template: {get_file: fragments/flannel-config.json}
+        - path: /root/flannel-sysconfig
+          permissions: 0644
+          content:
+            str_replace:
+              params:
+                $HOSTNAME:
+                  str_replace:
+                    template: "HOST-SUFFIX.example.com"
+                    params:
+                      HOST: {get_param: hostname_prefix}
+                      SUFFIX: {get_attr: [random_hostname_suffix, value]}
+              template: {get_file: fragments/flannel-sysconfig}
         - path: /usr/bin/retry
           permissions: 0755
           content: {get_file: fragments/retry.sh}
@@ -157,6 +180,13 @@ resources:
                       HOST: {get_param: hostname_prefix}
                       SUFFIX: {get_attr: [random_hostname_suffix, value]}
               template: {get_file: fragments/etc-node-hosts}
+        - path: /etc/sysconfig/network-scripts/ifcfg-eth1
+          content:
+            str_replace:
+              params:
+                $IPADDR: {get_attr: [container_port, fixed_ips, 0, ip_address]}
+                $HWADDR: {get_attr: [container_port, mac_address]}
+              template: {get_file: fragments/ifcfg-eth1}
 
   rhn_register:
     type: OS::Heat::SoftwareConfig
