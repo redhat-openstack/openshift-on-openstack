@@ -33,15 +33,15 @@ Deployment
 ==========
 
 Assuming your external network is called ``ext_net``, your SSH key is
-``default`` and your CentOS 7.1 image is ``centos71``, this is how you
-deploy OpenShift:
+``default``, your CentOS 7.1 image is ``centos71`` and your domain
+name is ``example.com``, this is how you deploy OpenShift:
 
 ::
 
    git clone https://github.com/redhat-openstack/openshift-on-openstack.git
    heat stack-create my_openshift -f openshift-on-openstack/openshift.yaml \
        -P server_image=centos71 -P external_network=ext_net \
-       -P ssh_key_name=default -P node_count=2
+       -P ssh_key_name=default -P domain_name=example.com -P node_count=2
 
 The ``node_count`` parameter specifies how many non-master OpenShift nodes you
 want to deploy. In the example above, we will deploy one master and two nodes.
@@ -112,8 +112,7 @@ Current Status
 1. The CA certificate used with OpenShift is currently not configurable and
    not available from the outside.
 
-2. The hostnames for all the OpenShift nodes as well as the apps cloud domain
-   are hardcoded for now. We need to make these configurable.
+2. The apps cloud domain is hardcoded for now. We need to make this configurable.
 
 
 Copyright

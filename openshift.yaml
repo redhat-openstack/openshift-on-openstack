@@ -66,12 +66,28 @@ parameters:
     hidden: true
     default: ''
 
-  master_fqdn:
+  domain_name:
     type: string
     description: >
-      The fully qualified domain name that is going to be set as the hostname
-      of the OpenShift master.
-    default: "openshift-master.example.com"
+      The domain name that is going to be used as the base for all hostnames.
+
+  dns_hostname:
+    type: string
+    description: >
+      The hostname that is going to be set for the DNS server.
+    default: "ns"
+
+  master_hostname:
+    type: string
+    description: >
+      The hostname that is going to be set for the master.
+    default: "openshift-master"
+
+  node_hostname_prefix:
+    type: string
+    description: >
+      The hostname prefix that is going to be set for the nodes.
+    default: "openshift-node"
 
   ssh_user:
     type: string
@@ -118,6 +134,7 @@ resources:
       subnet: {get_resource: fixed_subnet}
 
   dns_host:
+    depends_on: [openshift_nodes]
     type: dns.yaml
     properties:
       image: {get_param: server_image}
@@ -127,8 +144,15 @@ resources:
       external_network: {get_param: external_network}
       fixed_network: {get_resource: fixed_network}
       fixed_subnet: {get_resource: fixed_subnet}
+      hostname: {get_param: dns_hostname}
       master_ip_address: {get_attr: [master_floating_ip, floating_ip_address]}
-      master_hostname: {get_param: master_fqdn}
+      master_hostname: {get_param: master_hostname}
+      node_etc_hosts:
+        list_join:
+        - "\n"
+        - {get_attr: [openshift_nodes, outputs_list, etc_hosts]}
+      domain_name: {get_param: domain_name}
+      floating_ip: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
       port: {get_resource: dnsmasq_port}
 
   openshift_master:
@@ -148,7 +172,8 @@ resources:
       rhn_password: {get_param: rhn_password}
       rhn_pool: {get_param: rhn_pool}
       floating_ip: {get_attr: [master_floating_ip, floating_ip_address]}
-      hostname: {get_param: master_fqdn}
+      hostname: {get_param: master_hostname}
+      domain_name: {get_param: domain_name}
       ansible_public_key: {get_attr: [ansible_keys, public_key]}
       ansible_private_key: {get_attr: [ansible_keys, private_key]}
       openshift_ansible_git_url: {get_param: openshift_ansible_git_url}
@@ -156,11 +181,7 @@ resources:
       node_hostnames:
         list_join:
         - "\n"
-        - {get_attr: [openshift_nodes, outputs_list, hostname]}
-      node_etc_hosts:
-        list_join:
-        - "\n"
-        - {get_attr: [openshift_nodes, outputs_list, etc_hosts]}
+        - {get_attr: [openshift_nodes, outputs_list, ansible_entry]}
 
   openshift_nodes:
     depends_on: external_router_interface
@@ -182,7 +203,8 @@ resources:
           fixed_subnet: {get_resource: fixed_subnet}
           rhn_username: {get_param: rhn_username}
           rhn_password: {get_param: rhn_password}
-          hostname_prefix: "openshift-node"
+          hostname_prefix: {get_param: node_hostname_prefix}
+          domain_name: {get_param: domain_name}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
 
   dnsmasq_port:
