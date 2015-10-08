@@ -215,7 +215,6 @@ resources:
           rhn_password: {get_param: rhn_password}
           hostname_prefix: "openshift-node"
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
-          container_network_cidr: {get_param: container_network_cidr}
 
   dnsmasq_port:
     type: OS::Neutron::Port

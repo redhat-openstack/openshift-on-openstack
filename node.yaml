@@ -70,8 +70,6 @@ parameters:
   ssh_user:
     type: string
 
-  container_network_cidr:
-    type: string
 
 resources:
 
@@ -146,13 +144,6 @@ resources:
         - path: /usr/bin/docker-bridge-setup
           permissions: 0755
           content: {get_file: fragments/docker-bridge-setup.sh}
-        - path: /root/flannel-config.json
-          permissions: 0644
-          content:
-            str_replace:
-              params:
-                $NETWORK: {get_param: container_network_cidr}
-              template: {get_file: fragments/flannel-config.json}
         - path: /root/flannel-sysconfig
           permissions: 0644
           content:

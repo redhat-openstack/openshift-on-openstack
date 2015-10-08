@@ -43,6 +43,16 @@ systemctl restart iptables
 export ANSIBLE_HOST_KEY_CHECKING=False
 ansible-playbook --inventory /var/lib/ansible-inventory playbooks/byo/config.yml
 
+# Configure flannel
+cd /root
+cp /etc/origin/node/system:node:$(hostname).key etcd.key
+cp /etc/origin/node/system:node:$(hostname).crt etcd.crt
+CA=/etc/origin/node/ca.crt
+CERT=$(pwd)/etcd.crt
+KEY=$(pwd)/etcd.key
+curl -L --cacert $CA --cert $CERT --key $KEY https://openshift-master.example.com:4001/v2/keys/coreos.com/network/config -XPUT --data-urlencode value@flannel-config.json
+
+
 ansible -i /var/lib/ansible-inventory all -a 'docker-bridge-setup'
 
 echo "OpenShift has been installed."
