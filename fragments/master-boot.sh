@@ -4,29 +4,36 @@ set -eu
 set -x
 set -o pipefail
 
+function notify_success() {
+    $WC_NOTIFY --data-binary  "{\"status\": \"SUCCESS\", \"reason\": \"$1\", \"data\": \"$1\"}"
+    exit 0
+}
+
+function notify_failure() {
+    $WC_NOTIFY --data-binary "{\"status\": \"FAILURE\", \"reason\": \"$1\", \"data\": \"$1\"}"
+    exit 1
+}
+
 # master and nodes
 # Set the DNS to the one provided
 sed -i 's/search openstacklocal/&\nnameserver $DNS_IP/' /etc/resolv.conf
 sed -i -e 's/^PEERDNS.*/PEERDNS="no"/' /etc/sysconfig/network-scripts/ifcfg-eth0
 
 # master and nodes
-retry yum install -y deltarpm
-retry yum -y update
+retry yum install -y deltarpm || notify_failure "could not install deltarpm"
+retry yum -y update || notify_failure "could not update RPMs"
 
 # master
-retry yum install -y git httpd-tools
+retry yum install -y git httpd-tools || notify_failure "could not install httpd-tools"
 
-# TODO; Docker 1.6.2-14 is now in the repos, just do `yum install docker` here
-# Centos 7.1: We need docker >= 1.6.2
-#retry yum install -y http://cbs.centos.org/kojifiles/packages/docker/1.6.2/4.gitc3ca5bb.el7/x86_64/docker-1.6.2-4.gitc3ca5bb.el7.x86_64.rpm
-retry yum -y install docker 
+retry yum -y install docker || notify_failure "could not install docker"
 echo "INSECURE_REGISTRY='--insecure-registry 0.0.0.0/0'" >> /etc/sysconfig/docker
 systemctl enable docker
 
 # Setup Docker Storage Volume Group
 if ! [ -b /dev/vdb ]; then
   echo "ERROR: device /dev/vdb does not exist" >&2
-  exit 1 
+  notify_failure "device /dev/vdb does not exist"
 fi
 
 systemctl enable lvm2-lvmetad
@@ -40,18 +47,20 @@ EOF
 
 # NOTE: install the right Ansible version on RHEL7.1 and Centos 7.1:
 retry yum -y install \
-    http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
+    http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm \
+    || notify_failure "could not install EPEL"
 sed -i -e "s/^enabled=1/enabled=0/" /etc/yum.repos.d/epel.repo
-retry yum -y --enablerepo=epel install ansible
+retry yum -y --enablerepo=epel install ansible || notify_failure "could not install ansible"
 
 cd /root/
-git clone "$OPENSHIFT_ANSIBLE_GIT_URL" openshift-ansible
+git clone "$OPENSHIFT_ANSIBLE_GIT_URL" openshift-ansible \
+    || notify_failure "could not clone openshift-ansible"
 cd openshift-ansible
 git checkout "$OPENSHIFT_ANSIBLE_GIT_REV"
 
 # NOTE: the first ansible run hangs during the "Start and enable iptables
 # service" task. Doing it explicitly seems to fix that:
-yum install -y iptables iptables-services
+yum install -y iptables iptables-services || notify_failure "could not install iptables-services"
 systemctl enable iptables
 systemctl restart iptables
 
@@ -62,10 +71,11 @@ systemctl daemon-reload
 
 # NOTE: Ignore the known_hosts check/propmt for now:
 export ANSIBLE_HOST_KEY_CHECKING=False
-ansible-playbook --inventory /var/lib/ansible-inventory playbooks/byo/config.yml
+ansible-playbook --inventory /var/lib/ansible-inventory playbooks/byo/config.yml \
+    || notify_failure "ansible-playbook run did not succeed"
 
 # Move docker-storage-setup unit file back in place 
 mv /root/docker-storage-setup.service /usr/lib/systemd/system
 systemctl daemon-reload
 
-echo "OpenShift has been installed."
+notify_success "OpenShift has been installed."

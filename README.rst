@@ -70,16 +70,15 @@ Assuming your external network is called ``ext_net``, your SSH key is ``default`
 The ``node_count`` parameter specifies how many non-master OpenShift nodes you
 want to deploy. In the example above, we will deploy one master and two nodes.
 
-The templates are not robust enough to report to Heat when everything
-finishes yet. That means that ``heat stack-show my_openshift`` will report a
-success too early.
+The templates will report stack completion back to Heat only when the whole 
+OpenShift setup is finished.
 
-To check that everything is indeed ready, look for ``OpenShift has been
-installed.`` in the console log for the OpenShift master node:
+To confirm that everything is indeed ready, look for ``OpenShift has been
+installed.`` in the OpenShift master node data in the stack output:
 
 ::
 
-   openstack console log show openshift-master.example.com| grep "OpenShift.*installed."
+   heat output-show my_openshift master_data
 
 
 Post-Deployment Setup
