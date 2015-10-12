@@ -15,3 +15,5 @@ ip a del $DOCKER_NET dev docker0
 systemctl restart docker
 
 systemctl restart origin-node
+
+iptables -A DOCKER -p tcp -j ACCEPT
