@@ -45,6 +45,7 @@ ansible-playbook --inventory /var/lib/ansible-inventory playbooks/byo/config.yml
 
 # Configure flannel
 cd /root
+sed -i "s/\$SUBNET_MIN/$(flannel-subnet-min $CONTAINER_NETWORK_CIDR 4)/" flannel-config.json
 cp /etc/origin/node/system:node:$(hostname).key etcd.key
 cp /etc/origin/node/system:node:$(hostname).crt etcd.crt
 CA=/etc/origin/node/ca.crt

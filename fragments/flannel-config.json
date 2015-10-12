@@ -1,7 +1,7 @@
 {
     "Network": "$NETWORK",
     "SubnetLen": 24,
-    "SubnetMin": "172.16.5.0",
+    "SubnetMin": "$SUBNET_MIN",
     "Backend": {
         "Type": "host-gw"
      }

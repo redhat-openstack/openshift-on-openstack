@@ -97,7 +97,7 @@ parameters:
     type: string
     description: >
       The IP address range for the container network.
-    default: 172.16.1.1/16
+    default: 172.16.0.0/16
 
   container_subnet_length:
     type: number

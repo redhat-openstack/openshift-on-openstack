@@ -164,6 +164,9 @@ resources:
         - path: /usr/bin/docker-bridge-setup
           permissions: 0755
           content: {get_file: fragments/docker-bridge-setup.sh}
+        - path: /usr/bin/flannel-subnet-min
+          permissions: 0755
+          content: {get_file: fragments/flannel-subnet-min.sh}
         - path: /var/lib/ansible-inventory
           content:
             str_replace:
@@ -229,6 +232,7 @@ resources:
             $MASTER_IP: {get_param: floating_ip}
             $OPENSHIFT_ANSIBLE_GIT_URL: {get_param: openshift_ansible_git_url}
             $OPENSHIFT_ANSIBLE_GIT_REV: {get_param: openshift_ansible_git_rev}
+            $CONTAINER_NETWORK_CIDR: {get_param: container_network_cidr}
           template: {get_file: fragments/master-boot.sh}
 
   ansible_installer:
