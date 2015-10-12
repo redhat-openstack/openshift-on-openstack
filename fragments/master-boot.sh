@@ -55,4 +55,6 @@ curl -L --cacert $CA --cert $CERT --key $KEY https://openshift-master.example.co
 
 ansible -i /var/lib/ansible-inventory all -a 'docker-bridge-setup'
 
+iptables -t NAT -A POSTROUTING -o eth0 -j MASQUERADE
+
 echo "OpenShift has been installed."
