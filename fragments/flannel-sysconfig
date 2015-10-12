@@ -1,4 +1,4 @@
-FLANNEL_ETCD="https://openshift-master.example.com:4001"
+FLANNEL_ETCD="https://$MASTER_HOSTNAME:4001"
 
 # etcd config key.  This is the configuration key that flannel queries
 # For address range assignment

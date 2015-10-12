@@ -70,6 +70,9 @@ parameters:
   ssh_user:
     type: string
 
+  master_hostname:
+    type: string
+
 
 resources:
 
@@ -149,6 +152,7 @@ resources:
           content:
             str_replace:
               params:
+                $MASTER_HOSTNAME: {get_param: master_hostname}
                 $HOSTNAME:
                   str_replace:
                     template: "HOST-SUFFIX.example.com"

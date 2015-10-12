@@ -189,6 +189,7 @@ resources:
           content:
             str_replace:
               params:
+                $MASTER_HOSTNAME: {get_param: hostname}
                 $HOSTNAME: {get_param: hostname}
               template: {get_file: fragments/flannel-sysconfig}
         - path: /etc/sysconfig/network-scripts/ifcfg-eth1
