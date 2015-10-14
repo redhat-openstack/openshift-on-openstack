@@ -125,11 +125,7 @@ resources:
   node_boot:
     type: OS::Heat::SoftwareConfig
     properties:
-      config:
-        str_replace:
-          params:
-            $DNS_IP: {get_param: dns_ip}
-          template: {get_file: fragments/node-boot.sh}
+      config: {get_file: fragments/node-boot.sh}
 
   management_port:
     type: OS::Neutron::Port
