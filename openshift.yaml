@@ -72,12 +72,6 @@ parameters:
       The IP address range for the container network.
     default: 172.16.0.0/16
 
-  container_subnet_length:
-    type: number
-    description: >
-      The number of bits per subnet associated with each node.
-    default: 8
-
 
 resources:
 
