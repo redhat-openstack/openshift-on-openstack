@@ -162,23 +162,6 @@ resources:
 
 
 outputs:
-  hostname:
-    description: Hostname of this OpenShift node
-    value:
-      str_replace:
-        template: "HOST-SUFFIX.example.com"
-        params:
-          HOST: {get_param: hostname_prefix}
-          SUFFIX: {get_attr: [random_hostname_suffix, value]}
-  etc_hosts:
-    description: A hostname/IP entry for /etc/hosts
-    value:
-      str_replace:
-        template: "IP HOST-SUFFIX.example.com"
-        params:
-          IP: {get_attr: [floating_ip, floating_ip_address]}
-          HOST: {get_param: hostname_prefix}
-          SUFFIX: {get_attr: [random_hostname_suffix, value]}
   ip_address:
     description: IP address of the node
     value: {get_attr: [floating_ip, floating_ip_address]}
