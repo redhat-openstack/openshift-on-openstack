@@ -1,8 +1,0 @@
-FLANNEL_ETCD="https://$MASTER_HOSTNAME:4001"
-
-# etcd config key.  This is the configuration key that flannel queries
-# For address range assignment
-FLANNEL_ETCD_KEY="/coreos.com/network"
-
-# Any additional options that you want to pass
-FLANNEL_OPTIONS="-iface eth1 --etcd-cafile=/etc/origin/node/ca.crt --etcd-keyfile=/etc/origin/node/system:node:$HOSTNAME.key --etcd-certfile=/etc/origin/node/system:node:$HOSTNAME.crt"
