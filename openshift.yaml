@@ -109,7 +109,7 @@ resources:
 
   openshift_nodes:
     depends_on: external_router_interface
-    type: OS::Heat::ResoureGroup
+    type: OS::Heat::ResourceGroup
     properties:
       count: {get_param: node_count}
       resource_def:
