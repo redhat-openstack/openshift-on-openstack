@@ -5,7 +5,7 @@ set -x
 set -o pipefail
 
 if [ -n "$RHN_USERNAME" -a -n "$RHN_PASSWORD" ]; then
-    retry subscription-manager register \
+    subscription-manager register \
                          --username="$RHN_USERNAME" \
                          --password="$RHN_PASSWORD"
 
