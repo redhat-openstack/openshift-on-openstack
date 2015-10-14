@@ -47,10 +47,6 @@ parameters:
     constraints:
     - custom_constraint: neutron.subnet
 
-  dns_ip:
-    type: string
-    description: IP address of the DNS server
-
   rhn_username:
     type: string
 
