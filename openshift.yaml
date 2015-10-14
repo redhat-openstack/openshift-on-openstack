@@ -130,10 +130,10 @@ resources:
 outputs:
   servers:
     description: IP addresses of the Nova servers
-    value: {get_attr: [openshift_nodes, outputs_list, ip_address]}
+    value: {get_attr: [openshift_nodes, ip_address]}
   inventory:
     description: Line-separated Floating IP addresses of the Nova servers
     value:
       list_join:
       - "\n"
-      - {get_attr: [openshift_nodes, outputs_list, ip_address]}
+      - {get_attr: [openshift_nodes, ip_address]}
