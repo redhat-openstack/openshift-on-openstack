@@ -126,11 +126,11 @@ resources:
       external_gateway_info:
         network: {get_param: external_network}
 
-    container_router_interface:
-      type:: OS::Neutron::RouterInterface
-      properties:
-        router_id: {get_resource: container_router}
-        subnet: {get_resource: container_subnet}
+  container_router_interface:
+    type:: OS::Neutron::RouterInterface
+    properties:
+      router_id: {get_resource: container_router}
+      subnet: {get_resource: container_subnet}
 
   openshift_nodes:
     depends_on: external_router_interface
