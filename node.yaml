@@ -103,6 +103,9 @@ resources:
                 $IPADDR: {get_attr: [container_port, fixed_ips, 0, ip_address]}
                 $HWADDR: {get_attr: [container_port, mac_address]}
               template: {get_file: fragments/ifcfg-eth1}
+        - path: /usr/bin/retry
+          permissions: 0755
+          content: {get_file: fragments/retry.sh}
 
   rhn_register:
     type: OS::Heat::SoftwareConfig
