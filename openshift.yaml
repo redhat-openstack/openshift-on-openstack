@@ -127,7 +127,7 @@ resources:
         network: {get_param: external_network}
 
   container_router_interface:
-    type:: OS::Neutron::RouterInterface
+    type: OS::Neutron::RouterInterface
     properties:
       router_id: {get_resource: container_router}
       subnet: {get_resource: container_subnet}
