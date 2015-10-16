@@ -121,7 +121,11 @@ resources:
   node_boot:
     type: OS::Heat::SoftwareConfig
     properties:
-      config: {get_file: fragments/node-boot.sh}
+      config:
+        str_replace:
+          params:
+            $CONTAINER_NETWORK_CIDR: {get_attr: [{get_param: container_subnet}, cidr]}
+          template: {get_file: fragments/node-boot.sh}
 
   management_port:
     type: OS::Neutron::Port
