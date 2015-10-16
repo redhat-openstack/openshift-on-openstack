@@ -47,6 +47,9 @@ parameters:
     constraints:
     - custom_constraint: neutron.subnet
 
+  container_cidr:
+    type: string
+
   rhn_username:
     type: string
 
@@ -124,7 +127,7 @@ resources:
       config:
         str_replace:
           params:
-            $CONTAINER_NETWORK_CIDR: {get_attr: [{get_param: container_subnet}, cidr]}
+            $CONTAINER_NETWORK_CIDR: {get_param: container_cidr}
           template: {get_file: fragments/node-boot.sh}
 
   management_port:
