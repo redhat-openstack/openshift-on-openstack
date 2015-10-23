@@ -62,4 +62,33 @@ ansible -i /var/lib/ansible-inventory all -a 'docker-bridge-setup'
 
 iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 
+sed -i 's/:\${version}/:latest/' /etc/origin/master/master-config.yaml
+systemctl restart atomic-openshift-master
+
+ansible -i /var/lib/ansible-inventory nodes  -a "sed -i 's/:\${version}/:latest/' /etc/origin/node/node-config.yaml"
+ansible -i /var/lib/ansible-inventory nodes  -a "systemctl restart atomic-openshift-node"
+
+
+docker pull openshift3/ose-pod:latest
+docker pull openshift3/ose-docker-registry:latest
+docker pull openshift3/ose-haproxy-router:latest
+oadm manage-node "$(hostname)" --schedulable=true
+
+CA=/etc/origin/master
+
+oadm ca create-server-cert --signer-cert=$CA/ca.crt --signer-key=$CA/ca.key --signer-serial=$CA/ca.serial.txt --hostnames='*.cloudapps.$DOMAIN' --cert=cloudapps.crt --key=cloudapps.key
+
+cat cloudapps.crt cloudapps.key $CA/ca.crt > cloudapps.router.pem
+
+oadm router --replicas=1 --default-cert=cloudapps.router.pem --credentials=/etc/origin/master/openshift-router.kubeconfig --selector='region=infra' --service-account=router --images='openshift3/ose-${component}:latest'
+
+oadm registry --create --config=/etc/origin/master/admin.kubeconfig --credentials=/etc/origin/master/openshift-registry.kubeconfig --selector="region=infra" --images='openshift3/ose-${component}:latest'
+
+
+sleep 60
+
+oadm manage-node "$(hostname)" --schedulable=false
+
+
+
 echo "OpenShift has been installed."
