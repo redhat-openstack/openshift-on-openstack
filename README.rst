@@ -54,8 +54,14 @@ Assuming your external network is called ``ext_net``, your SSH key is ``default`
     rhn_password: ""
     rhn_pool: ''
     deployment_type: origin
-    domain_name: example.com
+    domain_name: "example.com"
+    dns_hostname: "ns"
+    master_hostname: "origin-master"
+    node_hostname_prefix: "origin-node"
     ssh_user: cloud-user
+    master_docker_volume_size_gb: 25
+    node_docker_volume_size_gb: 25
+
   EOF
 
    git clone https://github.com/redhat-openstack/openshift-on-openstack.git

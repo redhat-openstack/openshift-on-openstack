@@ -44,7 +44,7 @@ parameters:
   docker_volume_size:
     type: number
     description: >
-      size of a cinder volume to allocate to docker for container/image
+      size of a cinder volume in GB to allocate to docker for container/image
       storage
     default: 25
 

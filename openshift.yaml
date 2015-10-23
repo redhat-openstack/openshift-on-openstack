@@ -101,17 +101,17 @@ parameters:
       The SSH user available on all nodes.
     default: 'cloud-user'
 
-  master_docker_volume_size:
+  master_docker_volume_size_gb:
     type: number
     description: >
-      size of a cinder volume to allocate to docker for container/image
+      size of a cinder volume in GB to allocate to docker for container/image
       storage
     default: 25
 
-  node_docker_volume_size:
+  node_docker_volume_size_gb:
     type: number
     description: >
-      size of a cinder volume to allocate to docker for container/image
+      size of a cinder volume in GB to allocate to docker for container/image
       storage
     default: 25
 
@@ -195,7 +195,7 @@ resources:
       rhn_password: {get_param: rhn_password}
       rhn_pool: {get_param: rhn_pool}
       deployment_type: {get_param: deployment_type}
-      docker_volume_size: {get_param: master_docker_volume_size}
+      docker_volume_size: {get_param: master_docker_volume_size_gb}
       floating_ip: {get_attr: [master_floating_ip, floating_ip_address]}
       hostname: {get_param: master_hostname}
       domain_name: {get_param: domain_name}
@@ -226,7 +226,7 @@ resources:
           dns_ip: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
           fixed_network: {get_resource: fixed_network}
           fixed_subnet: {get_resource: fixed_subnet}
-          docker_volume_size: {get_param: node_docker_volume_size}
+          docker_volume_size: {get_param: node_docker_volume_size_gb}
           rhn_username: {get_param: rhn_username}
           rhn_password: {get_param: rhn_password}
           rhn_pool: {get_param: rhn_pool}

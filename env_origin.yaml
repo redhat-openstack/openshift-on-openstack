@@ -1,8 +1,8 @@
 parameters:
-  ssh_key_name: adminkey
-  server_image: CentOS-7-20150628-x86_64
+  ssh_key_name: default
+  server_image: centos71
   flavor: m1.medium
-  external_network: pubnet1
+  external_network: ext_net
   dns_nameserver: 8.8.4.4,8.8.8.8
   node_count: 2
   rhn_username: ""
@@ -14,6 +14,5 @@ parameters:
   master_hostname: "origin-master"
   node_hostname_prefix: "origin-node"
   ssh_user: cloud-user
-  master_docker_volume_size: 25
-  node_docker_volume_size: 25
-  domain_name: example.com
+  master_docker_volume_size_gb: 25
+  node_docker_volume_size_gb: 25
