@@ -170,6 +170,9 @@ resources:
                 $NODE_HOSTNAME: {get_param: hostname}
                 $NODE_DOMAIN: {get_param: domain_name}
               template: {get_file: fragments/etc-node-hosts}
+        - path: /usr/bin/write-keystone-auth-config
+          permissions: 0755
+          content: {get_file: fragments/write-keystone-auth-config.py}
         - path: /usr/bin/docker-bridge-setup
           permissions: 0755
           content: {get_file: fragments/docker-bridge-setup.sh}

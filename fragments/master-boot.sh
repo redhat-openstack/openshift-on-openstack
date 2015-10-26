@@ -90,5 +90,10 @@ sleep 60
 oadm manage-node "$(hostname)" --schedulable=false
 
 
+# Configure Keystone auth
+echo '10.12.48.120 openstack.demorack.lab.eng.rdu.redhat.com' >> /etc/hosts
+write-keystone-auth-config
+systemctl restart atomic-openshift-master
+
 
 echo "OpenShift has been installed."
