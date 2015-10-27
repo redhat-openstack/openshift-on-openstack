@@ -1,0 +1,18 @@
+parameters:
+  ssh_key_name: default
+  server_image: centos71
+  flavor: m1.medium
+  external_network: ext_net
+  dns_nameserver: 8.8.4.4,8.8.8.8
+  node_count: 2
+  rhn_username: ""
+  rhn_password: ""
+  rhn_pool: ''
+  deployment_type: origin
+  domain_name: "example.com"
+  dns_hostname: "ns"
+  master_hostname: "origin-master"
+  node_hostname_prefix: "origin-node"
+  ssh_user: cloud-user
+  master_docker_volume_size_gb: 25
+  node_docker_volume_size_gb: 25

@@ -41,6 +41,13 @@ parameters:
     type: string
     description: IP address of the DNS server
 
+  docker_volume_size:
+    type: number
+    description: >
+      size of a cinder volume in GB to allocate to docker for container/image
+      storage
+    default: 25
+
   rhn_username:
     type: string
 
@@ -51,6 +58,9 @@ parameters:
   rhn_pool:
     type: string
     hidden: true
+
+  deployment_type:
+    type: string
 
   port:
     description: >
@@ -85,6 +95,12 @@ parameters:
   openshift_ansible_git_rev:
     type: string
 
+  openshift_ansible_git_url:
+    type: string
+
+  openshift_ansible_git_rev:
+    type: string
+
 resources:
 
   host:
@@ -105,12 +121,24 @@ resources:
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
 
+  docker_volume:
+    type: OS::Cinder::Volume
+    properties:
+      size: {get_param: docker_volume_size}
+
+  docker_volume_attach:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      instance_uuid: {get_resource: host}
+      volume_id: {get_resource: docker_volume}
+
   init:
     type: OS::Heat::MultipartMime
     properties:
       parts:
       - config: {get_resource: set_hostname}
       - config: {get_resource: included_files}
+      - config: {get_resource: create_inventory}
       - config: {get_resource: rhn_register}
       - config: {get_resource: master_boot}
 
@@ -139,15 +167,6 @@ resources:
                 $NODE_HOSTNAME: {get_param: hostname}
                 $NODE_DOMAIN: {get_param: domain_name}
               template: {get_file: fragments/etc-node-hosts}
-        - path: /var/lib/ansible-inventory
-          content:
-            str_replace:
-              params:
-                $MASTER_HOSTNAME: {get_param: hostname}
-                $DOMAINNAME: {get_param: domain_name}
-                $NODE_HOSTNAMES: {get_param: node_hostnames}
-                $SSH_USER: {get_param: ssh_user}
-              template: {get_file: fragments/ansible-inventory}
         - path: /root/.ssh/id_rsa
           permissions: 0600
           content: {get_param: ansible_private_key}
@@ -159,6 +178,19 @@ resources:
           content: {get_file: fragments/retry.sh}
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
+
+  create_inventory:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            $MASTER_HOSTNAME: {get_param: hostname}
+            $DOMAINNAME: {get_param: domain_name}
+            $NODE_HOSTNAMES: {get_param: node_hostnames}
+            $SSH_USER: {get_param: ssh_user}
+            $DEPLOYMENT_TYPE: {get_param: deployment_type}
+          template: {get_file: fragments/ansible-inventory.sh}
 
   rhn_register:
     type: OS::Heat::SoftwareConfig
