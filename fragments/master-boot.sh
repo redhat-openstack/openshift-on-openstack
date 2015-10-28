@@ -19,6 +19,10 @@ function notify_failure() {
 sed -i 's/search openstacklocal/&\nnameserver $DNS_IP/' /etc/resolv.conf
 sed -i -e 's/^PEERDNS.*/PEERDNS="no"/' /etc/sysconfig/network-scripts/ifcfg-eth0
 
+# cloud-init does not set the $HOME, which is used by ansible
+export HOME=/root
+cd $HOME
+
 # master and nodes
 retry yum install -y deltarpm || notify_failure "could not install deltarpm"
 retry yum -y update || notify_failure "could not update RPMs"
@@ -52,7 +56,6 @@ retry yum -y install \
 sed -i -e "s/^enabled=1/enabled=0/" /etc/yum.repos.d/epel.repo
 retry yum -y --enablerepo=epel install ansible || notify_failure "could not install ansible"
 
-cd /root/
 git clone "$OPENSHIFT_ANSIBLE_GIT_URL" openshift-ansible \
     || notify_failure "could not clone openshift-ansible"
 cd openshift-ansible
@@ -66,7 +69,7 @@ systemctl restart iptables
 
 # NOTE: docker-storage-setup hangs during cloud-init because systemd file is set
 # to run after cloud-final.  Temporarily move out of the way (as we've already done storage setup 
-mv /usr/lib/systemd/system/docker-storage-setup.service /root
+mv /usr/lib/systemd/system/docker-storage-setup.service $HOME
 systemctl daemon-reload
 
 # NOTE: Ignore the known_hosts check/propmt for now:
@@ -75,7 +78,7 @@ ansible-playbook --inventory /var/lib/ansible-inventory playbooks/byo/config.yml
     || notify_failure "ansible-playbook run did not succeed"
 
 # Move docker-storage-setup unit file back in place 
-mv /root/docker-storage-setup.service /usr/lib/systemd/system
+mv $HOME/docker-storage-setup.service /usr/lib/systemd/system
 systemctl daemon-reload
 
 notify_success "OpenShift has been installed."
