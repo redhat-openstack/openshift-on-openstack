@@ -95,11 +95,10 @@ parameters:
   openshift_ansible_git_rev:
     type: string
 
-  openshift_ansible_git_url:
-    type: string
-
-  openshift_ansible_git_rev:
-    type: string
+  timeout:
+    description: Time to wait until the master setup is ready.
+    type: number
+    default: 4000
 
 resources:
 
@@ -213,12 +212,22 @@ resources:
             $MASTER_IP: {get_param: floating_ip}
             $OPENSHIFT_ANSIBLE_GIT_URL: {get_param: openshift_ansible_git_url}
             $OPENSHIFT_ANSIBLE_GIT_REV: {get_param: openshift_ansible_git_rev}
+            $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
           template: {get_file: fragments/master-boot.sh}
 
   ansible_installer:
     type: OS::Heat::SoftwareConfig
     properties:
       config: {get_file: fragments/ansible_installer.sh}
+
+  wait_condition:
+    type: OS::Heat::WaitCondition
+    properties:
+      handle: {get_resource: wait_handle}
+      timeout: {get_param: timeout}
+
+  wait_handle:
+    type: OS::Heat::WaitConditionHandle
 
 outputs:
   console_url:
@@ -235,3 +244,5 @@ outputs:
           HOSTNAME: {get_param: hostname}
           DOMAINNAME: {get_param: domain_name}
         template: "https://HOSTNAME.DOMAINNAME:8443/"
+  wc_data:
+    value: { get_attr: ['wait_condition', 'data'] }

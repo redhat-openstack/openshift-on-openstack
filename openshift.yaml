@@ -320,6 +320,9 @@ outputs:
   api_url:
     description: URL entrypoint to the OpenShift API
     value: {get_attr: [openshift_master, api_url]}
+  master_data:
+    description: Status of cluster setup on the master.
+    value: {get_attr: [openshift_master, wc_data]}
   host_ips:
     description: IP addresses of the OpenShift nodes
     value: {get_attr: [openshift_nodes, outputs_list, ip_address]}
