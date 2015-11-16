@@ -4,6 +4,16 @@ set -eu
 set -x
 set -o pipefail
 
+function notify_success() {
+    $WC_NOTIFY --data-binary  "{\"status\": \"SUCCESS\", \"reason\": \"$1\", \"data\": \"$1\"}"
+    exit 0
+}
+
+function notify_failure() {
+    $WC_NOTIFY --data-binary "{\"status\": \"FAILURE\", \"reason\": \"$1\", \"data\": \"$1\"}"
+    exit 1
+}
+
 # master and nodes
 # Set the DNS to the one provided
 sed -i 's/search openstacklocal/&\nnameserver $DNS_IP/' /etc/resolv.conf
@@ -33,3 +43,4 @@ EOF
 
 /usr/bin/docker-storage-setup
 
+notify_success "OpenShift node has been prepared for running ansible."

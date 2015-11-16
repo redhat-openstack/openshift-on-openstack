@@ -5,11 +5,7 @@ set -eu
 set -x
 set -o pipefail
 
-if [[ -f /var/lib/ansible-inventory ]] ; then
-  echo "/var/lib/ansible-inventory already exists.  Exiting."
-  exit 0
-fi
-
+export HOME=/root
 cat << EOF > /var/lib/ansible-inventory
 # Create an OSEv3 group that contains the masters and nodes groups
 [OSv3:children]
@@ -54,7 +50,20 @@ EOF
 
 # Write each node
 for node in $NODE_HOSTNAMES
-do 
+do
   #echo "$node" >> /var/lib/ansible-inventory
   echo "$node openshift_hostname=$node openshift_public_hostname=$node openshift_node_labels=\"{'region': 'primary', 'zone': 'default'}\"" >> /var/lib/ansible-inventory
 done
+
+# NOTE: docker-storage-setup hangs during cloud-init because systemd file is set
+# to run after cloud-final.  Temporarily move out of the way (as we've already done storage setup
+mv /usr/lib/systemd/system/docker-storage-setup.service $HOME
+systemctl daemon-reload
+
+# NOTE: Ignore the known_hosts check/propmt for now:
+export ANSIBLE_HOST_KEY_CHECKING=False
+ansible-playbook --inventory /var/lib/ansible-inventory $HOME/openshift-ansible/playbooks/byo/config.yml
+
+# Move docker-storage-setup unit file back in place
+mv $HOME/docker-storage-setup.service /usr/lib/systemd/system
+systemctl daemon-reload

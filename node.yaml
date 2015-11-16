@@ -71,6 +71,15 @@ parameters:
   ssh_user:
     type: string
 
+  master_node:
+    type: string
+    default: ''
+
+  timeout:
+    description: Time to wait until the master setup is ready.
+    type: number
+    default: 4000
+
 resources:
 
   random_hostname_suffix:
@@ -159,6 +168,7 @@ resources:
           content: {get_file: fragments/retry.sh}
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
+
   rhn_register:
     type: OS::Heat::SoftwareConfig
     properties:
@@ -177,6 +187,7 @@ resources:
         str_replace:
           params:
             $DNS_IP: {get_param: dns_ip}
+            $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
           template: {get_file: fragments/node-boot.sh}
 
   port:
@@ -208,6 +219,45 @@ resources:
       floating_network: {get_param: external_network}
       port_id: {get_resource: port}
 
+  node_cleanup:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      inputs:
+        - name: node_name
+      outputs:
+        - name: result
+      config: |
+        #!/bin/bash -x
+        oc --config ~/.kube/config delete node "$node_name"
+        echo "Deleted node $node_name"
+
+  deployment_node_cleanup:
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      actions: ['DELETE']
+      input_values:
+        node_name:
+          str_replace:
+            template: "HOST-SUFFIX.DOMAIN"
+            params:
+              HOST: {get_param: hostname_prefix}
+              SUFFIX: {get_attr: [random_hostname_suffix, value]}
+              DOMAIN: {get_param: domain_name}
+      config:
+        get_resource: node_cleanup
+      server:
+        get_param: master_node
+
+  wait_condition:
+    type: OS::Heat::WaitCondition
+    properties:
+      handle: {get_resource: wait_handle}
+      timeout: {get_param: timeout}
+
+  wait_handle:
+    type: OS::Heat::WaitConditionHandle
+
 outputs:
   hostname:
     description: Hostname of this OpenShift node
@@ -231,7 +281,7 @@ outputs:
     description: A hostname/IP entry for /etc/hosts
     value:
       str_replace:
-        template: "IP HOST-SUFFIX.DOMAIN HOST-SUFFIX"
+        template: "IP HOST-SUFFIX.DOMAIN HOST-SUFFIX #openshift"
         params:
           IP: {get_attr: [floating_ip, floating_ip_address]}
           HOST: {get_param: hostname_prefix}
@@ -240,3 +290,5 @@ outputs:
   ip_address:
     description: IP address of the node
     value: {get_attr: [floating_ip, floating_ip_address]}
+  wc_data:
+    value: { get_attr: ['wait_condition', 'data'] }

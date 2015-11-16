@@ -154,7 +154,7 @@ resources:
       subnet: {get_resource: fixed_subnet}
 
   dns_host:
-    depends_on: [openshift_nodes]
+    depends_on: external_router_interface
     type: dns.yaml
     properties:
       image: {get_param: server_image}
@@ -173,13 +173,9 @@ resources:
       port: {get_resource: dnsmasq_port}
       domain_name: {get_param: domain_name}
       floating_ip: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
-      node_etc_hosts:
-        list_join:
-        - "\n"
-        - {get_attr: [openshift_nodes, outputs_list, etc_hosts]}
 
   openshift_master:
-    depends_on: [dns_host, openshift_nodes]
+    depends_on: external_router_interface
     type: master.yaml
     properties:
       image: {get_param: server_image}
@@ -203,10 +199,6 @@ resources:
       ansible_private_key: {get_attr: [ansible_keys, private_key]}
       openshift_ansible_git_url: {get_param: openshift_ansible_git_url}
       openshift_ansible_git_rev: {get_param: openshift_ansible_git_rev}
-      node_hostnames:
-        list_join:
-        - " "
-        - {get_attr: [openshift_nodes, outputs_list, hostname]}
 
   openshift_nodes:
     depends_on: external_router_interface
@@ -233,6 +225,7 @@ resources:
           hostname_prefix: {get_param: node_hostname_prefix}
           domain_name: {get_param: domain_name}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
+          master_node: {get_attr: [openshift_master, resource.host]}
 
   dnsmasq_port:
     type: OS::Neutron::Port
@@ -303,6 +296,34 @@ resources:
           params:
             STACK: {get_param: "OS::stack_id"}
       save_private_key: True
+
+  deployment_node_hosts:
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      config:
+        get_attr: [dns_host, resource.node_hosts]
+      server:
+        get_attr: [dns_host, resource.host]
+      input_values:
+        node_etc_hosts:
+          list_join:
+          - "\n"
+          - {get_attr: [openshift_nodes, outputs_list, etc_hosts]}
+
+
+  deployment_run_ansible:
+    depends_on: deployment_node_hosts
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      config:
+        get_attr: [openshift_master, resource.run_ansible]
+      server:
+        get_attr: [openshift_master, resource.host]
+      input_values:
+        node_hostnames:
+          list_join:
+          - " "
+          - {get_attr: [openshift_nodes, outputs_list, hostname]}
 
 outputs:
   # TODO: return the master's certificate authority here so we can use the CLI

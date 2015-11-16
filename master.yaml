@@ -85,6 +85,7 @@ parameters:
 
   node_hostnames:
     type: string
+    default: ''
 
   ssh_user:
     type: string
@@ -138,9 +139,10 @@ resources:
     type: OS::Heat::MultipartMime
     properties:
       parts:
+      - config: {get_attr: [config_agent, config]}
+        type: multipart
       - config: {get_resource: set_hostname}
       - config: {get_resource: included_files}
-      - config: {get_resource: create_inventory}
       - config: {get_resource: rhn_register}
       - config: {get_resource: master_boot}
 
@@ -181,19 +183,6 @@ resources:
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
 
-  create_inventory:
-    type: OS::Heat::SoftwareConfig
-    properties:
-      config:
-        str_replace:
-          params:
-            $MASTER_HOSTNAME: {get_param: hostname}
-            $DOMAINNAME: {get_param: domain_name}
-            $NODE_HOSTNAMES: {get_param: node_hostnames}
-            $SSH_USER: {get_param: ssh_user}
-            $DEPLOYMENT_TYPE: {get_param: deployment_type}
-          template: {get_file: fragments/ansible-inventory.sh}
-
   rhn_register:
     type: OS::Heat::SoftwareConfig
     properties:
@@ -205,9 +194,15 @@ resources:
             $POOL_ID: {get_param: rhn_pool}
           template: {get_file: fragments/rhn-register.sh}
 
+  ansible_installer:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config: {get_file: fragments/ansible_installer.sh}
+
   master_boot:
     type: OS::Heat::SoftwareConfig
     properties:
+      group: script
       config:
         str_replace:
           params:
@@ -218,10 +213,21 @@ resources:
             $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
           template: {get_file: fragments/master-boot.sh}
 
-  ansible_installer:
+  run_ansible:
     type: OS::Heat::SoftwareConfig
     properties:
-      config: {get_file: fragments/ansible_installer.sh}
+      group: script
+      inputs:
+        - name: node_hostnames
+      config:
+        str_replace:
+          params:
+            $MASTER_HOSTNAME: {get_param: hostname}
+            $DOMAINNAME: {get_param: domain_name}
+            $NODE_HOSTNAMES: $node_hostnames
+            $SSH_USER: {get_param: ssh_user}
+            $DEPLOYMENT_TYPE: {get_param: deployment_type}
+          template: {get_file: fragments/master-ansible.sh}
 
   wait_condition:
     type: OS::Heat::WaitCondition

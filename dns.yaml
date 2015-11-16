@@ -48,6 +48,7 @@ parameters:
   
   node_etc_hosts:
     type: string
+    default: ''
 
   domain_name:
     type: string
@@ -65,9 +66,6 @@ parameters:
   rhn_pool:
     type: string
     hidden: true
-
-  node_etc_hosts:
-    type: string
 
   domain_name:
     type: string
@@ -109,6 +107,8 @@ resources:
     type: OS::Heat::MultipartMime
     properties:
       parts:
+      - config: {get_attr: [dns_config_agent, config]}
+        type: multipart
       - config: {get_resource: set_hostname}
       - config: {get_resource: included_files}
       - config: {get_resource: rhn_register}
@@ -140,7 +140,6 @@ resources:
                 $NODE_DOMAIN: {get_param: domain_name}
                 $MASTER_IP: {get_param: master_ip_address}
                 $MASTER_HOSTNAME: {get_param: master_hostname}
-                $NODE_ETC_HOSTS: {get_param: node_etc_hosts}
               template:
                 {get_file: fragments/etc-hosts}
         - path: /root/dnsmasq.conf
@@ -165,8 +164,22 @@ resources:
             $POOL_ID: {get_param: rhn_pool}
           template: {get_file: fragments/rhn-register.sh}
 
+  node_hosts:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      inputs:
+      - name: node_etc_hosts
+      outputs:
+      - name: result
+      config: |
+        #!/bin/sh -x
+        echo "Writing to /etc/hosts"
+        sed -i 's/.* #openshift//' /etc/hosts
+        echo "$node_etc_hosts" >> /etc/hosts
+        systemctl restart dnsmasq
+
   boot_config:
     type: OS::Heat::SoftwareConfig
     properties:
       config: {get_file: fragments/dnsmasq.sh}
-
