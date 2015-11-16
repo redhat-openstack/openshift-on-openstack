@@ -84,6 +84,9 @@ parameters:
 
 resources:
 
+  dns_config_agent:
+    type: collect-config-setup/install_config_agent_centos_yum.yaml
+
   host:
     type: OS::Nova::Server
     properties:
