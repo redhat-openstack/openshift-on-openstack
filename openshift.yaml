@@ -129,6 +129,24 @@ parameters:
     # Known working version on Centos 7 + Origin:
     default: "8f6c6824073dff0cea3cd793db2745fb6cf52931"
 
+  autoscaling:
+    type: boolean
+    description: >
+      Automatically scale up/down openshift nodes.
+    default: false
+
+  openshift_nodes_min:
+    type: number
+    description: >
+      Minimum number of openshift nodes if autoscaling is enabled.
+    default: 1
+
+  openshift_nodes_max:
+    type: number
+    description: >
+      Maximum number of openshift nodes if autoscaling is enabled.
+    default: 5
+
 resources:
 
   fixed_network:
@@ -205,8 +223,8 @@ resources:
     type: OS::Heat::AutoScalingGroup
     properties:
       desired_capacity: {get_param: node_count}
-      min_size: 0
-      max_size: 100
+      min_size: {get_param: openshift_nodes_min}
+      max_size: {get_param: openshift_nodes_max}
       resource:
         type: node.yaml
         properties:
@@ -226,6 +244,55 @@ resources:
           domain_name: {get_param: domain_name}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
           master_node: {get_attr: [openshift_master, resource.host]}
+          master_run_ansible: {get_attr: [openshift_master, resource.run_ansible]}
+          dns_node: {get_attr: [dns_host, resource.host]}
+          dns_node_cleanup: {get_attr: [dns_host, resource.node_cleanup]}
+          dns_node_add: {get_attr: [dns_host, resource.node_add]}
+          metadata: {"metering.stack": {get_param: "OS::stack_id"}}
+
+  scale_up_policy:
+    type: OS::Heat::ScalingPolicy
+    properties:
+      adjustment_type: change_in_capacity
+      auto_scaling_group_id: {get_resource: openshift_nodes}
+      cooldown: 60
+      scaling_adjustment: 1
+
+  scale_down_policy:
+    type: OS::Heat::ScalingPolicy
+    properties:
+      adjustment_type: change_in_capacity
+      auto_scaling_group_id: {get_resource: openshift_nodes}
+      cooldown: 60
+      scaling_adjustment: '-1'
+
+  cpu_alarm_high:
+    type: OS::Ceilometer::Alarm
+    properties:
+      meter_name: cpu_util
+      statistic: avg
+      period: 60
+      evaluation_periods: 1
+      threshold: 50
+      enabled: {get_param: autoscaling}
+      alarm_actions:
+        - {get_attr: [scale_up_policy, alarm_url]}
+      matching_metadata: {'metadata.user_metadata.stack': {get_param: "OS::stack_id"}}
+      comparison_operator: gt
+
+  cpu_alarm_low:
+    type: OS::Ceilometer::Alarm
+    properties:
+      meter_name: cpu_util
+      statistic: avg
+      period: 600
+      evaluation_periods: 1
+      threshold: 15
+      enabled: {get_param: autoscaling}
+      alarm_actions:
+        - {get_attr: [scale_down_policy, alarm_url]}
+      matching_metadata: {'metadata.user_metadata.stack': {get_param: "OS::stack_id"}}
+      comparison_operator: lt
 
   dnsmasq_port:
     type: OS::Neutron::Port
@@ -297,34 +364,6 @@ resources:
             STACK: {get_param: "OS::stack_id"}
       save_private_key: True
 
-  deployment_node_hosts:
-    type: OS::Heat::SoftwareDeployment
-    properties:
-      config:
-        get_attr: [dns_host, resource.node_hosts]
-      server:
-        get_attr: [dns_host, resource.host]
-      input_values:
-        node_etc_hosts:
-          list_join:
-          - "\n"
-          - {get_attr: [openshift_nodes, outputs_list, etc_hosts]}
-
-
-  deployment_run_ansible:
-    depends_on: deployment_node_hosts
-    type: OS::Heat::SoftwareDeployment
-    properties:
-      config:
-        get_attr: [openshift_master, resource.run_ansible]
-      server:
-        get_attr: [openshift_master, resource.host]
-      input_values:
-        node_hostnames:
-          list_join:
-          - " "
-          - {get_attr: [openshift_nodes, outputs_list, hostname]}
-
 outputs:
   # TODO: return the master's certificate authority here so we can use the CLI
   # outside of the host.
@@ -347,9 +386,15 @@ outputs:
   host_ips:
     description: IP addresses of the OpenShift nodes
     value: {get_attr: [openshift_nodes, outputs_list, ip_address]}
-  # scale_up_url:
-  #   description: A URL that triggers a scale up event on HTTP POST
-  #   value: {get_attr: [scale_up, alarm_url]}
-  # scale_down_url:
-  #   description: A URL that triggers a scale down event on HTTP POST
-  #   value: {get_attr: [scale_down, alarm_url]}
+  scale_up_url:
+    description: >
+      This URL is the webhook to scale up the autoscaling group.  You
+      can invoke the scale-up operation by doing an HTTP POST to this
+      URL; no body nor extra headers are needed.
+    value: {get_attr: [scale_up_policy, alarm_url]}
+  scale_dn_url:
+    description: >
+      This URL is the webhook to scale down the autoscaling group.
+      You can invoke the scale-down operation by doing an HTTP POST to
+      this URL; no body nor extra headers are needed.
+    value: {get_attr: [scale_down_policy, alarm_url]}

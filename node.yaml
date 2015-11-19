@@ -75,10 +75,29 @@ parameters:
     type: string
     default: ''
 
+  master_run_ansible:
+    type: string
+    default: ''
+
+  dns_node:
+    type: string
+    default: ''
+
+  dns_node_add:
+    type: string
+    default: ''
+
+  dns_node_cleanup:
+    type: string
+    default: ''
+
   timeout:
     description: Time to wait until the master setup is ready.
     type: number
     default: 4000
+
+  metadata:
+    type: json
 
 resources:
 
@@ -106,6 +125,7 @@ resources:
       - port: {get_resource: port}
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
+      metadata: {get_param: metadata}
 
   docker_volume:
     type: OS::Cinder::Volume
@@ -219,7 +239,7 @@ resources:
       floating_network: {get_param: external_network}
       port_id: {get_resource: port}
 
-  node_cleanup:
+  master_node_cleanup:
     type: OS::Heat::SoftwareConfig
     properties:
       group: script
@@ -230,9 +250,11 @@ resources:
       config: |
         #!/bin/bash -x
         oc --config ~/.kube/config delete node "$node_name"
+        cp /var/lib/openshift_nodes /var/lib/openshift_nodes.bkp
+        grep -v "$node_name" /var/lib/openshift_nodes.bkp > /var/lib/openshift_nodes
         echo "Deleted node $node_name"
 
-  deployment_node_cleanup:
+  deployment_master_node_cleanup:
     type: OS::Heat::SoftwareDeployment
     properties:
       actions: ['DELETE']
@@ -245,9 +267,60 @@ resources:
               SUFFIX: {get_attr: [random_hostname_suffix, value]}
               DOMAIN: {get_param: domain_name}
       config:
-        get_resource: node_cleanup
+        get_resource: master_node_cleanup
       server:
         get_param: master_node
+
+  deployment_dns_node_cleanup:
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      actions: ['DELETE']
+      input_values:
+        node_name:
+          str_replace:
+            template: "HOST-SUFFIX.DOMAIN"
+            params:
+              HOST: {get_param: hostname_prefix}
+              SUFFIX: {get_attr: [random_hostname_suffix, value]}
+              DOMAIN: {get_param: domain_name}
+      config:
+        get_param: dns_node_cleanup
+      server:
+        get_param: dns_node
+
+  deployment_dns_node_add:
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      config:
+        get_param: dns_node_add
+      server:
+        get_param: dns_node
+      input_values:
+        node_etc_host:
+          str_replace:
+              template: "IP HOST-SUFFIX.DOMAIN HOST-SUFFIX #openshift"
+              params:
+                IP: {get_attr: [floating_ip, floating_ip_address]}
+                HOST: {get_param: hostname_prefix}
+                SUFFIX: {get_attr: [random_hostname_suffix, value]}
+                DOMAIN: {get_param: domain_name}
+
+  deployment_run_ansible:
+    depends_on: deployment_dns_node_add
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      config:
+        get_param: master_run_ansible
+      server:
+        get_param: master_node
+      input_values:
+        node_hostname:
+          str_replace:
+            template: "HOST-SUFFIX.DOMAIN"
+            params:
+              HOST: {get_param: hostname_prefix}
+              SUFFIX: {get_attr: [random_hostname_suffix, value]}
+              DOMAIN: {get_param: domain_name}
 
   wait_condition:
     type: OS::Heat::WaitCondition
