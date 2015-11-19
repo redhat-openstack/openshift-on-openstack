@@ -50,9 +50,11 @@ EOF
 /usr/bin/docker-storage-setup
 
 # NOTE: install the right Ansible version on RHEL7.1 and Centos 7.1:
-retry yum -y install \
-    http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm \
-    || notify_failure "could not install EPEL"
+if ! rpm -q epel-release-7-5;then
+    retry yum -y install \
+        http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm \
+        || notify_failure "could not install EPEL"
+fi
 sed -i -e "s/^enabled=1/enabled=0/" /etc/yum.repos.d/epel.repo
 retry yum -y --enablerepo=epel install ansible || notify_failure "could not install ansible"
 
@@ -67,18 +69,4 @@ yum install -y iptables iptables-services || notify_failure "could not install i
 systemctl enable iptables
 systemctl restart iptables
 
-# NOTE: docker-storage-setup hangs during cloud-init because systemd file is set
-# to run after cloud-final.  Temporarily move out of the way (as we've already done storage setup 
-mv /usr/lib/systemd/system/docker-storage-setup.service $HOME
-systemctl daemon-reload
-
-# NOTE: Ignore the known_hosts check/propmt for now:
-export ANSIBLE_HOST_KEY_CHECKING=False
-ansible-playbook --inventory /var/lib/ansible-inventory playbooks/byo/config.yml \
-    || notify_failure "ansible-playbook run did not succeed"
-
-# Move docker-storage-setup unit file back in place 
-mv $HOME/docker-storage-setup.service /usr/lib/systemd/system
-systemctl daemon-reload
-
-notify_success "OpenShift has been installed."
+notify_success "OpenShift node has been prepared for running ansible."
