@@ -72,6 +72,25 @@ parameters:
   openshift_ansible_git_rev:
     type: string
 
+  os_auth_url:
+    type: string
+
+  os_username:
+    type: string
+
+  os_password:
+    type: string
+    hidden: true
+
+  os_tenant_name:
+    type: string
+
+  os_region_name:
+    type: string
+
+  identity_provider:
+    type: string
+
   timeout:
     description: Time to wait until the master setup is ready.
     type: number
@@ -311,6 +330,12 @@ resources:
             $OPENSHIFT_SDN: {get_param: openshift_sdn}
             $DEPLOY_REGISTRY: {get_param: deploy_registry}
             $DEPLOY_ROUTER: {get_param: deploy_router}
+            $OS_AUTH_URL: {get_param: os_auth_url}
+            $OS_USERNAME: {get_param: os_username}
+            $OS_PASSWORD: {get_param: os_password}
+            $OS_TENANT_NAME: {get_param: os_tenant_name}
+            $OS_REGION_NAME: {get_param: os_region_name}
+            $IDENTITY_PROVIDER: {get_param: identity_provider}
           template: {get_file: fragments/master-ansible.sh}
 
   deployment_dns_node_add:

@@ -198,6 +198,47 @@ parameters:
       List of policies applied on master nodes ServerGroup.
     default: ['anti-affinity']
 
+  os_auth_url:
+    type: string
+    description: >
+      The Openstack authentication URL to be used by Openshift
+    default: ''
+
+  os_username:
+    type: string
+    description: >
+      The Openstack username to be used by Openshift
+    default: ''
+
+  os_password:
+    type: string
+    description: >
+      The Openstack password to be used by Openshift
+    hidden: true
+    default: ''
+
+  os_tenant_name:
+    type: string
+    description: >
+      The Openstack tenant to by used by Openshift
+    default: ''
+
+  os_region_name:
+    type: string
+    description: >
+      The Openstack region name to by used by Openshift
+    default: ''
+
+  identity_provider:
+    type: string
+    description: >
+      The Openstack region name to by used by Openshift
+    default: 'htpasswd_auth'
+    constraints:
+      - allowed_values:
+        - htpasswd_auth
+        - keystone_auth
+
 resources:
 
   fixed_network:
@@ -293,6 +334,12 @@ resources:
           deploy_router: {get_param: deploy_router}
           master_server_group: {get_resource: master_server_group}
           master_security_group: {get_resource: master_security_group}
+          os_auth_url: {get_param: os_auth_url}
+          os_username: {get_param: os_username}
+          os_password: {get_param: os_password}
+          os_tenant_name: {get_param: os_tenant_name}
+          os_region_name: {get_param: os_region_name}
+          identity_provider: {get_param: identity_provider}
 
   openshift_nodes:
     depends_on: external_router_interface
