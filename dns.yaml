@@ -22,21 +22,6 @@ parameters:
     constraints:
     - custom_constraint: nova.flavor
 
-  external_network:
-    type: string
-    constraints:
-    - custom_constraint: neutron.network
-
-  fixed_network:
-    type: string
-    constraints:
-    - custom_constraint: neutron.network
-
-  fixed_subnet:
-    type: string
-    constraints:
-    - custom_constraint: neutron.subnet
-
   hostname:
     type: string
 
@@ -66,12 +51,6 @@ parameters:
   rhn_pool:
     type: string
     hidden: true
-
-  domain_name:
-    type: string
-
-  floating_ip:
-    type: string
 
   port:
     description: Neutron port (with a floating IP address) to assign to the DNS Nova Server
