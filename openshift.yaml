@@ -179,9 +179,6 @@ resources:
       flavor: {get_param: flavor}
       key_name: {get_param: ssh_key_name}
       ssh_user: {get_param: ssh_user}
-      external_network: {get_param: external_network}
-      fixed_network: {get_resource: fixed_network}
-      fixed_subnet: {get_resource: fixed_subnet}
       rhn_username: {get_param: rhn_username}
       rhn_password: {get_param: rhn_password}
       rhn_pool: {get_param: rhn_pool}
@@ -200,11 +197,8 @@ resources:
       flavor: {get_param: flavor}
       key_name: {get_param: ssh_key_name}
       ssh_user: {get_param: ssh_user}
-      external_network: {get_param: external_network}
       dns_ip: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
       port: {get_resource: master_port}
-      fixed_network: {get_resource: fixed_network}
-      fixed_subnet: {get_resource: fixed_subnet}
       rhn_username: {get_param: rhn_username}
       rhn_password: {get_param: rhn_password}
       rhn_pool: {get_param: rhn_pool}
@@ -381,7 +375,7 @@ outputs:
     description: URL entrypoint to the OpenShift API
     value: {get_attr: [openshift_master, api_url]}
   master_data:
-    description: Status of cluster setup on the master.
+    description: Status of boot setup on the master.
     value: {get_attr: [openshift_master, wc_data]}
   host_ips:
     description: IP addresses of the OpenShift nodes
