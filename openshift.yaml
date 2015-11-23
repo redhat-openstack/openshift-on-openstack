@@ -227,6 +227,36 @@ parameters:
       The pool to attach. Will use `subscription-manager attach --auto` if left
       blank.
     hidden: true
+
+  os_auth_url:
+    type: string
+    description: >
+      The Openstack authentication URL to be used by Openshift
+    default: ''
+
+  os_username:
+    type: string
+    description: >
+      The Openstack username to be used by Openshift
+    default: ''
+
+  os_password:
+    type: string
+    description: >
+      The Openstack password to be used by Openshift
+    hidden: true
+    default: ''
+
+  os_tenant_name:
+    type: string
+    description: >
+      The Openstack tenant to by used by Openshift
+    default: ''
+
+  os_region_name:
+    type: string
+    description: >
+      The Openstack region name to by used by Openshift
     default: ''
 
 resources:
@@ -305,6 +335,11 @@ resources:
       skip_ansible: {get_param: skip_ansible}
       openshift_ansible_git_url: {get_param: openshift_ansible_git_url}
       openshift_ansible_git_rev: {get_param: openshift_ansible_git_rev}
+      os_auth_url: {get_param: os_auth_url}
+      os_username: {get_param: os_username}
+      os_password: {get_param: os_password}
+      os_tenant_name: {get_param: os_tenant_name}
+      os_region_name: {get_param: os_region_name}
 
   openshift_masters:
     depends_on: external_router_interface
