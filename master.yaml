@@ -218,13 +218,13 @@ resources:
     properties:
       group: script
       inputs:
-        - name: node_hostnames
+        - name: node_hostname
       config:
         str_replace:
           params:
             $MASTER_HOSTNAME: {get_param: hostname}
             $DOMAINNAME: {get_param: domain_name}
-            $NODE_HOSTNAMES: $node_hostnames
+            $NODE_HOSTNAME: $node_hostname
             $SSH_USER: {get_param: ssh_user}
             $DEPLOYMENT_TYPE: {get_param: deployment_type}
           template: {get_file: fragments/master-ansible.sh}

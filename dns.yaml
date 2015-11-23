@@ -164,19 +164,33 @@ resources:
             $POOL_ID: {get_param: rhn_pool}
           template: {get_file: fragments/rhn-register.sh}
 
-  node_hosts:
+  node_add:
     type: OS::Heat::SoftwareConfig
     properties:
       group: script
       inputs:
-      - name: node_etc_hosts
+      - name: node_etc_host
       outputs:
       - name: result
       config: |
         #!/bin/sh -x
         echo "Writing to /etc/hosts"
-        sed -i 's/.* #openshift//' /etc/hosts
-        echo "$node_etc_hosts" >> /etc/hosts
+        #sed -i 's/.* #openshift//' /etc/hosts
+        echo "$node_etc_host" >> /etc/hosts
+        systemctl restart dnsmasq
+
+  node_cleanup:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      inputs:
+      - name: node_name
+      outputs:
+      - name: result
+      config: |
+        #!/bin/sh -x
+        cp /etc/hosts /etc/hosts.bkp
+        grep -v "$node_name" /etc/hosts.bkp > /etc/hosts
         systemctl restart dnsmasq
 
   boot_config:
