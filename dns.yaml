@@ -86,11 +86,11 @@ resources:
     type: OS::Heat::MultipartMime
     properties:
       parts:
-      - config: {get_attr: [dns_config_agent, config]}
-        type: multipart
       - config: {get_resource: set_hostname}
       - config: {get_resource: included_files}
       - config: {get_resource: rhn_register}
+      - config: {get_attr: [dns_config_agent, config]}
+        type: multipart
       - config: {get_resource: boot_config}
 
   set_hostname:
