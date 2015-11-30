@@ -5,6 +5,11 @@ set -eu
 set -x
 set -o pipefail
 
+# master and nodes
+# crond was stopped in cloud-init before yum update, make sure it's running
+systemctl status crond && systemctl restart crond
+
+
 echo $NODE_HOSTNAME >> /var/lib/openshift_nodes
 
 export HOME=/root
