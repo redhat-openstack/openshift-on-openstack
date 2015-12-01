@@ -33,7 +33,7 @@ CentOS and RHEL are the only tested distros for now.
 Deployment
 ==========
 
-You can pass all environment variables to heat on command line.  However, two example environment files have been given.  
+You can pass all environment variables to heat on command line.  However, two example environment files have been given.
 
 * ``env_origin.yaml`` is an example of the variables to deploy an OpenShift Origin 3 environment.
 * ``env_aop.yaml`` is an example of the variables to deploy an Atomic Enterprise or OpenShift Enterprise 3 environment.  Note deployment type should be *openshift-enterprise* for OpenShift or *atomic-enterprise* for Atomic Enterprise.  Also, a valid RHN subscription is required for deployment.
@@ -41,7 +41,7 @@ You can pass all environment variables to heat on command line.  However, two ex
 Assuming your external network is called ``ext_net``, your SSH key is ``default`` and your CentOS 7.1 image is ``centos71`` and your domain name is ``example.com``, this is how you deploy OpenShift Origin:
 
 ::
-   
+
   cat << EOF > env.yaml
   parameters:
     ssh_key_name: default
@@ -56,7 +56,7 @@ Assuming your external network is called ``ext_net``, your SSH key is ``default`
     deployment_type: origin
     domain_name: "example.com"
     dns_hostname: "ns"
-    master_hostname: "origin-master"
+    master_hostname_prefix: "origin-master"
     node_hostname_prefix: "origin-node"
     ssh_user: cloud-user
     master_docker_volume_size_gb: 25
@@ -65,7 +65,7 @@ Assuming your external network is called ``ext_net``, your SSH key is ``default`
   EOF
 
    git clone https://github.com/redhat-openstack/openshift-on-openstack.git
-   heat stack-create my_openshift -e env.yaml -f openshift-on-openstack/openshift.yaml 
+   heat stack-create my_openshift -e env.yaml -e openshift-on-openstack/env_single.yaml -f openshift-on-openstack/openshift.yaml
 
 The ``node_count`` parameter specifies how many non-master OpenShift nodes you
 want to deploy. In the example above, we will deploy one master and two nodes.
@@ -80,6 +80,22 @@ installed.`` in the OpenShift master node data in the stack output:
 
    heat output-show my_openshift master_data
 
+Multiple Master Nodes
+=====================
+
+You can deploy OpenShift with multiple master nodes using the 'native' HA
+method (see https://docs.openshift.org/latest/install_config/install/advanced_install.html#multiple-masters
+for details):
+
+::
+
+   heat stack-create my_openshift -e env.yaml -e openshift-on-openstack/env_ha.yaml -f openshift-on-openstack/openshift.yaml
+
+Three master nodes and a loadbalancer will be deployed. Console and API URLs
+then point to the loadbalancer server which distributes requests across all
+three nodes. You can get the URLs from Heat by running
+``heat output-show my_openshift lb_console_url`` and
+``heat output-show my_openshift lb_api_url``.
 
 Post-Deployment Setup
 =====================
@@ -118,7 +134,7 @@ my_openshift master_ip``.
    iptables -I OS_FIREWALL_ALLOW -p tcp -m tcp --dport 1936 -j ACCEPT
    service iptables save; service iptables restart
 
-   # Validate the router is running 
+   # Validate the router is running
    oc get pods
    oc describe pod <router name>
 
@@ -129,13 +145,13 @@ my_openshift master_ip``.
       --selector="region=infra"
 
    # Validate the registry is running
-   oc get pods 
+   oc get pods
 
 Accessing the Web UI
 ====================
 
 You can get the URL for the OpenShift Console (the web UI) from Heat by running
-``heat output-show my_openshift console_url``.
+``heat output-show my_openshift master_console_url``.
 
 Currently, the UI and the resolution for the public hostnames that will be associated
 to services running in OpenShift is dependent on the DNS created internally by

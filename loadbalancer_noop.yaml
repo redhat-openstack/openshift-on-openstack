@@ -1,0 +1,61 @@
+heat_template_version: 2014-10-16
+
+
+description: >
+  A template which provides a fake loadbalancer definition used in situation when HA is not required.
+
+
+parameters:
+
+  key_name:
+    type: string
+    constraints:
+    - custom_constraint: nova.keypair
+
+  image:
+    type: string
+    constraints:
+    - custom_constraint: glance.image
+
+  flavor:
+    type: string
+    constraints:
+    - custom_constraint: nova.flavor
+
+  hostname:
+    type: string
+
+  domain_name:
+    type: string
+
+  rhn_username:
+    type: string
+
+  rhn_password:
+    type: string
+    hidden: true
+
+  rhn_pool:
+    type: string
+    hidden: true
+
+  ssh_user:
+    type: string
+
+  external_network:
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  fixed_network:
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  fixed_subnet:
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  ansible_public_key:
+    type: string

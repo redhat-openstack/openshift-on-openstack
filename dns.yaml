@@ -25,12 +25,22 @@ parameters:
   hostname:
     type: string
 
-  master_ip_address:
+  lb_hostname:
     type: string
+    default: ''
 
-  master_hostname:
+  lb_ip:
     type: string
-  
+    default: ''
+
+  ldap_hostname:
+    type: string
+    default: ''
+
+  ldap_ip:
+    type: string
+    default: ''
+
   node_etc_hosts:
     type: string
     default: ''
@@ -88,6 +98,7 @@ resources:
       parts:
       - config: {get_resource: set_hostname}
       - config: {get_resource: included_files}
+      - config: {get_resource: add_extra_etc_hosts}
       - config: {get_resource: rhn_register}
       - config: {get_attr: [dns_config_agent, config]}
         type: multipart
@@ -117,15 +128,12 @@ resources:
                 $NODE_IP: {get_param: floating_ip}
                 $NODE_HOSTNAME: {get_param: hostname}
                 $NODE_DOMAIN: {get_param: domain_name}
-                $MASTER_IP: {get_param: master_ip_address}
-                $MASTER_HOSTNAME: {get_param: master_hostname}
               template:
                 {get_file: fragments/etc-hosts}
         - path: /root/dnsmasq.conf
           content:
             str_replace:
               params:
-                $MASTER_IP: {get_param: master_ip_address}
                 $DOMAINNAME: {get_param: domain_name}
               template: {get_file: fragments/dnsmasq.conf}
         - path: /usr/bin/retry
@@ -142,6 +150,17 @@ resources:
             $RHN_PASSWORD: {get_param: rhn_password}
             $POOL_ID: {get_param: rhn_pool}
           template: {get_file: fragments/rhn-register.sh}
+
+  add_extra_etc_hosts:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            $LB_DOMAIN: {get_param: domain_name}
+            $LB_HOSTNAME: {get_param: lb_hostname}
+            $LB_IP: {get_param: lb_ip}
+          template: {get_file: fragments/etc-hosts-extra}
 
   node_add:
     type: OS::Heat::SoftwareConfig

@@ -1,0 +1,172 @@
+heat_template_version: 2014-10-16
+
+
+description: >
+  A host providing the loadbalancing for the OpenShift master nodes.
+
+
+parameters:
+
+  key_name:
+    type: string
+    constraints:
+    - custom_constraint: nova.keypair
+
+  image:
+    type: string
+    constraints:
+    - custom_constraint: glance.image
+
+  flavor:
+    type: string
+    constraints:
+    - custom_constraint: nova.flavor
+
+  hostname:
+    type: string
+
+  domain_name:
+    type: string
+
+  rhn_username:
+    type: string
+
+  rhn_password:
+    type: string
+    hidden: true
+
+  rhn_pool:
+    type: string
+    hidden: true
+
+  ssh_user:
+    type: string
+
+  external_network:
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  fixed_network:
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  fixed_subnet:
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  ansible_public_key:
+    type: string
+
+resources:
+
+  floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: {get_param: external_network}
+      port_id: {get_resource: port}
+
+  port:
+    type: OS::Neutron::Port
+    properties:
+      security_groups:
+      - {get_resource: security_group}
+      network: {get_param: fixed_network}
+      fixed_ips:
+      - subnet: {get_param: fixed_subnet}
+      replacement_policy: AUTO
+
+  security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+      - protocol: icmp
+      # Just open everything for now:
+      - protocol: tcp
+        port_range_min: 0
+        port_range_max: 65535
+      - protocol: udp
+        port_range_min: 0
+        port_range_max: 65535
+
+  host:
+    type: OS::Nova::Server
+    properties:
+      name:
+        str_replace:
+          template: "HOST.DOMAIN"
+          params:
+            HOST: {get_param: hostname}
+            DOMAIN: {get_param: domain_name}
+      admin_user: {get_param: ssh_user}
+      image: {get_param: image}
+      flavor: {get_param: flavor}
+      key_name: {get_param: key_name}
+      networks:
+      - port: {get_resource: port}
+      user_data_format: SOFTWARE_CONFIG
+      user_data: {get_resource: init}
+
+  init:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: set_hostname}
+      - config: {get_resource: included_files}
+      - config: {get_resource: rhn_register}
+
+  set_hostname:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        hostname: {get_param: hostname}
+        fqdn:
+          str_replace:
+            template: "HOST.DOMAIN"
+            params:
+              HOST: {get_param: hostname}
+              DOMAIN: {get_param: domain_name}
+
+  included_files:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        write_files:
+        - path: /usr/bin/retry
+          permissions: 0755
+          content: {get_file: fragments/retry.sh}
+        ssh_authorized_keys:
+        - {get_param: ansible_public_key}
+
+  rhn_register:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            $RHN_USERNAME: {get_param: rhn_username}
+            $RHN_PASSWORD: {get_param: rhn_password}
+            $POOL_ID: {get_param: rhn_pool}
+          template: {get_file: fragments/rhn-register.sh}
+
+outputs:
+  floating_ip:
+    value: {get_attr: [floating_ip, floating_ip_address]}
+
+  console_url:
+    value:
+      str_replace:
+        params:
+          HOSTNAME: {get_param: hostname}
+          DOMAINNAME: {get_param: domain_name}
+        template: "https://HOSTNAME.DOMAINNAME:8443/console/"
+
+  api_url:
+    value:
+      str_replace:
+        params:
+          HOSTNAME: {get_param: hostname}
+          DOMAINNAME: {get_param: domain_name}
+        template: "https://HOSTNAME.DOMAINNAME:8443/"

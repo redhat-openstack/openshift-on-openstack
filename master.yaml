@@ -47,19 +47,10 @@ parameters:
   deployment_type:
     type: string
 
-  port:
-    description: >
-      Neutron port (with a floating IP address) to assign to the OpenShift
-      Master Nova Server
-    type: string
-
-  hostname:
+  hostname_prefix:
     type: string
 
   domain_name:
-    type: string
-
-  floating_ip:
     type: string
 
   ansible_public_key:
@@ -86,7 +77,63 @@ parameters:
     type: number
     default: 4000
 
+  external_network:
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  dns_node:
+    type: string
+    default: ''
+
+  dns_node_add:
+    type: string
+    default: ''
+
+  fixed_network:
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  fixed_subnet:
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  lb_hostname:
+    type: string
+    default: ''
+
 resources:
+
+  port:
+    type: OS::Neutron::Port
+    properties:
+      security_groups:
+      - {get_resource: master_security_group}
+      network: {get_param: fixed_network}
+      fixed_ips:
+      - subnet: {get_param: fixed_subnet}
+      replacement_policy: AUTO
+
+  master_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+      - protocol: icmp
+      # Just open everything for now:
+      - protocol: tcp
+        port_range_min: 0
+        port_range_max: 65535
+      - protocol: udp
+        port_range_min: 0
+        port_range_max: 65535
+
+  random_hostname_suffix:
+    type: OS::Heat::RandomString
+    properties:
+      character_classes: [{"class": lowercase}, {"class": digits}]
+      length: 8
 
   config_agent:
     type: collect-config-setup/install_config_agent_centos_yum.yaml
@@ -96,16 +143,17 @@ resources:
     properties:
       name:
         str_replace:
-          template: "HOST.DOMAIN"
+          template: "HOST-SUFFIX.DOMAIN"
           params:
-            HOST: {get_param: hostname}
+            HOST: {get_param: hostname_prefix}
+            SUFFIX: {get_attr: [random_hostname_suffix, value]}
             DOMAIN: {get_param: domain_name}
       admin_user: {get_param: ssh_user}
       image: {get_param: image}
       flavor: {get_param: flavor}
       key_name: {get_param: key_name}
       networks:
-      - port: {get_param: port}
+      - port: {get_resource: port}
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
 
@@ -119,6 +167,12 @@ resources:
     properties:
       instance_uuid: {get_resource: host}
       volume_id: {get_resource: docker_volume}
+
+  floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: {get_param: external_network}
+      port_id: {get_resource: port}
 
   init:
     type: OS::Heat::MultipartMime
@@ -135,12 +189,18 @@ resources:
     type: OS::Heat::CloudConfig
     properties:
       cloud_config:
-        hostname: {get_param: hostname}
+        hostname:
+          str_replace:
+            template: "HOST-SUFFIX"
+            params:
+              HOST: {get_param: hostname_prefix}
+              SUFFIX: {get_attr: [random_hostname_suffix, value]}
         fqdn:
           str_replace:
-            template: "HOST.DOMAIN"
+            template: "HOST-SUFFIX.DOMAIN"
             params:
-              HOST: {get_param: hostname}
+              HOST: {get_param: hostname_prefix}
+              SUFFIX: {get_attr: [random_hostname_suffix, value]}
               DOMAIN: {get_param: domain_name}
 
   included_files:
@@ -152,8 +212,13 @@ resources:
           content:
             str_replace:
               params:
-                $NODE_IP: {get_param: floating_ip}
-                $NODE_HOSTNAME: {get_param: hostname}
+                $NODE_IP: {get_attr: [floating_ip, floating_ip_address]}
+                $NODE_HOSTNAME:
+                  str_replace:
+                    template: "HOST-SUFFIX"
+                    params:
+                      HOST: {get_param: hostname_prefix}
+                      SUFFIX: {get_attr: [random_hostname_suffix, value]}
                 $NODE_DOMAIN: {get_param: domain_name}
               template: {get_file: fragments/etc-node-hosts}
         - path: /root/.ssh/id_rsa
@@ -187,7 +252,7 @@ resources:
         str_replace:
           params:
             $DNS_IP: {get_param: dns_ip}
-            $MASTER_IP: {get_param: floating_ip}
+            $MASTER_IP: {get_attr: [floating_ip, floating_ip_address]}
             $OPENSHIFT_ANSIBLE_GIT_URL: {get_param: openshift_ansible_git_url}
             $OPENSHIFT_ANSIBLE_GIT_REV: {get_param: openshift_ansible_git_rev}
             $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
@@ -199,15 +264,34 @@ resources:
       group: script
       inputs:
         - name: node_hostname
+        - name: all_master_nodes
       config:
         str_replace:
           params:
-            $MASTER_HOSTNAME: {get_param: hostname}
+            $ALL_MASTER_NODES: $all_master_nodes
             $DOMAINNAME: {get_param: domain_name}
             $NODE_HOSTNAME: $node_hostname
             $SSH_USER: {get_param: ssh_user}
             $DEPLOYMENT_TYPE: {get_param: deployment_type}
+            $LB_HOSTNAME: {get_param: lb_hostname}
           template: {get_file: fragments/master-ansible.sh}
+
+  deployment_dns_node_add:
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      config:
+        get_param: dns_node_add
+      server:
+        get_param: dns_node
+      input_values:
+        node_etc_host:
+          str_replace:
+              template: "IP HOST-SUFFIX.DOMAIN HOST-SUFFIX #openshift"
+              params:
+                IP: {get_attr: [floating_ip, floating_ip_address]}
+                HOST: {get_param: hostname_prefix}
+                SUFFIX: {get_attr: [random_hostname_suffix, value]}
+                DOMAIN: {get_param: domain_name}
 
   wait_condition:
     type: OS::Heat::WaitCondition
@@ -223,15 +307,28 @@ outputs:
     value:
       str_replace:
         params:
-          HOSTNAME: {get_param: hostname}
+          HOSTNAME: {get_param: hostname_prefix}
+          SUFFIX: {get_attr: [random_hostname_suffix, value]}
           DOMAINNAME: {get_param: domain_name}
-        template: "https://HOSTNAME.DOMAINNAME:8443/console/"
+        template: "https://HOSTNAME-SUFFIX.DOMAINNAME:8443/console/"
   api_url:
     value:
       str_replace:
         params:
-          HOSTNAME: {get_param: hostname}
+          HOSTNAME: {get_param: hostname_prefix}
+          SUFFIX: {get_attr: [random_hostname_suffix, value]}
           DOMAINNAME: {get_param: domain_name}
-        template: "https://HOSTNAME.DOMAINNAME:8443/"
+        template: "https://HOSTNAME-SUFFIX.DOMAINNAME:8443/"
   wc_data:
     value: { get_attr: ['wait_condition', 'data'] }
+  hostname:
+    value:
+      str_replace:
+        template: "HOST-SUFFIX"
+        params:
+          HOST: {get_param: hostname_prefix}
+          SUFFIX: {get_attr: [random_hostname_suffix, value]}
+  host:
+    value: {get_resource: host}
+  run_ansible:
+    value: {get_resource: run_ansible}

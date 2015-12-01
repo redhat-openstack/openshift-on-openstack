@@ -75,6 +75,10 @@ parameters:
     type: string
     default: ''
 
+  all_master_nodes:
+    type: string
+    default: ''
+
   master_run_ansible:
     type: string
     default: ''
@@ -321,6 +325,7 @@ resources:
               HOST: {get_param: hostname_prefix}
               SUFFIX: {get_attr: [random_hostname_suffix, value]}
               DOMAIN: {get_param: domain_name}
+        all_master_nodes: {get_param: all_master_nodes}
 
   wait_condition:
     type: OS::Heat::WaitCondition

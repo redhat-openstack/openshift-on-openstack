@@ -11,7 +11,7 @@ parameters:
   deployment_type: openshift-enterprise
   domain_name: "example.com"
   dns_hostname: "ns"
-  master_hostname: "openshift-master"
+  master_hostname_prefix: "openshift-master"
   node_hostname_prefix: "openshift-node"
   ssh_user: cloud-user
   master_docker_volume_size_gb: 25
