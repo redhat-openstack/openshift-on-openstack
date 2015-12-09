@@ -92,7 +92,8 @@ parameters:
   deployment_type:
     type: string
     description: >
-      The type of Openshift deployment.  origin and enterprise are valid 
+      The type of Openshift deployment.  origin and openshift-enterprise
+      are valid.
     default: "origin"
 
   ssh_user:

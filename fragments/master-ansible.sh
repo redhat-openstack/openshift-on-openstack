@@ -31,7 +31,7 @@ ansible_ssh_user=$SSH_USER
 # user must be configured for passwordless sudo
 ansible_sudo=true
 
-# deployment type valid values are origin, online and enterprise
+# deployment type valid values are origin, online and openshift-enterprise
 deployment_type=$DEPLOYMENT_TYPE
 
 # htpasswd_auth
