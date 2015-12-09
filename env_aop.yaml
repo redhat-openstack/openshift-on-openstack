@@ -8,7 +8,7 @@ parameters:
   rhn_username: "Your RHN Username"
   rhn_password: "Your RHN Password"
   rhn_pool: ''
-  deployment_type: enterprise
+  deployment_type: openshift-enterprise
   domain_name: "example.com"
   dns_hostname: "ns"
   master_hostname: "openshift-master"
