@@ -107,6 +107,3 @@ chmod 755 /usr/bin/heat-config-notify
 # run once to write out /etc/os-collect-config.conf
 os-collect-config --one-time --debug
 cat /etc/os-collect-config.conf
-
-# run again to poll for deployments and run hooks
-os-collect-config --one-time --debug
