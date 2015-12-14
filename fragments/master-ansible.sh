@@ -22,6 +22,22 @@ export HOME=/root
 
 # Set variables common for all OSEv3 hosts
 mkdir -p /var/lib/ansible/group_vars
+
+case "$OPENSHIFT_SDN" in
+	openshift-sdn)
+		openshift_use_openshift_sdn=true
+		openshift_use_flannel=false
+	;;
+	flannel)
+		openshift_use_openshift_sdn=false
+		openshift_use_flannel=true
+	;;
+	none)
+		openshift_use_openshift_sdn=false
+		openshift_use_flannel=false
+	;;
+esac
+
 cat << EOF > /var/lib/ansible/group_vars/OSv3.yml
 ansible_ssh_user: $SSH_USER
 ansible_sudo: true
@@ -65,6 +81,8 @@ openshift_master_identity_providers:
     challenge: true
     kind: HTPasswdPasswordIdentityProvider
     filename: /etc/openshift/openshift-passwd
+openshift_use_openshift_sdn: $openshift_use_openshift_sdn
+openshift_use_flannel: $openshift_use_flannel
 EOF
 fi
 

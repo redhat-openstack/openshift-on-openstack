@@ -128,6 +128,9 @@ parameters:
     type: string
     default: false
 
+  openshift_sdn:
+    type: string
+
 resources:
 
   port:
@@ -304,6 +307,7 @@ resources:
             $LDAP_BIND_PASSWORD: {get_param: ldap_bind_password}
             $LDAP_CA: {get_param: ldap_ca}
             $LDAP_INSECURE: {get_param: ldap_insecure}
+            $OPENSHIFT_SDN: {get_param: openshift_sdn}
           template: {get_file: fragments/master-ansible.sh}
 
   deployment_dns_node_add:
