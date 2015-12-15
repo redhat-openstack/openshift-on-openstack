@@ -104,6 +104,30 @@ parameters:
     type: string
     default: ''
 
+  ldap_url:
+    type: string
+    default: ''
+
+  ldap_preferred_username:
+    type: string
+    default: 'uid'
+
+  ldap_bind_dn:
+    type: string
+    default: ''
+
+  ldap_bind_password:
+    type: string
+    default: ''
+
+  ldap_ca:
+    type: string
+    default: ''
+
+  ldap_insecure:
+    type: string
+    default: false
+
 resources:
 
   port:
@@ -274,6 +298,12 @@ resources:
             $SSH_USER: {get_param: ssh_user}
             $DEPLOYMENT_TYPE: {get_param: deployment_type}
             $LB_HOSTNAME: {get_param: lb_hostname}
+            $LDAP_URL: {get_param: ldap_url}
+            $LDAP_PREFERRED_USERNAME: {get_param: ldap_preferred_username}
+            $LDAP_BIND_DN: {get_param: ldap_bind_dn}
+            $LDAP_BIND_PASSWORD: {get_param: ldap_bind_password}
+            $LDAP_CA: {get_param: ldap_ca}
+            $LDAP_INSECURE: {get_param: ldap_insecure}
           template: {get_file: fragments/master-ansible.sh}
 
   deployment_dns_node_add:

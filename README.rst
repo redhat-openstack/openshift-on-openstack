@@ -97,6 +97,28 @@ three nodes. You can get the URLs from Heat by running
 ``heat output-show my_openshift lb_console_url`` and
 ``heat output-show my_openshift lb_api_url``.
 
+LDAP authentication
+===================
+
+You can use an external LDAP server to authenticate OpenShift users. Update
+parameters in ``env_ldap.yaml`` file and include this environment file on stack
+create:
+
+::
+
+    heat stack-create my_openshift -e env.yaml -e openshift-on-openstack/env_ha.yaml -e openshift-on-openstack/env_ldap.yaml -f openshift-on-openstack/openshift.yaml
+
+Example of using an Active Directory server:
+
+::
+
+   parameter_defaults:
+       ldap_hostname: <ldap hostname>
+       ldap_ip: <ip of ldap server>
+       ldap_url: ldap://<ldap hostname>:389/CN=Users,DC=example,DC=openshift,DC=com?sAMAccountName
+       ldap_bind_dn: CN=Administrator,CN=Users,DC=example,DC=openshift,DC=com?sAMAccountName
+       ldap_bind_password: <admin password>
+
 Post-Deployment Setup
 =====================
 

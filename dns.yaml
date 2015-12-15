@@ -160,6 +160,8 @@ resources:
             $LB_DOMAIN: {get_param: domain_name}
             $LB_HOSTNAME: {get_param: lb_hostname}
             $LB_IP: {get_param: lb_ip}
+            $LDAP_HOSTNAME: {get_param: ldap_hostname}
+            $LDAP_IP: {get_param: ldap_ip}
           template: {get_file: fragments/etc-hosts-extra}
 
   node_add:

@@ -39,7 +39,26 @@ openshift_master_cluster_public_hostname: $LB_HOSTNAME.$DOMAINNAME
 EOF
 fi
 
-cat << EOF >> /var/lib/ansible/group_vars/OSv3.yml
+if [ -n "$LDAP_URL" ]; then
+    cat << EOF >> /var/lib/ansible/group_vars/OSv3.yml
+openshift_master_identity_providers:
+  - name: ldap_auth
+    kind: LDAPPasswordIdentityProvider
+    challenge: true
+    login: true
+    bindDN: $LDAP_BIND_DN
+    bindPassword: $LDAP_BIND_PASSWORD
+    ca: '$LDAP_CA'
+    insecure: $LDAP_INSECURE
+    url: $LDAP_URL
+    attributes:
+      id: ['dn']
+      email: ['mail']
+      name: ['cn']
+      preferredUsername: ['$LDAP_PREFERRED_USERNAME']
+EOF
+else
+    cat << EOF >> /var/lib/ansible/group_vars/OSv3.yml
 openshift_master_identity_providers:
   - name: htpasswd_auth
     login: true
@@ -47,6 +66,8 @@ openshift_master_identity_providers:
     kind: HTPasswdPasswordIdentityProvider
     filename: /etc/openshift/openshift-passwd
 EOF
+fi
+
 
 cat << EOF > /var/lib/ansible/inventory
 # Create an OSEv3 group that contains the masters and nodes groups
