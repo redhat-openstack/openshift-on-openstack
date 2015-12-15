@@ -13,32 +13,28 @@ systemctl status crond && systemctl restart crond
 echo $NODE_HOSTNAME >> /var/lib/openshift_nodes
 
 export HOME=/root
-cat << EOF > /var/lib/ansible-inventory
+
+# Set variables common for all OSEv3 hosts
+mkdir -p /var/lib/ansible/group_vars
+cat << EOF > /var/lib/ansible/group_vars/OSv3.yml
+ansible_ssh_user: $SSH_USER
+ansible_sudo: true
+deployment_type: $DEPLOYMENT_TYPE # deployment type valid values are origin, online and openshif-enterprise
+osm_default_subdomain: cloudapps.$DOMAINNAME # default subdomain to use for exposed routes
+openshift_master_identity_providers:
+  - name: htpasswd_auth
+    login: true
+    challenge: true
+    kind: HTPasswdPasswordIdentityProvider
+    filename: /etc/openshift/openshift-passwd
+EOF
+
+cat << EOF > /var/lib/ansible/inventory
 # Create an OSEv3 group that contains the masters and nodes groups
 [OSv3:children]
 masters
 nodes
 etcd
-
-# Set variables common for all OSEv3 hosts
-[OSv3:vars]
-# SSH user, this user should allow ssh based auth without requiring a
-# password. If using ssh key based auth, then the key should be managed by an
-# ssh agent.
-ansible_ssh_user=$SSH_USER
-
-# If ansible_ssh_user is not root, ansible_sudo must be set to true and the
-# user must be configured for passwordless sudo
-ansible_sudo=true
-
-# deployment type valid values are origin, online and openshift-enterprise
-deployment_type=$DEPLOYMENT_TYPE
-
-# htpasswd_auth
-openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/openshift/openshift-passwd'}]
-
-# default subdomain to use for exposed routes
-osm_default_subdomain=cloudapps.$DOMAINNAME
 
 ### Note - openshift_hostname and openshift_public_hostname are overrides used because OpenStack instance metadata appends .novalocal by default to hostnames
 
@@ -62,8 +58,8 @@ sleep 60
 
 # Write each node
 for node in `cat /var/lib/openshift_nodes`;do
-  #echo "$node" >> /var/lib/ansible-inventory
-  echo "$node openshift_hostname=$node openshift_public_hostname=$node openshift_node_labels=\"{'region': 'primary', 'zone': 'default'}\"" >> /var/lib/ansible-inventory
+  #echo "$node" >> /var/lib/ansible/inventory
+  echo "$node openshift_hostname=$node openshift_public_hostname=$node openshift_node_labels=\"{'region': 'primary', 'zone': 'default'}\"" >> /var/lib/ansible/inventory
 done
 
 while pidof -x /bin/ansible-playbook; do
@@ -71,12 +67,12 @@ while pidof -x /bin/ansible-playbook; do
   sleep 10
 done
 
-if [ -e /var/lib/ansible-inventory.deployed ] && diff /var/lib/ansible-inventory /var/lib/ansible-inventory.deployed; then
+if [ -e /var/lib/ansible/inventory.deployed ] && diff /var/lib/ansible/inventory /var/lib/ansible/inventory.deployed; then
     echo "inventory file has not changed since last ansible run, no need to re-run"
     exit 0
 fi
 
-cp /var/lib/ansible-inventory /var/lib/ansible-inventory.started
+cp /var/lib/ansible/inventory /var/lib/ansible/inventory.started
 
 # NOTE: docker-storage-setup hangs during cloud-init because systemd file is set
 # to run after cloud-final.  Temporarily move out of the way (as we've already done storage setup
@@ -87,10 +83,10 @@ fi
 
 # NOTE: Ignore the known_hosts check/propmt for now:
 export ANSIBLE_HOST_KEY_CHECKING=False
-ansible-playbook --inventory /var/lib/ansible-inventory $HOME/openshift-ansible/playbooks/byo/config.yml
+ansible-playbook --inventory /var/lib/ansible/inventory $HOME/openshift-ansible/playbooks/byo/config.yml
 
 # Move docker-storage-setup unit file back in place
 mv $HOME/docker-storage-setup.service /usr/lib/systemd/system
 systemctl daemon-reload
 
-mv /var/lib/ansible-inventory.started /var/lib/ansible-inventory.deployed
+mv /var/lib/ansible/inventory.started /var/lib/ansible/inventory.deployed
