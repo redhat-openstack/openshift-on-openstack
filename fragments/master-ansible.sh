@@ -12,16 +12,7 @@ systemctl status crond && systemctl restart crond
 
 echo $NODE_HOSTNAME >> /var/lib/openshift_nodes
 
-if [ -n "$LB_HOSTNAME" ]; then
-    LB_CHILDREN=lb
-else
-    LB_CHILDREN=''
-fi
-
 export HOME=/root
-
-# Set variables common for all OSEv3 hosts
-mkdir -p /var/lib/ansible/group_vars
 
 case "$OPENSHIFT_SDN" in
 	openshift-sdn)
@@ -38,6 +29,10 @@ case "$OPENSHIFT_SDN" in
 	;;
 esac
 
+mkdir -p /var/lib/ansible/group_vars
+mkdir -p /var/lib/ansible/host_vars
+
+# Set variables common for all OSEv3 hosts
 cat << EOF > /var/lib/ansible/group_vars/OSv3.yml
 ansible_ssh_user: $SSH_USER
 ansible_sudo: true
@@ -46,13 +41,15 @@ osm_default_subdomain: cloudapps.$DOMAINNAME # default subdomain to use for expo
 EOF
 
 if [ -n "$LB_HOSTNAME" ]; then
+    LB_CHILDREN=lb
     cat << EOF >> /var/lib/ansible/group_vars/OSv3.yml
 openshift_master_cluster_password: openshift_cluster
 openshift_master_cluster_method: native
 openshift_master_cluster_hostname: $LB_HOSTNAME.$DOMAINNAME
 openshift_master_cluster_public_hostname: $LB_HOSTNAME.$DOMAINNAME
-
 EOF
+else
+    LB_CHILDREN=''
 fi
 
 if [ -n "$LDAP_URL" ]; then
@@ -86,7 +83,14 @@ openshift_use_flannel: $openshift_use_flannel
 EOF
 fi
 
+# Set variables common for all nodes
+cat << EOF > /var/lib/ansible/group_vars/nodes.yml
+openshift_node_labels:
+  region: primary
+  zone: default
+EOF
 
+# Write ansible inventory
 cat << EOF > /var/lib/ansible/inventory
 # Create an OSEv3 group that contains the masters and nodes groups
 [OSv3:children]
@@ -95,42 +99,40 @@ nodes
 etcd
 $LB_CHILDREN
 
-### Note - openshift_hostname and openshift_public_hostname are overrides used because OpenStack instance metadata appends .novalocal by default to hostnames
-
+[masters]
 EOF
 
-if [ -n "$LB_HOSTNAME" ]; then
-    cat << EOF >> /var/lib/ansible/inventory
-[lb]
-$LB_HOSTNAME.$DOMAINNAME
-EOF
-fi
-
-echo -e "\n[masters]" >> /var/lib/ansible/inventory
-for node in $ALL_MASTER_NODES;do
-    if [ -n "$LB_HOSTNAME" ]; then
+for node in $ALL_MASTER_NODES
+do
+    if [ -n "$LB_HOSTNAME" ]
+    then
         public_name="$LB_HOSTNAME.$DOMAINNAME"
     else
         public_name="$node.$DOMAINNAME"
     fi
-    echo "$node.$DOMAINNAME openshift_hostname=$node.$DOMAINNAME openshift_public_hostname=$public_name openshift_master_public_console_url=https://$public_name:8443/console openshift_master_public_api_url=https://$public_name:8443" >> /var/lib/ansible/inventory
+
+    # Set variables for master node
+    cat << EOF > /var/lib/ansible/host_vars/$node.$DOMAINNAME.yml
+openshift_hostname: $node.$DOMAINNAME
+openshift_public_hostname: $public_name
+openshift_master_public_console_url: https://$public_name:8443/console
+openshift_master_public_api_url: https://$public_name:8443
+openshift_node_labels:
+  region: infra
+  zone: default
+EOF
+    echo -e "$node.$DOMAINNAME" >> /var/lib/ansible/inventory
 done
 
-
 echo -e "\n[etcd]" >> /var/lib/ansible/inventory
-for node in $ALL_MASTER_NODES;do
-    if [ -n "$LB_HOSTNAME" ]; then
-        public_name="$LB_HOSTNAME.$DOMAINNAME"
-    else
-        public_name="$node.$DOMAINNAME"
-    fi
-    echo "$node.$DOMAINNAME openshift_hostname=$node.$DOMAINNAME openshift_public_hostname=$public_name" >> /var/lib/ansible/inventory
+for node in $ALL_MASTER_NODES; do
+    echo "$node.$DOMAINNAME" >> /var/lib/ansible/inventory
 done
 
 # host group for nodes
 echo -e "\n[nodes]" >> /var/lib/ansible/inventory
 for node in $ALL_MASTER_NODES;do
-    echo "$node.$DOMAINNAME openshift_hostname=$node.$DOMAINNAME openshift_public_hostname=$node.$DOMAINNAME openshift_node_labels=\"{'region': 'infra', 'zone': 'default'}\"" >> /var/lib/ansible/inventory
+    echo "$node.$DOMAINNAME" >> /var/lib/ansible/inventory
 done
 
 # this script is triggered for each node being added, let's
@@ -138,11 +140,20 @@ done
 # minimizes number of ansible-playbook re-runs)
 sleep 60
 
+### Note - openshift_hostname and openshift_public_hostname are overrides used because OpenStack instance metadata appends .novalocal by default to hostnames
+
 # Write each node
-for node in `cat /var/lib/openshift_nodes`;do
-  #echo "$node" >> /var/lib/ansible/inventory
-  echo "$node openshift_hostname=$node openshift_public_hostname=$node openshift_node_labels=\"{'region': 'primary', 'zone': 'default'}\"" >> /var/lib/ansible/inventory
+for node in `cat /var/lib/openshift_nodes`; do
+  echo "$node" >> /var/lib/ansible/inventory
+  echo -e "openshift_hostname: $node\nopenshift_public_hostname: $node" >> /var/lib/ansible/host_vars/$node
 done
+
+if [ -n "$LB_HOSTNAME" ]; then
+    cat << EOF >> /var/lib/ansible/inventory
+[lb]
+$LB_HOSTNAME.$DOMAINNAME
+EOF
+fi
 
 while pidof -x /bin/ansible-playbook; do
   echo "waiting for another ansible-playbook to finish"
