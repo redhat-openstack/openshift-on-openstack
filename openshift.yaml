@@ -170,6 +170,18 @@ parameters:
         - none
     default: openshift-sdn
 
+  deploy_registry:
+    type: boolean
+    description: >
+      Specify if a Docker registry should be deployed.
+    default: false
+
+  deploy_router:
+    type: boolean
+    description: >
+      Specify if a router should be deployed.
+    default: false
+
 resources:
 
   fixed_network:
@@ -261,6 +273,8 @@ resources:
           external_network: {get_param: external_network}
           lb_hostname: {get_param: lb_hostname}
           openshift_sdn: {get_param: openshift_sdn}
+          deploy_registry: {get_param: deploy_registry}
+          deploy_router: {get_param: deploy_router}
 
   openshift_nodes:
     depends_on: external_router_interface

@@ -102,8 +102,11 @@ $LB_CHILDREN
 [masters]
 EOF
 
+num_infra=0
 for node in $ALL_MASTER_NODES
 do
+    num_infra=$((num_infra+1))
+
     if [ -n "$LB_HOSTNAME" ]
     then
         public_name="$LB_HOSTNAME.$DOMAINNAME"
@@ -117,6 +120,7 @@ openshift_hostname: $node.$DOMAINNAME
 openshift_public_hostname: $public_name
 openshift_master_public_console_url: https://$public_name:8443/console
 openshift_master_public_api_url: https://$public_name:8443
+openshift_schedulable: true
 openshift_node_labels:
   region: infra
   zone: default
@@ -177,6 +181,80 @@ fi
 # NOTE: Ignore the known_hosts check/propmt for now:
 export ANSIBLE_HOST_KEY_CHECKING=False
 ansible-playbook --inventory /var/lib/ansible/inventory /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml > /var/log/ansible.$$ 2>&1
+
+# Deploy registry and/or router
+if [ "$DEPLOY_ROUTER" == "True" ] || [ "$DEPLOY_REGISTRY" == "True" ]; then
+    cat << EOF > /var/lib/ansible/services.yml
+---
+- include: /usr/share/ansible/openshift-ansible/playbooks/common/openshift-cluster/evaluate_groups.yml
+  vars:
+    g_etcd_hosts: "{{ groups.etcd | default([]) }}"
+    g_lb_hosts: "{{ groups.lb | default([]) }}"
+    g_master_hosts: "{{ groups.masters | default([]) }}"
+    g_node_hosts: "{{ groups.nodes | default([]) }}"
+    g_nfs_hosts: "{{ groups.nfs | default([]) }}"
+    g_etcd_group: "{{ 'etcd' }}"
+    g_masters_group: "{{ 'masters' }}"
+    g_nodes_group: "{{ 'nodes' }}"
+    g_lb_group: "{{ 'lb' }}"
+    openshift_cluster_id: "{{ cluster_id | default('default') }}"
+    openshift_debug_level: 2
+    openshift_deployment_type: "{{ deployment_type }}"
+
+- name: Set facts
+  hosts: oo_first_master
+  roles:
+  - openshift_facts
+  post_tasks:
+  - openshift_facts:
+      role: "{{ item.role }}"
+      local_facts: "{{ item.local_facts }}"
+    with_items:
+      - role: master
+        local_facts:
+          registry_selector: "{{ openshift_registry_selector | default(None) }}"
+          infra_nodes: "{{ num_infra | default(None) }}"
+EOF
+
+    echo "num_infra: $num_infra" >> /var/lib/ansible/group_vars/masters.yml
+
+    if [ "$DEPLOY_REGISTRY" == "True" ]; then
+        echo "openshift_router_selector: region=infra" >> /var/lib/ansible/group_vars/masters.yml
+        cat << EOF >> /var/lib/ansible/services.yml
+- name: Create registry
+  hosts: oo_first_master
+  vars:
+    attach_registry_volume: false
+  roles:
+  - role: openshift_registry
+    when: openshift.master.infra_nodes is defined
+EOF
+
+        # To make the stats port acessible publicly, we will need to open it on your master
+        iptables -I OS_FIREWALL_ALLOW -p tcp -m tcp --dport 1936 -j ACCEPT
+        service iptables save || true; service iptables restart || true
+    fi
+
+    if [ "$DEPLOY_ROUTER" == "True" ]; then
+        echo "openshift_registry_selector: region=infra" >> /var/lib/ansible/group_vars/masters.yml
+        cat << EOF >> /var/lib/ansible/services.yml
+- name: Create router
+  hosts: oo_first_master
+  roles:
+  - role: openshift_router
+    when: openshift.master.infra_nodes is defined
+EOF
+    fi
+
+    ansible-playbook --inventory /var/lib/ansible/inventory /var/lib/ansible/services.yml
+
+    # Give a little time to Openshift to schedule the registry and/or the router
+    sleep 180
+fi
+
+for node in $ALL_MASTER_NODES;do
+    oadm manage-node $node.$DOMAINNAME --schedulable=false || true
+done
 
 # Move docker-storage-setup unit file back in place
 mv $HOME/docker-storage-setup.service /usr/lib/systemd/system

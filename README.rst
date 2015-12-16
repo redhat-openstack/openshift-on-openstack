@@ -61,7 +61,8 @@ Assuming your external network is called ``ext_net``, your SSH key is ``default`
     ssh_user: cloud-user
     master_docker_volume_size_gb: 25
     node_docker_volume_size_gb: 25
-
+    deploy_router: False
+    deploy_registry: False
   EOF
 
    git clone https://github.com/redhat-openstack/openshift-on-openstack.git
@@ -118,56 +119,6 @@ Example of using an Active Directory server:
        ldap_url: ldap://<ldap hostname>:389/CN=Users,DC=example,DC=openshift,DC=com?sAMAccountName
        ldap_bind_dn: CN=Administrator,CN=Users,DC=example,DC=openshift,DC=com?sAMAccountName
        ldap_bind_password: <admin password>
-
-Post-Deployment Setup
-=====================
-
-The OpenShift deployed by these templates doesn't create the default router,
-resource registry or users automatically. Right now, you should do this
-manually.
-
-You can get the IP address of the OpenShift master node with ``heat output-show
-my_openshift master_ip``.
-
-::
-
-   ssh cloud-user@MASTER_NODE_IP
-   sudo -i
-
-   # Change the master node to allow scheduling pods to it
-   # By default the master has SchedulingDisabled
-   oc edit node openshift-master.example.com
-   ### Remove the line: unschedulable: true
-
-   # Create the router
-   CA=/etc/openshift/master
-
-   ### NOTE: If origin, this should be CA=/etc/origin/master
-   oadm ca create-server-cert --signer-cert=$CA/ca.crt --signer-key=$CA/ca.key \
-      --signer-serial=$CA/ca.serial.txt --hostnames='*.cloudapps.example.com' --cert=cloudapps.crt --key=cloudapps.key
-   cat cloudapps.crt cloudapps.key $CA/ca.crt > cloudapps.router.pem
-
-   ### NOTE: If origin, credentials should be /etc/origin/master/openshift-router.kubeconfig
-   oadm router --replicas=1 --default-cert=cloudapps.router.pem \
-     --credentials=/etc/openshift/master/openshift-router.kubeconfig \
-     --selector='region=infra' --service-account=router
-
-     # Note - you will want to capture your stats user password
-   iptables -I OS_FIREWALL_ALLOW -p tcp -m tcp --dport 1936 -j ACCEPT
-   service iptables save; service iptables restart
-
-   # Validate the router is running
-   oc get pods
-   oc describe pod <router name>
-
-   # Create the resource registry
-   ### NOTE: On Origin this will be /etc/origin/master/openshift-registry.kubeconfig
-   oadm registry --create --config=/etc/openshift/master/admin.kubeconfig \
-      --credentials=/etc/openshift/master/openshift-registry.kubeconfig \
-      --selector="region=infra"
-
-   # Validate the registry is running
-   oc get pods
 
 Accessing the Web UI
 ====================

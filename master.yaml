@@ -131,6 +131,12 @@ parameters:
   openshift_sdn:
     type: string
 
+  deploy_registry:
+    type: boolean
+
+  deploy_router:
+    type: boolean
+
 resources:
 
   port:
@@ -308,6 +314,8 @@ resources:
             $LDAP_CA: {get_param: ldap_ca}
             $LDAP_INSECURE: {get_param: ldap_insecure}
             $OPENSHIFT_SDN: {get_param: openshift_sdn}
+            $DEPLOY_REGISTRY: {get_param: deploy_registry}
+            $DEPLOY_ROUTER: {get_param: deploy_router}
           template: {get_file: fragments/master-ansible.sh}
 
   deployment_dns_node_add:
