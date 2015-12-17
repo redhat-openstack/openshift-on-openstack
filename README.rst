@@ -66,7 +66,7 @@ Assuming your external network is called ``ext_net``, your SSH key is ``default`
   EOF
 
    git clone https://github.com/redhat-openstack/openshift-on-openstack.git
-   heat stack-create my_openshift -e env.yaml -e openshift-on-openstack/env_single.yaml -f openshift-on-openstack/openshift.yaml
+   heat stack-create my_openshift -t 180 -e env.yaml -e openshift-on-openstack/env_single.yaml -f openshift-on-openstack/openshift.yaml
 
 The ``node_count`` parameter specifies how many non-master OpenShift nodes you
 want to deploy. In the example above, we will deploy one master and two nodes.

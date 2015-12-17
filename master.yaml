@@ -75,7 +75,7 @@ parameters:
   timeout:
     description: Time to wait until the master setup is ready.
     type: number
-    default: 4000
+    default: 10800
 
   external_network:
     type: string
