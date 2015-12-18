@@ -126,8 +126,7 @@ parameters:
     type: string
     description: >
       The git revision of the openshift-ansible repository to check out to.
-    # Known working version on Centos 7 + Origin:
-    default: "8f6c6824073dff0cea3cd793db2745fb6cf52931"
+    default: "master"
 
   autoscaling:
     type: boolean
