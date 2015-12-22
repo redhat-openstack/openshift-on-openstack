@@ -149,7 +149,6 @@ We plan to let you supply your own DNS that has the OpenShift cloud domain and
 all the nodes pre-configured and also to optionally have the UI server bind to
 its IP address instead of the hostname.
 
-
 Current Status
 ==============
 
@@ -158,6 +157,15 @@ Current Status
 
 2. The apps cloud domain is hardcoded for now. We need to make this configurable.
 
+Prebuild images
+===============
+
+A `customize-disk-image` script is provided to preinstall Openshift packages.
+
+``./customize-disk-image --disk rhel7.2.qcow2 --sm-credentials user:password``
+
+The modified image must be uploaded into Glance and used as the server image
+for the heat stack with the `server_image` parameter.
 
 Copyright
 =========
