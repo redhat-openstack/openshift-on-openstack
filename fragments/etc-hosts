@@ -2,4 +2,3 @@
 ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
 
 $NODE_IP $NODE_HOSTNAME.$NODE_DOMAIN $NODE_HOSTNAME
-$MASTER_IP $MASTER_HOSTNAME.$NODE_DOMAIN $MASTER_HOSTNAME

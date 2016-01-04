@@ -1,0 +1,5 @@
+parameter_defaults:
+    ldap_hostname: ldap.example.com
+    ldap_ip: 192.168.0.1
+    ldap_url: ldap://ldap.example.com:389/cn=users,cn=compat,dc=example,dc=com?uid
+    ldap_insecure: true

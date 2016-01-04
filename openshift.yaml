@@ -38,10 +38,17 @@ parameters:
     description: address of a dns nameserver reachable in your environment
     default: 8.8.8.8
 
+  master_count:
+    type: number
+    description: >
+      Number of non-master nodes to create.
+    default: 1
+
   node_count:
     type: number
     description: >
       Number of non-master nodes to create.
+    default: 1
 
   rhn_username:
     type: string
@@ -77,7 +84,13 @@ parameters:
       The hostname that is going to be set for the DNS server.
     default: "ns"
 
-  master_hostname:
+  lb_hostname:
+    type: string
+    description: >
+      The hostname that is going to be set for the loadbalancer server.
+    default: ''
+
+  master_hostname_prefix:
     type: string
     description: >
       The hostname that is going to be set for the master.
@@ -128,7 +141,8 @@ parameters:
     description: >
       The git revision of the openshift-ansible repository to check out to.
     # Known working version on Centos 7 + Origin:
-    default: "8f6c6824073dff0cea3cd793db2745fb6cf52931"
+    #default: "8f6c6824073dff0cea3cd793db2745fb6cf52931"
+    default: "master"
 
   autoscaling:
     type: boolean
@@ -172,6 +186,24 @@ resources:
       router_id: {get_resource: external_router}
       subnet: {get_resource: fixed_subnet}
 
+  lb_host:
+    depends_on: external_router_interface
+    type: OS::LoadBalancer
+    properties:
+      image: {get_param: server_image}
+      flavor: {get_param: flavor}
+      key_name: {get_param: ssh_key_name}
+      ssh_user: {get_param: ssh_user}
+      rhn_username: {get_param: rhn_username}
+      rhn_password: {get_param: rhn_password}
+      rhn_pool: {get_param: rhn_pool}
+      hostname: {get_param: lb_hostname}
+      domain_name: {get_param: domain_name}
+      external_network: {get_param: external_network}
+      fixed_network: {get_resource: fixed_network}
+      fixed_subnet: {get_resource: fixed_subnet}
+      ansible_public_key: {get_attr: [ansible_keys, public_key]}
+
   dns_host:
     depends_on: external_router_interface
     type: dns.yaml
@@ -184,34 +216,42 @@ resources:
       rhn_password: {get_param: rhn_password}
       rhn_pool: {get_param: rhn_pool}
       hostname: {get_param: dns_hostname}
-      master_ip_address: {get_attr: [master_floating_ip, floating_ip_address]}
-      master_hostname: {get_param: master_hostname}
       port: {get_resource: dnsmasq_port}
       domain_name: {get_param: domain_name}
       floating_ip: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
+      lb_hostname: {get_param: lb_hostname}
+      lb_ip: {get_attr: [lb_host, floating_ip]}
 
-  openshift_master:
+  openshift_masters:
     depends_on: external_router_interface
-    type: master.yaml
+    type: OS::Heat::ResourceGroup
     properties:
-      image: {get_param: server_image}
-      flavor: {get_param: flavor}
-      key_name: {get_param: ssh_key_name}
-      ssh_user: {get_param: ssh_user}
-      dns_ip: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
-      port: {get_resource: master_port}
-      rhn_username: {get_param: rhn_username}
-      rhn_password: {get_param: rhn_password}
-      rhn_pool: {get_param: rhn_pool}
-      deployment_type: {get_param: deployment_type}
-      docker_volume_size: {get_param: master_docker_volume_size_gb}
-      floating_ip: {get_attr: [master_floating_ip, floating_ip_address]}
-      hostname: {get_param: master_hostname}
-      domain_name: {get_param: domain_name}
-      ansible_public_key: {get_attr: [ansible_keys, public_key]}
-      ansible_private_key: {get_attr: [ansible_keys, private_key]}
-      openshift_ansible_git_url: {get_param: openshift_ansible_git_url}
-      openshift_ansible_git_rev: {get_param: openshift_ansible_git_rev}
+      count: {get_param: master_count}
+      resource_def:
+        type: master.yaml
+        properties:
+          image: {get_param: server_image}
+          flavor: {get_param: flavor}
+          key_name: {get_param: ssh_key_name}
+          ssh_user: {get_param: ssh_user}
+          dns_ip: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
+          rhn_username: {get_param: rhn_username}
+          rhn_password: {get_param: rhn_password}
+          rhn_pool: {get_param: rhn_pool}
+          deployment_type: {get_param: deployment_type}
+          docker_volume_size: {get_param: master_docker_volume_size_gb}
+          hostname_prefix: {get_param: master_hostname_prefix}
+          domain_name: {get_param: domain_name}
+          ansible_public_key: {get_attr: [ansible_keys, public_key]}
+          ansible_private_key: {get_attr: [ansible_keys, private_key]}
+          openshift_ansible_git_url: {get_param: openshift_ansible_git_url}
+          openshift_ansible_git_rev: {get_param: openshift_ansible_git_rev}
+          dns_node: {get_attr: [dns_host, resource.host]}
+          dns_node_add: {get_attr: [dns_host, resource.node_add]}
+          fixed_network: {get_resource: fixed_network}
+          fixed_subnet: {get_resource: fixed_subnet}
+          external_network: {get_param: external_network}
+          lb_hostname: {get_param: lb_hostname}
 
   openshift_nodes:
     depends_on: external_router_interface
@@ -238,12 +278,16 @@ resources:
           hostname_prefix: {get_param: node_hostname_prefix}
           domain_name: {get_param: domain_name}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
-          master_node: {get_attr: [openshift_master, resource.host]}
-          master_run_ansible: {get_attr: [openshift_master, resource.run_ansible]}
+          master_node: {get_attr: [openshift_masters, resource.0.host]}
+          master_run_ansible: {get_attr: [openshift_masters, resource.0.run_ansible]}
           dns_node: {get_attr: [dns_host, resource.host]}
           dns_node_cleanup: {get_attr: [dns_host, resource.node_cleanup]}
           dns_node_add: {get_attr: [dns_host, resource.node_add]}
           metadata: {"metering.stack": {get_param: "OS::stack_id"}}
+          all_master_nodes:
+            list_join:
+              - " "
+              - {get_attr: [openshift_masters, hostname]}
 
   scale_up_policy:
     type: OS::Heat::ScalingPolicy
@@ -320,35 +364,6 @@ resources:
       floating_network: {get_param: external_network}
       port_id: {get_resource: dnsmasq_port}
 
-  master_port:
-    type: OS::Neutron::Port
-    properties:
-      security_groups:
-      - {get_resource: master_security_group}
-      network: {get_resource: fixed_network}
-      fixed_ips:
-      - subnet: {get_resource: fixed_subnet}
-      replacement_policy: AUTO
-
-  master_security_group:
-    type: OS::Neutron::SecurityGroup
-    properties:
-      rules:
-      - protocol: icmp
-      # Just open everything for now:
-      - protocol: tcp
-        port_range_min: 0
-        port_range_max: 65535
-      - protocol: udp
-        port_range_min: 0
-        port_range_max: 65535
-
-  master_floating_ip:
-    type: OS::Neutron::FloatingIP
-    properties:
-      floating_network: {get_param: external_network}
-      port_id: {get_resource: master_port}
-
   ansible_keys:
     type: OS::Nova::KeyPair
     properties:
@@ -363,21 +378,33 @@ outputs:
   # TODO: return the master's certificate authority here so we can use the CLI
   # outside of the host.
   # It's stored at `/etc/openshift/master/ca.crt`
-  master_ip:
-    description: IP address of the OpenShift master node
-    value: {get_attr: [master_floating_ip, floating_ip_address]}
+  #master_ip:
+  #  description: IP address of the OpenShift master node
+  #  value: {get_attr: [master_floating_ip, floating_ip_address]}
   dns_ip:
     description: IP address of the DNS server OpenShift relies on
     value: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
-  console_url:
+  lb_console_url:
     description: URL of the OpenShift web console
-    value: {get_attr: [openshift_master, console_url]}
-  api_url:
+    value: {get_attr: [lb_host, console_url]}
+  lb_api_url:
     description: URL entrypoint to the OpenShift API
-    value: {get_attr: [openshift_master, api_url]}
-  master_data:
-    description: Status of boot setup on the master.
-    value: {get_attr: [openshift_master, wc_data]}
+    value: {get_attr: [lb_host, api_url]}
+  master_console_url:
+    description: URL of the OpenShift web console
+    value:
+      list_join:
+        - ","
+        - {get_attr: [openshift_masters, console_url]}
+  master_api_url:
+    description: URL entrypoint to the OpenShift API
+    value:
+      list_join:
+        - ","
+        - {get_attr: [openshift_masters, api_url]}
+  #master_data:
+  #  description: Status of boot setup on the master.
+  #  value: {get_attr: [openshift_master, wc_data]}
   host_ips:
     description: IP addresses of the OpenShift nodes
     value: {get_attr: [openshift_nodes, outputs_list, ip_address]}
