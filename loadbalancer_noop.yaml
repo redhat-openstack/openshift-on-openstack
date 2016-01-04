@@ -59,3 +59,13 @@ parameters:
 
   ansible_public_key:
     type: string
+
+outputs:
+  floating_ip:
+    value: ''
+
+  console_url:
+    value: ''
+
+  api_url:
+    value: ''
