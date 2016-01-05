@@ -1,0 +1,107 @@
+#!/usr/bin/python
+
+import argparse
+import distutils.spawn
+import subprocess
+import sys
+import urllib2
+
+description = 'Customize disk image for Openshift.'
+
+parser = argparse.ArgumentParser(description=description)
+
+parser.add_argument('--disk', dest='disk', required=True,
+                    help='disk image to modify')
+parser.add_argument('--deployment-type', dest='deployment', default='origin',
+                    help='disk image to modify')
+parser.add_argument('--memsize', dest='memsize', default='512',
+                    help='memory size to be used by virt-customize')
+parser.add_argument('--package', dest="packages", action='append',
+                    default=['deltarpm',
+                             'ansible',
+                             'git',
+                             'httpd-tools',
+                             'iptables',
+                             'iptables-services',
+                             'PyYAML',
+                             'ceph-common',
+                             'glusterfs-fuse',
+                             'nfs-utils',
+                             'libselinux-python',
+                             'firewalld',
+                             'logrotate',
+                             'pcs',
+                             'bash-completion'],
+                    help='additional package to install')
+parser.add_argument('--sm-credentials', dest="sm_creds",
+                    help='subscription-manager credentials (user:password)')
+parser.add_argument('--sm-pool', dest="sm_pool",
+                    help='subscription-manager pool to attach')
+parser.add_argument('--sm-repo', dest="sm_repos", action='append',
+                    default=['rhel-7-server-rpms',
+                             'rhel-7-server-extras-rpms',
+                             'rhel-7-server-optional-rpms',
+                             'rhel-7-server-ose-3.1-rpms'],
+                    help='subscription-manager repository to enable')
+parser.add_argument('--no-update', dest="update", action='store_false',
+                    default=True, help='update packages')
+parser.add_argument('-v', '--verbose', dest='verbose', action='store_true',
+                    help='verbose mode')
+
+args = parser.parse_args()
+
+if not distutils.spawn.find_executable('virt-customize'):
+    print "virt-customize must be installed on the system"
+    sys.exit(1)
+
+cmd = ["virt-customize", "-a", args.disk]
+
+if args.verbose:
+    cmd += ["-v"]
+
+if args.deployment == "enterprise":
+    args.packages += ["atomic-openshift-master", "atomic-openshift-node",
+                      "tuned-profiles-atomic-openshift-node"]
+
+elif args.deployment == "origin":
+    args.packages += ["origin-master", "origin-node",
+                      "tuned-profiles-origin-node"]
+
+    maxamillion_copr = "https://copr.fedoraproject.org/coprs/maxamillion/" \
+                       "origin-next/repo/epel-7/" \
+                       "maxamillion-origin-next-epel-7.repo"
+    cmd += ["--write", "/etc/yum.repos.d/maxamillion-origin-next.repo:" +
+                       urllib2.urlopen(maxamillion_copr).read()]
+
+if args.sm_creds:
+    username, password = args.sm_creds.split(':')
+
+    cmd += ["--run-command", "subscription-manager register --username %s "
+                             "--password %s" % (username, password)]
+
+    if args.sm_pool:
+        attach_args = "--pool " + args.sm_pool
+    else:
+        attach_args = "--auto"
+
+    cmd += ["--run-command", "subscription-manager attach " + attach_args,
+            "--run-command", "subscription-manager repos --disable='*'",
+            "--run-command", "subscription-manager repos " +
+            " ".join(map(lambda repo: '--enable=' + repo, args.sm_repos))]
+
+if args.update:
+    cmd += ["--update"]
+
+cmd += ["--install", "http://dl.fedoraproject.org/pub/epel/7/x86_64/e/"
+                     "epel-release-7-5.noarch.rpm"]
+
+cmd += ["--install", ",".join(args.packages)]
+
+if args.sm_creds:
+    cmd += ["--run-command", "subscription-manager remove --all",
+            "--run-command", "subscription-manager unregister"]
+
+if args.verbose:
+    print "Running command " + " ".join(cmd)
+
+subprocess.call(cmd)
