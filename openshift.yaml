@@ -162,6 +162,16 @@ parameters:
       Maximum number of openshift nodes if autoscaling is enabled.
     default: 5
 
+  openshift_sdn:
+    type: string
+    description: Software to get an overlay network up and running for Openshift
+    constraints:
+      - allowed_values:
+        - openshift-sdn
+        - flannel
+        - none
+    default: openshift-sdn
+
 resources:
 
   fixed_network:
@@ -252,6 +262,7 @@ resources:
           fixed_subnet: {get_resource: fixed_subnet}
           external_network: {get_param: external_network}
           lb_hostname: {get_param: lb_hostname}
+          openshift_sdn: {get_param: openshift_sdn}
 
   openshift_nodes:
     depends_on: external_router_interface
