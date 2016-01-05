@@ -14,6 +14,8 @@ function notify_failure() {
     exit 1
 }
 
+systemctl is-enabled os-collect-config || notify_failure "os-collect-config service is not installed or enabled"
+
 # master and nodes
 # Set the DNS to the one provided
 sed -i 's/search openstacklocal/&\nnameserver $DNS_IP/' /etc/resolv.conf

@@ -69,6 +69,11 @@ parameters:
   ssh_user:
     type: string
 
+  timeout:
+    description: Time to wait until the master setup is ready.
+    type: number
+    default: 4000
+
 resources:
 
   dns_config_agent:
@@ -196,4 +201,18 @@ resources:
   boot_config:
     type: OS::Heat::SoftwareConfig
     properties:
-      config: {get_file: fragments/dnsmasq.sh}
+      config:
+        str_replace:
+          params:
+            $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
+          template: {get_file: fragments/dnsmasq.sh}
+
+
+  wait_condition:
+    type: OS::Heat::WaitCondition
+    properties:
+      handle: {get_resource: wait_handle}
+      timeout: {get_param: timeout}
+
+  wait_handle:
+    type: OS::Heat::WaitConditionHandle
