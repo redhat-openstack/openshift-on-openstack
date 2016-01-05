@@ -165,7 +165,7 @@ fi
 
 # NOTE: Ignore the known_hosts check/propmt for now:
 export ANSIBLE_HOST_KEY_CHECKING=False
-ansible-playbook --inventory /var/lib/ansible/inventory $HOME/openshift-ansible/playbooks/byo/config.yml > /var/log/ansible.$$ 2>&1
+ansible-playbook --inventory /var/lib/ansible/inventory /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml > /var/log/ansible.$$ 2>&1
 
 # Move docker-storage-setup unit file back in place
 mv $HOME/docker-storage-setup.service /usr/lib/systemd/system

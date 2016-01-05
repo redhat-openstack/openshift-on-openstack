@@ -134,15 +134,13 @@ parameters:
     description: >
       The URL to the git repository with the openshift-ansible templates to
       clone.
-    default: "https://github.com/openshift/openshift-ansible.git"
+    default: ""
 
   openshift_ansible_git_rev:
     type: string
     description: >
       The git revision of the openshift-ansible repository to check out to.
-    # Known working version on Centos 7 + Origin:
-    #default: "8f6c6824073dff0cea3cd793db2745fb6cf52931"
-    default: "master"
+    default: ""
 
   autoscaling:
     type: boolean

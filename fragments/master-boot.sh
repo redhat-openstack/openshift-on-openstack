@@ -62,10 +62,16 @@ fi
 sed -i -e "s/^enabled=1/enabled=0/" /etc/yum.repos.d/epel.repo
 retry yum -y --enablerepo=epel install ansible || notify_failure "could not install ansible"
 
-git clone "$OPENSHIFT_ANSIBLE_GIT_URL" openshift-ansible \
-    || notify_failure "could not clone openshift-ansible"
-cd openshift-ansible
-git checkout "$OPENSHIFT_ANSIBLE_GIT_REV"
+if [ -n "$OPENSHIFT_ANSIBLE_GIT_URL" ] && [ -n "$OPENSHIFT_ANSIBLE_GIT_REV" ]
+then
+    git clone "$OPENSHIFT_ANSIBLE_GIT_URL" /usr/share/ansible/openshift-ansible \
+        || notify_failure "could not clone openshift-ansible"
+    cd /usr/share/ansible/openshift-ansible
+    git checkout "$OPENSHIFT_ANSIBLE_GIT_REV"
+else
+    yum -y install openshift-ansible-roles openshift-ansible-playbooks \
+        || notify_failure "could not install openshift-ansible"
+fi
 
 # NOTE: the first ansible run hangs during the "Start and enable iptables
 # service" task. Doing it explicitly seems to fix that:
