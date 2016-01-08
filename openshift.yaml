@@ -33,6 +33,12 @@ parameters:
     constraints:
     - custom_constraint: neutron.network
 
+  internal_subnet:
+    type: string
+    description: >
+      The subnet used for openshift node-node and node-master communication
+    default: 192.168.0.0/24
+    
   dns_nameserver:
     type: comma_delimited_list
     description: address of a dns nameserver reachable in your environment
@@ -178,7 +184,7 @@ resources:
   fixed_subnet:
     type: OS::Neutron::Subnet
     properties:
-      cidr: 192.168.0.0/24
+      cidr: {get_param: internal_subnet}
       network: {get_resource: fixed_network}
       dns_nameservers: {get_param: dns_nameserver}
 
