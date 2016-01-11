@@ -75,7 +75,7 @@ parameters:
   timeout:
     description: Time to wait until the master setup is ready.
     type: number
-    default: 4000
+    default: 10800
 
   external_network:
     type: string
@@ -130,6 +130,12 @@ parameters:
 
   openshift_sdn:
     type: string
+
+  deploy_registry:
+    type: boolean
+
+  deploy_router:
+    type: boolean
 
 resources:
 
@@ -308,6 +314,8 @@ resources:
             $LDAP_CA: {get_param: ldap_ca}
             $LDAP_INSECURE: {get_param: ldap_insecure}
             $OPENSHIFT_SDN: {get_param: openshift_sdn}
+            $DEPLOY_REGISTRY: {get_param: deploy_registry}
+            $DEPLOY_ROUTER: {get_param: deploy_router}
           template: {get_file: fragments/master-ansible.sh}
 
   deployment_dns_node_add:
