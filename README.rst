@@ -30,6 +30,23 @@ CentOS and RHEL are the only tested distros for now.
 .. _CentOS: http://www.centos.org/
 .. _RHEL: https://access.redhat.com/downloads
 
+Following steps can be used to setup all-in-one testing/developer environment:
+
+::
+
+  cd $HOME
+  systemctl stop NetworkManager
+  systemctl disable NetworkManager
+  yum -y install openstack-packstack libvirt git
+  mv /var/lib/libvirt/images /home
+  ln -s /home/images /var/lib/libvirt/images
+  packstack --allinone --os-heat-install=y --keystone-admin-passwd=password --keystone-demo-passwd=password --provision-all-in-one-ovs-bridge=y --os-heat-cfn-install=y
+  git clone https://github.com/redhat-openstack/openshift-on-openstack.git
+  curl -O http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
+  source keystonerc_admin
+  glance image-create --name centos71 --disk-format qcow2 --container-format bare --is-public True --file CentOS-7-x86_64-GenericCloud.qcow2
+  nova keypair-add --pub-key ~/.ssh/id_rsa.pub default
+
 Deployment
 ==========
 
@@ -38,7 +55,7 @@ You can pass all environment variables to heat on command line.  However, two ex
 * ``env_origin.yaml`` is an example of the variables to deploy an OpenShift Origin 3 environment.
 * ``env_aop.yaml`` is an example of the variables to deploy an Atomic Enterprise or OpenShift Enterprise 3 environment.  Note deployment type should be *openshift-enterprise* for OpenShift or *atomic-enterprise* for Atomic Enterprise.  Also, a valid RHN subscription is required for deployment.
 
-Assuming your external network is called ``ext_net``, your SSH key is ``default`` and your CentOS 7.1 image is ``centos71`` and your domain name is ``example.com``, this is how you deploy OpenShift Origin:
+Assuming your external network is called ``public``, your SSH key is ``default`` and your CentOS 7.1 image is ``centos71`` and your domain name is ``example.com``, this is how you deploy OpenShift Origin:
 
 ::
 
@@ -47,7 +64,7 @@ Assuming your external network is called ``ext_net``, your SSH key is ``default`
     ssh_key_name: default
     server_image: centos71
     flavor: m1.medium
-    external_network: ext_net
+    external_network: public
     dns_nameserver: 8.8.4.4,8.8.8.8
     node_count: 2
     rhn_username: ""
