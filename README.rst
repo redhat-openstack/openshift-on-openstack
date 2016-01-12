@@ -19,7 +19,7 @@ Prerequisities
 1. OpenStack version Juno or later with the Heat, Neutron, Ceilometer services
 running
 
-2. CentOS_ 7.1 cloud image (we leverage cloud-init) loaded in Glance for OpenShift Origin Deployments.  RHEL_ 7.1 cloud image if doing Atomic Enterprise or OpenShift Enterprise
+2. CentOS_ 7.2 cloud image (we leverage cloud-init) loaded in Glance for OpenShift Origin Deployments.  RHEL_ 7.2 cloud image if doing Atomic Enterprise or OpenShift Enterprise
 
 3. An SSH keypair loaded to Nova
 
@@ -44,7 +44,7 @@ Following steps can be used to setup all-in-one testing/developer environment:
   git clone https://github.com/redhat-openstack/openshift-on-openstack.git
   curl -O http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
   source keystonerc_admin
-  glance image-create --name centos71 --disk-format qcow2 --container-format bare --is-public True --file CentOS-7-x86_64-GenericCloud.qcow2
+  glance image-create --name centos72 --disk-format qcow2 --container-format bare --is-public True --file CentOS-7-x86_64-GenericCloud.qcow2
   nova keypair-add --pub-key ~/.ssh/id_rsa.pub default
 
 Deployment
@@ -55,14 +55,14 @@ You can pass all environment variables to heat on command line.  However, two ex
 * ``env_origin.yaml`` is an example of the variables to deploy an OpenShift Origin 3 environment.
 * ``env_aop.yaml`` is an example of the variables to deploy an Atomic Enterprise or OpenShift Enterprise 3 environment.  Note deployment type should be *openshift-enterprise* for OpenShift or *atomic-enterprise* for Atomic Enterprise.  Also, a valid RHN subscription is required for deployment.
 
-Assuming your external network is called ``public``, your SSH key is ``default`` and your CentOS 7.1 image is ``centos71`` and your domain name is ``example.com``, this is how you deploy OpenShift Origin:
+Assuming your external network is called ``public``, your SSH key is ``default`` and your CentOS 7.2 image is ``centos72`` and your domain name is ``example.com``, this is how you deploy OpenShift Origin:
 
 ::
 
   cat << EOF > env.yaml
   parameters:
     ssh_key_name: default
-    server_image: centos71
+    server_image: centos72
     flavor: m1.medium
     external_network: public
     dns_nameserver: 8.8.4.4,8.8.8.8
