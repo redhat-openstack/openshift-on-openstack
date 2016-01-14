@@ -13,6 +13,7 @@ systemctl status crond && systemctl restart crond
 echo $NODE_HOSTNAME >> /var/lib/openshift_nodes
 
 export HOME=/root
+export ANSIBLE_ROLES_PATH=/usr/share/ansible/openshift-ansible/roles
 
 case "$OPENSHIFT_SDN" in
 	openshift-sdn)
