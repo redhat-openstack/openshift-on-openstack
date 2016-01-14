@@ -137,6 +137,9 @@ parameters:
   deploy_router:
     type: boolean
 
+  master_server_group:
+    type: string
+
 resources:
 
   port:
@@ -189,6 +192,8 @@ resources:
       - port: {get_resource: port}
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
+      scheduler_hints:
+        group: {get_param: master_server_group}
 
   docker_volume:
     type: OS::Cinder::Volume
