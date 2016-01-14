@@ -186,6 +186,13 @@ parameters:
       Specify if a Docker registry should be deployed.
     default: false
 
+  registry_volume_size_gb:
+    type: number
+    description: >
+      size of a cinder volume in GB to allocate for the Docker registry
+      storage
+    default: 5
+
   deploy_router:
     type: boolean
     description: >
@@ -331,6 +338,7 @@ resources:
           lb_hostname: {get_param: lb_hostname}
           openshift_sdn: {get_param: openshift_sdn}
           deploy_registry: {get_param: deploy_registry}
+          registry_volume_size_gb: {get_param: registry_volume_size_gb}
           deploy_router: {get_param: deploy_router}
           master_server_group: {get_resource: master_server_group}
           master_security_group: {get_resource: master_security_group}

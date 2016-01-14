@@ -153,6 +153,9 @@ parameters:
   deploy_registry:
     type: boolean
 
+  registry_volume_size_gb:
+    type: number
+
   deploy_router:
     type: boolean
 
@@ -329,6 +332,7 @@ resources:
             $LDAP_INSECURE: {get_param: ldap_insecure}
             $OPENSHIFT_SDN: {get_param: openshift_sdn}
             $DEPLOY_REGISTRY: {get_param: deploy_registry}
+            $REGISTRY_VOLUME_SIZE: {get_param: registry_volume_size_gb}
             $DEPLOY_ROUTER: {get_param: deploy_router}
             $OS_AUTH_URL: {get_param: os_auth_url}
             $OS_USERNAME: {get_param: os_username}

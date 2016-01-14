@@ -256,6 +256,24 @@ EOF
 
     ansible-playbook --inventory /var/lib/ansible/inventory /var/lib/ansible/services.yml
 
+    if [ "$DEPLOY_REGISTRY" == "True" ] && [ -n "$OS_AUTH_URL" ] &&[ -n "$OS_USERNAME" ] && \
+       [ -n "$OS_PASSWORD" ] && [ -n "$OS_TENANT_NAME" ]; then
+        cat << EOF > /var/lib/ansible/volumes.yml
+- hosts: all
+  gather_facts: no
+  roles:
+    - role: openshift_storage_openstack
+      osc_volume_prefix: "openshift-registry"
+      osc_volume_size: $REGISTRY_VOLUME_SIZE
+      osc_volume_num_start: 1
+      osc_number_of_volumes: 1
+      deployment_type: $DEPLOYMENT_TYPE
+EOF
+
+        ansible-playbook --connection=local -i "localhost," /var/lib/ansible/volumes.yml  > /var/log/ansible-volumes.$$ 2>&1
+        oc volume deploymentconfigs/docker-registry --add --name=registry-storage -t persistentVolumeClaim --claim-name=claim-openshift-registry-0001 --overwrite
+    fi
+
     # Give a little time to Openshift to schedule the registry and/or the router
     sleep 180
 fi
