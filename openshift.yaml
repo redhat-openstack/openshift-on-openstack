@@ -288,6 +288,7 @@ resources:
           deploy_registry: {get_param: deploy_registry}
           deploy_router: {get_param: deploy_router}
           master_server_group: {get_resource: master_server_group}
+          master_security_group: {get_resource: master_security_group}
 
   openshift_nodes:
     depends_on: external_router_interface
@@ -415,6 +416,19 @@ resources:
     properties:
       name: master_server_group
       policies: {get_param: master_server_group_policies}
+
+  master_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+      - protocol: icmp
+      # Just open everything for now:
+      - protocol: tcp
+        port_range_min: 0
+        port_range_max: 65535
+      - protocol: udp
+        port_range_min: 0
+        port_range_max: 65535
 
 outputs:
   # TODO: return the master's certificate authority here so we can use the CLI
