@@ -114,6 +114,10 @@ parameters:
       The type of Openshift deployment.  origin and openshift-enterprise
       are valid.
     default: "origin"
+    constraints:
+      - allowed_values:
+        - origin
+        - openshift-enterprise
 
   ssh_user:
     type: string
