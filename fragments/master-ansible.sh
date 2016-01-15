@@ -13,6 +13,7 @@ systemctl status crond && systemctl restart crond
 echo $NODE_HOSTNAME >> /var/lib/openshift_nodes
 
 export HOME=/root
+export ANSIBLE_ROLES_PATH=/usr/share/ansible/openshift-ansible/roles
 
 case "$OPENSHIFT_SDN" in
 	openshift-sdn)
@@ -219,7 +220,7 @@ EOF
     echo "num_infra: $num_infra" >> /var/lib/ansible/group_vars/masters.yml
 
     if [ "$DEPLOY_REGISTRY" == "True" ]; then
-        echo "openshift_router_selector: region=infra" >> /var/lib/ansible/group_vars/masters.yml
+        echo "openshift_registry_selector: region=infra" >> /var/lib/ansible/group_vars/masters.yml
         cat << EOF >> /var/lib/ansible/services.yml
 - name: Create registry
   hosts: oo_first_master
@@ -236,7 +237,7 @@ EOF
     fi
 
     if [ "$DEPLOY_ROUTER" == "True" ]; then
-        echo "openshift_registry_selector: region=infra" >> /var/lib/ansible/group_vars/masters.yml
+        echo "openshift_router_selector: region=infra" >> /var/lib/ansible/group_vars/masters.yml
         cat << EOF >> /var/lib/ansible/services.yml
 - name: Create router
   hosts: oo_first_master
