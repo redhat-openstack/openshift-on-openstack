@@ -171,6 +171,12 @@ resources:
   config_agent:
     type: collect-config-setup/install_config_agent_centos_yum.yaml
 
+  masters-group:
+    type: OS::Nova::ServerGroup
+    properties:
+      name: masters-group
+      policies: ['anti-affinity']
+
   host:
     type: OS::Nova::Server
     properties:
@@ -189,6 +195,8 @@ resources:
       - port: {get_resource: port}
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
+      scheduler_hints:
+        group: {get_resource: masters-group}
 
   docker_volume:
     type: OS::Cinder::Volume
