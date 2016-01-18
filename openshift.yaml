@@ -192,6 +192,12 @@ parameters:
       Specify if a router should be deployed.
     default: false
 
+  master_server_group_policies:
+    type: comma_delimited_list
+    description: >
+      List of policies applied on master nodes ServerGroup.
+    default: ['anti-affinity']
+
 resources:
 
   fixed_network:
@@ -285,6 +291,8 @@ resources:
           openshift_sdn: {get_param: openshift_sdn}
           deploy_registry: {get_param: deploy_registry}
           deploy_router: {get_param: deploy_router}
+          master_server_group: {get_resource: master_server_group}
+          master_security_group: {get_resource: master_security_group}
 
   openshift_nodes:
     depends_on: external_router_interface
@@ -406,6 +414,25 @@ resources:
           params:
             STACK: {get_param: "OS::stack_id"}
       save_private_key: True
+
+  master_server_group:
+    type: OS::Nova::ServerGroup
+    properties:
+      name: master_server_group
+      policies: {get_param: master_server_group_policies}
+
+  master_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+      - protocol: icmp
+      # Just open everything for now:
+      - protocol: tcp
+        port_range_min: 0
+        port_range_max: 65535
+      - protocol: udp
+        port_range_min: 0
+        port_range_max: 65535
 
 outputs:
   # TODO: return the master's certificate authority here so we can use the CLI

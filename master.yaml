@@ -137,30 +137,23 @@ parameters:
   deploy_router:
     type: boolean
 
+  master_server_group:
+    type: string
+
+  master_security_group:
+    type: string
+
 resources:
 
   port:
     type: OS::Neutron::Port
     properties:
       security_groups:
-      - {get_resource: master_security_group}
+      - {get_param: master_security_group}
       network: {get_param: fixed_network}
       fixed_ips:
       - subnet: {get_param: fixed_subnet}
       replacement_policy: AUTO
-
-  master_security_group:
-    type: OS::Neutron::SecurityGroup
-    properties:
-      rules:
-      - protocol: icmp
-      # Just open everything for now:
-      - protocol: tcp
-        port_range_min: 0
-        port_range_max: 65535
-      - protocol: udp
-        port_range_min: 0
-        port_range_max: 65535
 
   random_hostname_suffix:
     type: OS::Heat::RandomString
@@ -189,6 +182,8 @@ resources:
       - port: {get_resource: port}
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
+      scheduler_hints:
+        group: {get_param: master_server_group}
 
   docker_volume:
     type: OS::Cinder::Volume
