@@ -369,4 +369,8 @@ outputs:
     description: IP address of the node
     value: {get_attr: [floating_ip, floating_ip_address]}
   wc_data:
-    value: { get_attr: ['wait_condition', 'data'] }
+    value: {get_attr: ['wait_condition', 'data']}
+  ca_cert:
+    value: {get_attr: [deployment_run_ansible, ca_cert]}
+  ca_key:
+    value: {get_attr: [deployment_run_ansible, ca_key]}

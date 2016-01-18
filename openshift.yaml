@@ -480,3 +480,9 @@ outputs:
       You can invoke the scale-down operation by doing an HTTP POST to
       this URL; no body nor extra headers are needed.
     value: {get_attr: [scale_down_policy, alarm_url]}
+  ca_cert:
+    description: Openshift CA certificate.
+    value: {"Fn::Select": ["0", {get_attr: [openshift_nodes, outputs_list, ca_cert]}]}
+  ca_key:
+    description: Openshift CA certificate key.
+    value: {"Fn::Select": ["0", {get_attr: [openshift_nodes, outputs_list, ca_key]}]}
