@@ -14,6 +14,9 @@ function notify_failure() {
     exit 1
 }
 
+# Required for SSH pipelining
+sed -i "s/^.*requiretty/#Defaults requiretty/" /etc/sudoers
+
 # master and nodes
 # Set the DNS to the one provided
 sed -i 's/search openstacklocal/&\nnameserver $DNS_IP/' /etc/resolv.conf
