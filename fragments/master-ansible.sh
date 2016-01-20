@@ -9,6 +9,7 @@ set -o pipefail
 # crond was stopped in cloud-init before yum update, make sure it's running
 systemctl status crond && systemctl restart crond
 
+[ "$SKIP_ANSIBLE" == "True" ] && exit 0
 
 echo $NODE_HOSTNAME >> /var/lib/openshift_nodes
 
