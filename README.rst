@@ -155,11 +155,21 @@ We plan to let you supply your own DNS that has the OpenShift cloud domain and
 all the nodes pre-configured and also to optionally have the UI server bind to
 its IP address instead of the hostname.
 
+Retrieving the CA certificate
+=============================
+
+You can retrieve the CA certificate that was generated during the Openshift
+installation by running
+
+::
+
+  heat output-show --format=raw my_openshift ca_cert > ca.crt
+  heat output-show --format=raw my_openshift ca_key > ca.key
+
 Current Status
 ==============
 
-1. The CA certificate used with OpenShift is currently not configurable and
-   not available from the outside.
+1. The CA certificate used with OpenShift is currently not configurable.
 
 2. The apps cloud domain is hardcoded for now. We need to make this configurable.
 

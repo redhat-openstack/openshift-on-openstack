@@ -293,6 +293,9 @@ resources:
       inputs:
         - name: node_hostname
         - name: all_master_nodes
+      outputs:
+        - name: ca_cert
+        - name: ca_key
       config:
         str_replace:
           params:
