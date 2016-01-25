@@ -38,7 +38,7 @@ parameters:
     description: >
       The subnet used for openshift node-node and node-master communication
     default: 192.168.0.0/24
-    
+
   dns_nameserver:
     type: comma_delimited_list
     description: address of a dns nameserver reachable in your environment
@@ -95,6 +95,12 @@ parameters:
     description: >
       The hostname that is going to be set for the loadbalancer server.
     default: ''
+
+  infra_hostname:
+    type: string
+    description: >
+      The hostname that is going to be set for the dedicated infra node.
+    default: 'infra'
 
   master_hostname_prefix:
     type: string
@@ -246,9 +252,9 @@ resources:
       fixed_subnet: {get_resource: fixed_subnet}
       ansible_public_key: {get_attr: [ansible_keys, public_key]}
 
-  dns_host:
+  infra_host:
     depends_on: external_router_interface
-    type: dns.yaml
+    type: infra.yaml
     properties:
       image: {get_param: server_image}
       flavor: {get_param: flavor}
@@ -257,12 +263,24 @@ resources:
       rhn_username: {get_param: rhn_username}
       rhn_password: {get_param: rhn_password}
       rhn_pool: {get_param: rhn_pool}
-      hostname: {get_param: dns_hostname}
-      port: {get_resource: dnsmasq_port}
+      hostname: {get_param: infra_hostname}
       domain_name: {get_param: domain_name}
-      floating_ip: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
+      external_network: {get_param: external_network}
+      fixed_network: {get_resource: fixed_network}
+      fixed_subnet: {get_resource: fixed_subnet}
+      ansible_public_key: {get_attr: [ansible_keys, public_key]}
+      ansible_private_key: {get_attr: [ansible_keys, private_key]}
+      deployment_type: {get_param: deployment_type}
+      openshift_sdn: {get_param: openshift_sdn}
+      floating_ip: {get_attr: [infra_floating_ip, floating_ip_address]}
+      dns_ip: {get_attr: [infra_floating_ip, floating_ip_address]}
+      port: {get_resource: infra_port}
+      docker_volume_size: {get_param: master_docker_volume_size_gb}
       lb_hostname: {get_param: lb_hostname}
       lb_ip: {get_attr: [lb_host, floating_ip]}
+      deploy_registry: {get_param: deploy_registry}
+      deploy_router: {get_param: deploy_router}
+      skip_ansible: {get_param: skip_ansible}
 
   openshift_masters:
     depends_on: external_router_interface
@@ -276,7 +294,7 @@ resources:
           flavor: {get_param: flavor}
           key_name: {get_param: ssh_key_name}
           ssh_user: {get_param: ssh_user}
-          dns_ip: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
+          dns_ip: {get_attr: [infra_floating_ip, floating_ip_address]}
           rhn_username: {get_param: rhn_username}
           rhn_password: {get_param: rhn_password}
           rhn_pool: {get_param: rhn_pool}
@@ -288,8 +306,8 @@ resources:
           ansible_private_key: {get_attr: [ansible_keys, private_key]}
           openshift_ansible_git_url: {get_param: openshift_ansible_git_url}
           openshift_ansible_git_rev: {get_param: openshift_ansible_git_rev}
-          dns_node: {get_attr: [dns_host, resource.host]}
-          dns_node_add: {get_attr: [dns_host, resource.node_add]}
+          infra_node: {get_attr: [infra_host, resource.host]}
+          infra_node_add: {get_attr: [infra_host, resource.node_add]}
           fixed_network: {get_resource: fixed_network}
           fixed_subnet: {get_resource: fixed_subnet}
           external_network: {get_param: external_network}
@@ -299,7 +317,6 @@ resources:
           deploy_router: {get_param: deploy_router}
           master_server_group: {get_resource: master_server_group}
           master_security_group: {get_resource: master_security_group}
-          skip_ansible: {get_param: skip_ansible}
 
   openshift_nodes:
     depends_on: external_router_interface
@@ -316,7 +333,7 @@ resources:
           key_name: {get_param: ssh_key_name}
           ssh_user: {get_param: ssh_user}
           external_network: {get_param: external_network}
-          dns_ip: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
+          dns_ip: {get_attr: [infra_floating_ip, floating_ip_address]}
           fixed_network: {get_resource: fixed_network}
           fixed_subnet: {get_resource: fixed_subnet}
           docker_volume_size: {get_param: node_docker_volume_size_gb}
@@ -326,11 +343,12 @@ resources:
           hostname_prefix: {get_param: node_hostname_prefix}
           domain_name: {get_param: domain_name}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
-          master_node: {get_attr: [openshift_masters, resource.0.host]}
-          master_run_ansible: {get_attr: [openshift_masters, resource.0.run_ansible]}
-          dns_node: {get_attr: [dns_host, resource.host]}
-          dns_node_cleanup: {get_attr: [dns_host, resource.node_cleanup]}
-          dns_node_add: {get_attr: [dns_host, resource.node_add]}
+          #master_node: {get_attr: [openshift_masters, resource.0.host]}
+          master_node: {get_attr: [infra_host, resource.host]}
+          master_run_ansible: {get_attr: [infra_host, resource.run_ansible]}
+          infra_node: {get_attr: [infra_host, resource.host]}
+          infra_node_cleanup: {get_attr: [infra_host, resource.node_cleanup]}
+          infra_node_add: {get_attr: [infra_host, resource.node_add]}
           metadata: {"metering.stack": {get_param: "OS::stack_id"}}
           all_master_nodes:
             list_join:
@@ -381,17 +399,17 @@ resources:
       matching_metadata: {'metadata.user_metadata.stack': {get_param: "OS::stack_id"}}
       comparison_operator: lt
 
-  dnsmasq_port:
+  infra_port:
     type: OS::Neutron::Port
     properties:
       security_groups:
-      - {get_resource: dnsmasq_security_group}
+      - {get_resource: infra_security_group}
       network: {get_resource: fixed_network}
       fixed_ips:
       - subnet: {get_resource: fixed_subnet}
       replacement_policy: AUTO
 
-  dnsmasq_security_group:
+  infra_security_group:
     type: OS::Neutron::SecurityGroup
     properties:
       rules:
@@ -406,11 +424,11 @@ resources:
         port_range_min: 53
         port_range_max: 53
 
-  dnsmasq_floating_ip:
+  infra_floating_ip:
     type: OS::Neutron::FloatingIP
     properties:
       floating_network: {get_param: external_network}
-      port_id: {get_resource: dnsmasq_port}
+      port_id: {get_resource: infra_port}
 
   ansible_keys:
     type: OS::Nova::KeyPair
@@ -450,7 +468,7 @@ outputs:
   #  value: {get_attr: [master_floating_ip, floating_ip_address]}
   dns_ip:
     description: IP address of the DNS server OpenShift relies on
-    value: {get_attr: [dnsmasq_floating_ip, floating_ip_address]}
+    value: {get_attr: [infra_floating_ip, floating_ip_address]}
   lb_console_url:
     description: URL of the OpenShift web console
     value: {get_attr: [lb_host, console_url]}

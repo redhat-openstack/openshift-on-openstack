@@ -1,0 +1,327 @@
+heat_template_version: 2014-10-16
+
+
+description: >
+  A host used for running openshift-ansible playbooks and other optional services.
+
+
+parameters:
+
+  key_name:
+    type: string
+    constraints:
+    - custom_constraint: nova.keypair
+
+  image:
+    type: string
+    constraints:
+    - custom_constraint: glance.image
+
+  flavor:
+    type: string
+    constraints:
+    - custom_constraint: nova.flavor
+
+  hostname:
+    type: string
+
+  domain_name:
+    type: string
+
+  rhn_username:
+    type: string
+
+  rhn_password:
+    type: string
+    hidden: true
+
+  rhn_pool:
+    type: string
+    hidden: true
+
+  ssh_user:
+    type: string
+
+  external_network:
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  fixed_network:
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  fixed_subnet:
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  ansible_public_key:
+    type: string
+
+  ansible_private_key:
+    type: string
+
+  deployment_type:
+    type: string
+
+  lb_hostname:
+    type: string
+    default: ''
+
+  ldap_url:
+    type: string
+    default: ''
+
+  ldap_preferred_username:
+    type: string
+    default: 'uid'
+
+  ldap_bind_dn:
+    type: string
+    default: ''
+
+  ldap_bind_password:
+    type: string
+    default: ''
+
+  ldap_ca:
+    type: string
+    default: ''
+
+  ldap_insecure:
+    type: string
+    default: false
+
+  openshift_sdn:
+    type: string
+
+  dns_ip:
+    type: string
+    description: IP address of the DNS server
+
+  docker_volume_size:
+    type: number
+    description: >
+      size of a cinder volume in GB to allocate to docker for container/image
+      storage
+    default: 25
+
+  floating_ip:
+    type: string
+
+  port:
+    description: Neutron port (with a floating IP address) to assign to the DNS Nova Server
+    type: string
+
+  lb_ip:
+    type: string
+    default: ''
+
+  ldap_ip:
+    type: string
+    default: ''
+
+  ldap_hostname:
+    type: string
+    default: ''
+
+  deploy_registry:
+    type: boolean
+
+  deploy_router:
+    type: boolean
+
+  timeout:
+    description: Time to wait until the master setup is ready.
+    type: number
+    default: 4000
+
+  skip_ansible:
+    type: boolean
+
+resources:
+
+  host:
+    type: OS::Nova::Server
+    properties:
+      name:
+        str_replace:
+          template: "HOST.DOMAIN"
+          params:
+            HOST: {get_param: hostname}
+            DOMAIN: {get_param: domain_name}
+      admin_user: {get_param: ssh_user}
+      image: {get_param: image}
+      flavor: {get_param: flavor}
+      key_name: {get_param: key_name}
+      networks:
+      - port: {get_param: port}
+      user_data_format: SOFTWARE_CONFIG
+      user_data: {get_resource: init}
+
+  run_ansible:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      inputs:
+        - name: node_hostname
+        - name: all_master_nodes
+      outputs:
+        - name: ca_cert
+        - name: ca_key
+      config:
+        str_replace:
+          params:
+            $ALL_MASTER_NODES: $all_master_nodes
+            $DOMAINNAME: {get_param: domain_name}
+            $NODE_HOSTNAME: $node_hostname
+            $SSH_USER: {get_param: ssh_user}
+            $DEPLOYMENT_TYPE: {get_param: deployment_type}
+            $LB_HOSTNAME: {get_param: lb_hostname}
+            $LDAP_URL: {get_param: ldap_url}
+            $LDAP_PREFERRED_USERNAME: {get_param: ldap_preferred_username}
+            $LDAP_BIND_DN: {get_param: ldap_bind_dn}
+            $LDAP_BIND_PASSWORD: {get_param: ldap_bind_password}
+            $LDAP_CA: {get_param: ldap_ca}
+            $LDAP_INSECURE: {get_param: ldap_insecure}
+            $OPENSHIFT_SDN: {get_param: openshift_sdn}
+            $DEPLOY_REGISTRY: {get_param: deploy_registry}
+            $DEPLOY_ROUTER: {get_param: deploy_router}
+            $SKIP_ANSIBLE: {get_param: skip_ansible}
+          template: {get_file: fragments/master-ansible.sh}
+
+  init:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: set_hostname}
+      - config: {get_resource: included_files}
+      - config: {get_resource: rhn_register}
+      - config: {get_resource: set_dns}
+      - config: {get_resource: infra_boot}
+
+  infra_boot:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config:
+        str_replace:
+          params:
+            $DNS_IP: {get_param: dns_ip}
+            $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
+          template: {get_file: fragments/infra-boot.sh}
+
+  set_hostname:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        hostname: {get_param: hostname}
+        fqdn:
+          str_replace:
+            template: "HOST.DOMAIN"
+            params:
+              HOST: {get_param: hostname}
+              DOMAIN: {get_param: domain_name}
+
+  included_files:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        write_files:
+        #- path: /usr/bin/retry
+        #  permissions: 0755
+        #  content: {get_file: fragments/retry.sh}
+        - path: /etc/hosts
+          content:
+            str_replace:
+              params:
+                $NODE_IP: {get_param: floating_ip}
+                $NODE_HOSTNAME: {get_param: hostname}
+                $NODE_DOMAIN: {get_param: domain_name}
+              template:
+                {get_file: fragments/etc-hosts}
+        #- path: /root/dnsmasq.conf
+        #  content:
+        #    str_replace:
+        #      params:
+        #        $DOMAINNAME: {get_param: domain_name}
+        #      template: {get_file: fragments/dnsmasq.conf}
+        - path: /root/.ssh/id_rsa
+          permissions: 0600
+          content: {get_param: ansible_private_key}
+        - path: /root/.ssh/id_rsa.pub
+          permissions: 0600
+          content: {get_param: ansible_public_key}
+        ssh_authorized_keys:
+        - {get_param: ansible_public_key}
+
+
+  rhn_register:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            $RHN_USERNAME: {get_param: rhn_username}
+            $RHN_PASSWORD: {get_param: rhn_password}
+            $POOL_ID: {get_param: rhn_pool}
+          template: {get_file: fragments/rhn-register.sh}
+
+  set_dns:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config:
+        str_replace:
+          params:
+            $LB_DOMAIN: {get_param: domain_name}
+            $LB_HOSTNAME: {get_param: lb_hostname}
+            $LB_IP: {get_param: lb_ip}
+            $LDAP_HOSTNAME: {get_param: ldap_hostname}
+            $LDAP_IP: {get_param: ldap_ip}
+            $DOMAINNAME: {get_param: domain_name}
+          template: {get_file: fragments/infra-dns.sh}
+
+  node_add:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      inputs:
+      - name: node_etc_host
+      outputs:
+      - name: result
+      config:
+        get_file: fragments/infra-node-add.sh
+
+  node_cleanup:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      inputs:
+      - name: node_name
+      outputs:
+      - name: result
+      config:
+        get_file: fragments/infra-node-cleanup.sh
+
+  docker_volume:
+    type: OS::Cinder::Volume
+    properties:
+      size: {get_param: docker_volume_size}
+
+  docker_volume_attach:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      instance_uuid: {get_resource: host}
+      volume_id: {get_resource: docker_volume}
+
+  wait_condition:
+    type: OS::Heat::WaitCondition
+    properties:
+      handle: {get_resource: wait_handle}
+      timeout: {get_param: timeout}
+
+  wait_handle:
+    type: OS::Heat::WaitConditionHandle

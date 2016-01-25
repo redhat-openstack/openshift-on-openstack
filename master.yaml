@@ -82,11 +82,11 @@ parameters:
     constraints:
     - custom_constraint: neutron.network
 
-  dns_node:
+  infra_node:
     type: string
     default: ''
 
-  dns_node_add:
+  infra_node_add:
     type: string
     default: ''
 
@@ -142,9 +142,6 @@ parameters:
 
   master_security_group:
     type: string
-
-  skip_ansible:
-    type: boolean
 
 resources:
 
@@ -258,7 +255,7 @@ resources:
         - path: /root/.ssh/id_rsa.pub
           permissions: 0600
           content: {get_param: ansible_public_key}
-        - path: /usr/bin/retry
+        - path: /usr/local/bin/retry
           permissions: 0755
           content: {get_file: fragments/retry.sh}
         ssh_authorized_keys:
@@ -287,47 +284,15 @@ resources:
             $OPENSHIFT_ANSIBLE_GIT_URL: {get_param: openshift_ansible_git_url}
             $OPENSHIFT_ANSIBLE_GIT_REV: {get_param: openshift_ansible_git_rev}
             $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
-            $SKIP_ANSIBLE: {get_param: skip_ansible}
           template: {get_file: fragments/master-boot.sh}
 
-  run_ansible:
-    type: OS::Heat::SoftwareConfig
-    properties:
-      group: script
-      inputs:
-        - name: node_hostname
-        - name: all_master_nodes
-      outputs:
-        - name: ca_cert
-        - name: ca_key
-      config:
-        str_replace:
-          params:
-            $ALL_MASTER_NODES: $all_master_nodes
-            $DOMAINNAME: {get_param: domain_name}
-            $NODE_HOSTNAME: $node_hostname
-            $SSH_USER: {get_param: ssh_user}
-            $DEPLOYMENT_TYPE: {get_param: deployment_type}
-            $LB_HOSTNAME: {get_param: lb_hostname}
-            $LDAP_URL: {get_param: ldap_url}
-            $LDAP_PREFERRED_USERNAME: {get_param: ldap_preferred_username}
-            $LDAP_BIND_DN: {get_param: ldap_bind_dn}
-            $LDAP_BIND_PASSWORD: {get_param: ldap_bind_password}
-            $LDAP_CA: {get_param: ldap_ca}
-            $LDAP_INSECURE: {get_param: ldap_insecure}
-            $OPENSHIFT_SDN: {get_param: openshift_sdn}
-            $DEPLOY_REGISTRY: {get_param: deploy_registry}
-            $DEPLOY_ROUTER: {get_param: deploy_router}
-            $SKIP_ANSIBLE: {get_param: skip_ansible}
-          template: {get_file: fragments/master-ansible.sh}
-
-  deployment_dns_node_add:
+  deployment_infra_node_add:
     type: OS::Heat::SoftwareDeployment
     properties:
       config:
-        get_param: dns_node_add
+        get_param: infra_node_add
       server:
-        get_param: dns_node
+        get_param: infra_node
       input_values:
         node_etc_host:
           str_replace:
@@ -375,5 +340,3 @@ outputs:
           SUFFIX: {get_attr: [random_hostname_suffix, value]}
   host:
     value: {get_resource: host}
-  run_ansible:
-    value: {get_resource: run_ansible}
