@@ -19,8 +19,14 @@ sed -i "s/^.*requiretty/#Defaults requiretty/" /etc/sudoers
 
 # master and nodes
 # Set the DNS to the one provided
-sed -i 's/search openstacklocal/&\nnameserver $DNS_IP/' /etc/resolv.conf
+sed -i 's/search openstacklocal.*/&\nnameserver $DNS_IP/' /etc/resolv.conf
 sed -i -e 's/^PEERDNS.*/PEERDNS="no"/' /etc/sysconfig/network-scripts/ifcfg-eth0
+
+# workaround for openshift-ansible - symlinks are created in /usr/local/bin but
+# this path is not by default in sudo secure_path so ansible fails
+sed -i 's,secure_path = /sbin:/bin:/usr/sbin:/usr/bin,secure_path = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin,' /etc/sudoers
+
+[ -e /run/ostree-booted ] && notify_success "OpenShift node has been prepared for running ansible."
 
 # master and nodes
 retry yum install -y deltarpm

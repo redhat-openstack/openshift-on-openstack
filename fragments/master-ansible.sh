@@ -174,16 +174,9 @@ fi
 
 cp /var/lib/ansible/inventory /var/lib/ansible/inventory.started
 
-# NOTE: docker-storage-setup hangs during cloud-init because systemd file is set
-# to run after cloud-final.  Temporarily move out of the way (as we've already done storage setup
-if [ -e /usr/lib/systemd/system/docker-storage-setup.service ]; then
-    mv /usr/lib/systemd/system/docker-storage-setup.service $HOME
-    systemctl daemon-reload
-fi
-
 # NOTE: Ignore the known_hosts check/propmt for now:
 export ANSIBLE_HOST_KEY_CHECKING=False
-ansible-playbook --inventory /var/lib/ansible/inventory /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml > /var/log/ansible.$$ 2>&1
+ansible-playbook -vvvv --inventory /var/lib/ansible/inventory /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml > /var/log/ansible.$$ 2>&1
 
 # Deploy registry and/or router
 if [ "$DEPLOY_ROUTER" == "True" ] || [ "$DEPLOY_REGISTRY" == "True" ]; then
@@ -255,15 +248,9 @@ EOF
     sleep 180
 fi
 
-for node in $ALL_MASTER_NODES;do
-    oadm manage-node $node.$DOMAINNAME --schedulable=false || true
-done
-
-# Move docker-storage-setup unit file back in place
-mv $HOME/docker-storage-setup.service /usr/lib/systemd/system
-systemctl daemon-reload
+ansible masters -m shell -a 'oadm manage-node $HOSTNAME --schedulable=false || true' -u cloud-user --sudo -i /var/lib/ansible/inventory
 
 mv /var/lib/ansible/inventory.started /var/lib/ansible/inventory.deployed
 
-cp /etc/origin/master/ca.crt $heat_outputs_path.ca_cert
-cp /etc/origin/master/ca.key $heat_outputs_path.ca_key
+ansible masters[0] -m fetch -a "src=/etc/origin/master/ca.crt dest=$heat_outputs_path.ca_cert flat=yes" -u cloud-user --sudo -i /var/lib/ansible/inventory
+ansible masters[0] -m fetch -a "src=/etc/origin/master/ca.key dest=$heat_outputs_path.ca_key flat=yes" -u cloud-user --sudo -i /var/lib/ansible/inventory

@@ -66,12 +66,6 @@ parameters:
   ssh_user:
     type: string
 
-  openshift_ansible_git_url:
-    type: string
-
-  openshift_ansible_git_rev:
-    type: string
-
   timeout:
     description: Time to wait until the master setup is ready.
     type: number
@@ -160,9 +154,6 @@ resources:
     properties:
       character_classes: [{"class": lowercase}, {"class": digits}]
       length: 8
-
-  config_agent:
-    type: collect-config-setup/install_config_agent_centos_yum.yaml
 
   host:
     type: OS::Nova::Server
@@ -281,8 +272,6 @@ resources:
           params:
             $DNS_IP: {get_param: dns_ip}
             $MASTER_IP: {get_attr: [floating_ip, floating_ip_address]}
-            $OPENSHIFT_ANSIBLE_GIT_URL: {get_param: openshift_ansible_git_url}
-            $OPENSHIFT_ANSIBLE_GIT_REV: {get_param: openshift_ansible_git_rev}
             $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
           template: {get_file: fragments/master-boot.sh}
 

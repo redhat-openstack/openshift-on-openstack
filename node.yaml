@@ -187,9 +187,9 @@ resources:
                       SUFFIX: {get_attr: [random_hostname_suffix, value]}
                 $NODE_DOMAIN: {get_param: domain_name}
               template: {get_file: fragments/etc-node-hosts}
-        #- path: /usr/bin/retry
-        #  permissions: 0755
-        #  content: {get_file: fragments/retry.sh}
+        - path: /usr/local/bin/retry
+          permissions: 0755
+          content: {get_file: fragments/retry.sh}
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
 

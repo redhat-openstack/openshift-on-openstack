@@ -141,6 +141,12 @@ parameters:
   skip_ansible:
     type: boolean
 
+  openshift_ansible_git_url:
+    type: string
+
+  openshift_ansible_git_rev:
+    type: string
+
 resources:
 
   host:
@@ -160,6 +166,9 @@ resources:
       - port: {get_param: port}
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
+
+  config_agent:
+    type: collect-config-setup/install_config_agent_centos_yum.yaml
 
   run_ansible:
     type: OS::Heat::SoftwareConfig
@@ -200,6 +209,8 @@ resources:
       - config: {get_resource: included_files}
       - config: {get_resource: rhn_register}
       - config: {get_resource: set_dns}
+      - config: {get_attr: [config_agent, config]}
+        type: multipart
       - config: {get_resource: infra_boot}
 
   infra_boot:
@@ -210,6 +221,8 @@ resources:
         str_replace:
           params:
             $DNS_IP: {get_param: dns_ip}
+            $OPENSHIFT_ANSIBLE_GIT_URL: {get_param: openshift_ansible_git_url}
+            $OPENSHIFT_ANSIBLE_GIT_REV: {get_param: openshift_ansible_git_rev}
             $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
           template: {get_file: fragments/infra-boot.sh}
 
@@ -230,9 +243,9 @@ resources:
     properties:
       cloud_config:
         write_files:
-        #- path: /usr/bin/retry
-        #  permissions: 0755
-        #  content: {get_file: fragments/retry.sh}
+        - path: /usr/local/bin/retry
+          permissions: 0755
+          content: {get_file: fragments/retry.sh}
         - path: /etc/hosts
           content:
             str_replace:

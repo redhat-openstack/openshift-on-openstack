@@ -1,6 +1,10 @@
 #!/bin/bash
 set -eux
 
+# on Atomic host os-collect-config runs inside a container which is
+# fetched&started in another step
+[ -e /run/ostree-booted ] && exit 0
+
 # os-apply-config templates directory
 oac_templates=/usr/libexec/os-apply-config/templates
 mkdir -p $oac_templates/etc

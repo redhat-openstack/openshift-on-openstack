@@ -1,6 +1,10 @@
 #!/bin/bash
 set -eux
 
+# on Atomic host os-collect-config runs inside a container which is
+# fetched&started in another step
+[ -e /run/ostree-booted ] && exit 0
+
 if ! yum info os-collect-config; then
     # if os-collect-config package is not available, first check if
     # the repo is available but disabled, otherwise install the package

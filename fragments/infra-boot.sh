@@ -17,36 +17,34 @@ function notify_failure() {
 #[ -e /run/ostree-booted ] && notify_success "OpenShift node has been prepared for running ansible."
 #systemctl is-enabled os-collect-config || notify_failure "os-collect-config service is not installed or enabled"
 
-HOME=/root
-#mv /usr/lib/systemd/system/docker-storage-setup.service $HOME
-mv /etc/systemd/system/multi-user.target.wants/docker-storage-setup.service $HOME
-systemctl daemon-reload
-
 # master and nodes
-# Set the DNS to the one provided
-cp /etc/resolv.conf /etc/resolv.conf.local
-# FIXME - the clean way would be to set nameserver for openstack's neutron network
-sed -i 's/search openstacklocal.*/&\nnameserver $DNS_IP/' /etc/resolv.conf
 sed -i -e 's/^PEERDNS.*/PEERDNS="no"/' /etc/sysconfig/network-scripts/ifcfg-eth0
 
-# Setup Docker Storage Volume Group
-if ! [ -b /dev/vdb ]; then
-  echo "ERROR: device /dev/vdb does not exist" >&2
-  notify_failure "device /dev/vdb does not exist"
-fi
+if [ -e /run/ostree-booted ]; then
+    # Set the DNS to the one provided
+    cp /etc/resolv.conf /etc/resolv.conf.local
+    # FIXME - the clean way would be to set nameserver for openstack's neutron network
+    sed -i 's/search openstacklocal.*/&\nnameserver $DNS_IP/' /etc/resolv.conf
 
-systemctl enable lvm2-lvmetad
-systemctl start lvm2-lvmetad
+    HOME=/root
+    mv /etc/systemd/system/multi-user.target.wants/docker-storage-setup.service $HOME
+    systemctl daemon-reload
+
+    # Setup Docker Storage Volume Group
+    if ! [ -b /dev/vdb ]; then
+      echo "ERROR: device /dev/vdb does not exist" >&2
+      notify_failure "device /dev/vdb does not exist"
+    fi
+
+    systemctl enable lvm2-lvmetad
+    systemctl start lvm2-lvmetad
 cat << EOF > /etc/sysconfig/docker-storage-setup
 DEVS=/dev/vdb
 VG=docker-vg
 EOF
+    /usr/bin/docker-storage-setup || notify_failure "failed to run docker-storage-setup"
+    systemctl start docker --ignore-dependencies || notify_failure "failed to start docker"
 
-/usr/bin/docker-storage-setup || notify_failure "failed to run docker-storage-setup"
-
-systemctl start docker --ignore-dependencies || notify_failure "failed to start docker"
-
-if [ -e /run/ostree-booted ]; then
     docker pull jprovaznik/ooshift-dns
     docker run -d -p 53:53/udp -v /var/log:/var/log -v /etc/hosts:/etc/hosts -v /etc/dnsmasq.conf:/etc/dnsmasq.conf -v /etc/resolv.conf.local:/etc/resolv.conf --name dnsmasq jprovaznik/ooshift-dns || notify_failure "failed to run dns docker image"
     docker pull jprovaznik/ooshift-heat-agent

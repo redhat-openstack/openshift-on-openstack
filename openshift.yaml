@@ -281,6 +281,8 @@ resources:
       deploy_registry: {get_param: deploy_registry}
       deploy_router: {get_param: deploy_router}
       skip_ansible: {get_param: skip_ansible}
+      openshift_ansible_git_url: {get_param: openshift_ansible_git_url}
+      openshift_ansible_git_rev: {get_param: openshift_ansible_git_rev}
 
   openshift_masters:
     depends_on: external_router_interface
@@ -304,8 +306,6 @@ resources:
           domain_name: {get_param: domain_name}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
           ansible_private_key: {get_attr: [ansible_keys, private_key]}
-          openshift_ansible_git_url: {get_param: openshift_ansible_git_url}
-          openshift_ansible_git_rev: {get_param: openshift_ansible_git_rev}
           infra_node: {get_attr: [infra_host, resource.host]}
           infra_node_add: {get_attr: [infra_host, resource.node_add]}
           fixed_network: {get_resource: fixed_network}
