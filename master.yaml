@@ -143,6 +143,9 @@ parameters:
   master_security_group:
     type: string
 
+  skip_ansible:
+    type: boolean
+
 resources:
 
   port:
@@ -284,6 +287,7 @@ resources:
             $OPENSHIFT_ANSIBLE_GIT_URL: {get_param: openshift_ansible_git_url}
             $OPENSHIFT_ANSIBLE_GIT_REV: {get_param: openshift_ansible_git_rev}
             $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
+            $SKIP_ANSIBLE: {get_param: skip_ansible}
           template: {get_file: fragments/master-boot.sh}
 
   run_ansible:
@@ -314,6 +318,7 @@ resources:
             $OPENSHIFT_SDN: {get_param: openshift_sdn}
             $DEPLOY_REGISTRY: {get_param: deploy_registry}
             $DEPLOY_ROUTER: {get_param: deploy_router}
+            $SKIP_ANSIBLE: {get_param: skip_ansible}
           template: {get_file: fragments/master-ansible.sh}
 
   deployment_dns_node_add:

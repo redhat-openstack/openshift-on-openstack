@@ -33,9 +33,6 @@ systemctl status crond && systemctl stop crond
 retry yum install -y deltarpm || notify_failure "could not install deltarpm"
 retry yum -y update || notify_failure "could not update RPMs"
 
-# master
-retry yum install -y git httpd-tools || notify_failure "could not install httpd-tools"
-
 retry yum -y install docker || notify_failure "could not install docker"
 echo "INSECURE_REGISTRY='--insecure-registry 0.0.0.0/0'" >> /etc/sysconfig/docker
 systemctl enable docker
@@ -54,6 +51,14 @@ VG=docker-vg
 EOF
 
 /usr/bin/docker-storage-setup
+
+if [ "$SKIP_ANSIBLE" == "True" ]; then
+    notify_success "OpenShift node has been prepared."
+    exit 0
+fi
+
+# master
+retry yum install -y git httpd-tools || notify_failure "could not install httpd-tools"
 
 # NOTE: install the right Ansible version on RHEL7.1 and Centos 7.1:
 if ! rpm -q epel-release-7-5;then

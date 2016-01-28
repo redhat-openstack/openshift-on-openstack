@@ -198,6 +198,12 @@ parameters:
       List of policies applied on master nodes ServerGroup.
     default: ['anti-affinity']
 
+  skip_ansible:
+    type: boolean
+    description: >
+      Do not install Openshift using Ansible
+    default: false
+
 resources:
 
   fixed_network:
@@ -293,6 +299,7 @@ resources:
           deploy_router: {get_param: deploy_router}
           master_server_group: {get_resource: master_server_group}
           master_security_group: {get_resource: master_security_group}
+          skip_ansible: {get_param: skip_ansible}
 
   openshift_nodes:
     depends_on: external_router_interface
