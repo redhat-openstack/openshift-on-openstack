@@ -60,6 +60,10 @@ fi
 # master
 retry yum install -y git httpd-tools || notify_failure "could not install httpd-tools"
 
+# for centos openssl pkg is not included in pkg requirements yet,
+# make sure it's present
+yum -y install pyOpenSSL || notify_failure "could not install pyOpenSSL"
+
 # NOTE: install the right Ansible version on RHEL7.1 and Centos 7.1:
 if ! rpm -q epel-release-7-5;then
     retry yum -y install \
