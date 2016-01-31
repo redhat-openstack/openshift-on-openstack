@@ -13,8 +13,8 @@ else that's necessary to deploy OpenShift_ on OpenStack_.
 .. _OpenStack: http://www.openstack.org/
 
 
-Prerequisities
-==============
+Prerequisites
+=============
 
 1. OpenStack version Juno or later with the Heat, Neutron, Ceilometer services
 running
@@ -145,7 +145,7 @@ You can get the URL for the OpenShift Console (the web UI) from Heat by running
 
 Currently, the UI and the resolution for the public hostnames that will be associated
 to services running in OpenShift is dependent on the DNS created internally by
-the these Heat templates.
+these Heat templates.
 
 So to access the UI, you can get the DNS IP address by ``heat output-show
 my_openshift dns_ip`` and put ``nameserver $DNS_IP`` as the first entry in your
