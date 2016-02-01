@@ -304,6 +304,22 @@ resources:
             $DOMAINNAME: {get_param: domain_name}
           template: {get_file: fragments/infra-dns.sh}
 
+  tune_ansible:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config:
+        get_file: fragments/tune-ansible.sh
+
+  deployment_tune_ansible:
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      actions: ['CREATE']
+      config:
+        get_resource: tune_ansible
+      server:
+        get_resource: host
+
   node_add:
     type: OS::Heat::SoftwareConfig
     properties:

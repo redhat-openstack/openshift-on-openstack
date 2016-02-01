@@ -26,6 +26,9 @@ sed -i -e 's/^PEERDNS.*/PEERDNS="no"/' /etc/sysconfig/network-scripts/ifcfg-eth0
 # this path is not by default in sudo secure_path so ansible fails
 sed -i 's,secure_path = /sbin:/bin:/usr/sbin:/usr/bin,secure_path = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin,' /etc/sudoers
 
+# Required for SSH pipelining
+sed -i "s/^.*requiretty/#Defaults requiretty/" /etc/sudoers
+
 [ -e /run/ostree-booted ] && notify_success "OpenShift node has been prepared for running ansible."
 
 # Install Docker and prep storage
