@@ -1,6 +1,7 @@
 parameters:
   ssh_key_name: default
   server_image: rhel71
+  lb_image: rhel71
   flavor: m1.medium
   external_network: ext_net
   dns_nameserver: 8.8.4.4,8.8.8.8

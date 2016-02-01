@@ -63,6 +63,7 @@ Assuming your external network is called ``public``, your SSH key is ``default``
   parameters:
     ssh_key_name: default
     server_image: centos72
+    lb_image: centos72
     flavor: m1.medium
     external_network: public
     dns_nameserver: 8.8.4.4,8.8.8.8
@@ -181,7 +182,7 @@ A `customize-disk-image` script is provided to preinstall Openshift packages.
 ``./customize-disk-image --disk rhel7.2.qcow2 --sm-credentials user:password``
 
 The modified image must be uploaded into Glance and used as the server image
-for the heat stack with the `server_image` parameter.
+for the heat stack with the `server_image` and `lb_image` parameters.
 
 Copyright
 =========

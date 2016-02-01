@@ -19,6 +19,12 @@ parameters:
     constraints:
     - custom_constraint: glance.image
 
+  lb_image:
+    type: string
+    description: Name or ID of the loadbalancer host image registered with Glance
+    constraints:
+    - custom_constraint: glance.image
+
   flavor:
     type: string
     description: The Nova flavor to use for the OpenShift nodes
@@ -238,7 +244,7 @@ resources:
     depends_on: external_router_interface
     type: OS::LoadBalancer
     properties:
-      image: {get_param: server_image}
+      image: {get_param: lb_image}
       flavor: {get_param: flavor}
       key_name: {get_param: ssh_key_name}
       ssh_user: {get_param: ssh_user}
