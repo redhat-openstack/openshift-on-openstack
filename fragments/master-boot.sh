@@ -36,8 +36,6 @@ cd $HOME
 # hangs when ran inside cloud-init, temporary workaround is to stop
 # crond service so yum update doesn't try to start it
 systemctl status crond && systemctl stop crond
-retry yum install -y deltarpm || notify_failure "could not install deltarpm"
-retry yum -y update || notify_failure "could not update RPMs"
 
 retry yum -y install docker || notify_failure "could not install docker"
 echo "INSECURE_REGISTRY='--insecure-registry 0.0.0.0/0'" >> /etc/sysconfig/docker

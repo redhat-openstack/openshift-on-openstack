@@ -149,6 +149,7 @@ resources:
       - config: {get_resource: set_hostname}
       - config: {get_resource: included_files}
       - config: {get_resource: rhn_register}
+      - config: {get_resource: host_update}
       - config: {get_resource: node_boot}
 
   set_hostname:
@@ -203,6 +204,12 @@ resources:
             $RHN_PASSWORD: {get_param: rhn_password}
             $POOL_ID: {get_param: rhn_pool}
           template: {get_file: fragments/rhn-register.sh}
+
+  host_update:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        get_file: fragments/host-update.sh
 
   node_boot:
     type: OS::Heat::SoftwareConfig

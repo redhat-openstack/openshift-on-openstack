@@ -28,10 +28,6 @@ sed -i 's,secure_path = /sbin:/bin:/usr/sbin:/usr/bin,secure_path = /sbin:/bin:/
 
 [ -e /run/ostree-booted ] && notify_success "OpenShift node has been prepared for running ansible."
 
-# master and nodes
-retry yum install -y deltarpm
-retry yum -y update
-
 # Install Docker and prep storage
 retry yum -y install docker
 echo "INSECURE_REGISTRY='--insecure-registry 0.0.0.0/0'" >> /etc/sysconfig/docker

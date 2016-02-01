@@ -116,6 +116,7 @@ resources:
       - config: {get_resource: set_hostname}
       - config: {get_resource: included_files}
       - config: {get_resource: rhn_register}
+      - config: {get_resource: host_update}
 
   set_hostname:
     type: OS::Heat::CloudConfig
@@ -150,6 +151,12 @@ resources:
             $RHN_PASSWORD: {get_param: rhn_password}
             $POOL_ID: {get_param: rhn_pool}
           template: {get_file: fragments/rhn-register.sh}
+
+  host_update:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        get_file: fragments/host-update.sh
 
 outputs:
   floating_ip:
