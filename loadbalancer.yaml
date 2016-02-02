@@ -60,6 +60,15 @@ parameters:
   ansible_public_key:
     type: string
 
+  dns_ip:
+    type: string
+    description: IP address of the DNS server
+
+  timeout:
+    description: Time to wait until the master setup is ready.
+    type: number
+    default: 4000
+
 resources:
 
   floating_ip:
@@ -117,6 +126,7 @@ resources:
       - config: {get_resource: included_files}
       - config: {get_resource: rhn_register}
       - config: {get_resource: host_update}
+      - config: {get_resource: lb_boot}
 
   set_hostname:
     type: OS::Heat::CloudConfig
@@ -157,6 +167,25 @@ resources:
     properties:
       config:
         get_file: fragments/host-update.sh
+
+  lb_boot:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            $DNS_IP: {get_param: dns_ip}
+            $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
+          template: {get_file: fragments/lb-boot.sh}
+
+  wait_condition:
+    type: OS::Heat::WaitCondition
+    properties:
+      handle: {get_resource: wait_handle}
+      timeout: {get_param: timeout}
+
+  wait_handle:
+    type: OS::Heat::WaitConditionHandle
 
 outputs:
   floating_ip:

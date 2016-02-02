@@ -257,6 +257,7 @@ resources:
       fixed_network: {get_resource: fixed_network}
       fixed_subnet: {get_resource: fixed_subnet}
       ansible_public_key: {get_attr: [ansible_keys, public_key]}
+      dns_ip: {get_attr: [infra_floating_ip, floating_ip_address]}
 
   infra_host:
     depends_on: external_router_interface
