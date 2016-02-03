@@ -100,6 +100,9 @@ set_ansible_configuration defaults "fact_caching_timeout" "600"
 
 # Required for SSH pipelining
 sed -i "s/^.*requiretty/#Defaults requiretty/" /etc/sudoers
+# restart os-collect-config service to make sure that tty sudo change is
+# applied on it too
+systemctl restart --no-block os-collect-config
 
 # NOTE: the first ansible run hangs during the "Start and enable iptables
 # service" task. Doing it explicitly seems to fix that:
