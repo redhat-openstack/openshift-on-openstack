@@ -80,7 +80,7 @@ openshift_master_identity_providers:
     login: true
     challenge: true
     kind: HTPasswdPasswordIdentityProvider
-    filename: /etc/openshift/openshift-passwd
+    filename: /etc/origin/openshift-passwd
 openshift_use_openshift_sdn: $openshift_use_openshift_sdn
 openshift_use_flannel: $openshift_use_flannel
 EOF
