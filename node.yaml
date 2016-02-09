@@ -310,7 +310,7 @@ resources:
                 DOMAIN: {get_param: domain_name}
 
   deployment_run_ansible:
-    depends_on: deployment_dns_node_add
+    depends_on: [wait_condition, deployment_dns_node_add]
     type: OS::Heat::SoftwareDeployment
     properties:
       config:
