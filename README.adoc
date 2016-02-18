@@ -1,0 +1,248 @@
+
+= OpenShift on OpenStack
+
+
+== About
+
+A collection of documentation, https://wiki.openstack.org/wiki/Heat[Heat] templates, configuration and everything
+else that's necessary to deploy http://www.openshift.org/[OpenShift]
+on http://www.openstack.org/[OpenStack].
+
+This template uses Heat to create the OpenStack infrastructure
+components, then calls the https://github.com/openshift/openshift-ansible[OpenShift Ansible] installer playbooks to
+install and configure OpenShift on the VMs.
+
+
+== Prerequisites
+
+1. OpenStack version Juno or later with the Heat, Neutron, Ceilometer services
+running
+2. http://www.centos.org/[CentOS] 7.2 cloud image (we leverage cloud-init) loaded in Glance for OpenShift Origin Deployments.  https://access.redhat.com/downloads[RHEL]_ 7.2 cloud image if doing Atomic Enterprise or OpenShift Enterprise
+3. An SSH keypair loaded to Nova
+4. A (Neutron) network with a pool of floating IP addresses available
+
+CentOS and RHEL are the only tested distros for now.
+
+== Creating an All-In-One Demo Environment
+
+Following steps can be used to setup all-in-one testing/developer environment:
+
+```bash
+# OpenStack does not run with NetworkManager
+systemctl stop NetworkManager
+systemctl disable NetworkManager
+
+# The Packstack Installer is not supported for production but will work
+# for demonstrations
+yum -y install openstack-packstack libvirt git
+
+# Add room for images if /varlib is too small
+mv /var/lib/libvirt/images /home
+ln -s /home/images /var/lib/libvirt/images
+
+# Install openstack demonstrator with no real security
+#   This produces the keystonrc_admin file used below
+packstack --allinone --provision-all-in-one-ovs-bridge=y \
+  --os-heat-install=y --os-heat-cfn-install=y \
+  --keystone-admin-passwd=password --keystone-demo-passwd=password
+
+# Retrieve the Heat templates for OpenShift
+git clone https://github.com/redhat-openstack/openshift-on-openstack.git
+
+# Retrieve a compatible image for the OpenShift VMs
+curl -O http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
+
+# Set access environment parameters for the new OpenStack service
+source keystonerc_admin
+
+# Load the VM image into the store and make it available for creating VMs
+glance image-create --name centos72 --is-public True \
+  --disk-format qcow2 --container-format bare \
+  --file CentOS-7-x86_64-GenericCloud.qcow2
+
+# Install the current user's SSH key for access to VMs
+nova keypair-add --pub-key ~/.ssh/id_rsa.pub default
+```
+
+== Deployment
+
+You can pass all environment variables to heat on command line.  However, two example environment files have been given.
+
+* ``env_origin.yaml`` is an example of the variables to deploy an OpenShift Origin 3 environment.
+* ``env_aop.yaml`` is an example of the variables to deploy an Atomic Enterprise or OpenShift Enterprise 3 environment.  Note deployment type should be *openshift-enterprise* for OpenShift or *atomic-enterprise* for Atomic Enterprise.  Also, a valid RHN subscription is required for deployment.
+
+Assuming your external network is called ``public``, your SSH key is ``default`` and your CentOS 7.2 image is ``centos72`` and your domain name is ``example.com``, this is how you deploy OpenShift Origin:
+
+```yaml
+cat << EOF > openshift_parameters.yaml
+parameters:
+   # Use OpenShift Origin (vs Openshift Enterprise)
+   deployment_type: origin
+
+   # set SSH access to VMs
+   ssh_user: cloud-user
+   ssh_key_name: default
+
+   # Set the image type and size for the VMs
+   server_image: centos72
+   lb_image: centos72
+   flavor: m1.medium
+
+   # Set an existing network for inbound and outbound traffic
+   external_network: public
+   dns_nameserver: 8.8.4.4,8.8.8.8
+
+   # Define the host name templates for master and nodes
+   domain_name: "example.com"
+   dns_hostname: "ns"
+   master_hostname_prefix: "origin-master"
+   node_hostname_prefix: "origin-node"
+
+   # Allocate additional space for Docker images
+   master_docker_volume_size_gb: 25
+   node_docker_volume_size_gb: 25
+
+   # Specify the (initial) number of nodes to deploy
+   node_count: 2
+
+   # Add auxiliary services: OpenStack router and internal Docker registry
+   deploy_router: False
+   deploy_registry: False
+
+   # If using RHEL image, add RHN credentials for RPM installation on VMs
+   rhn_username: ""
+   rhn_password: ""
+   rhn_pool: '' # OPTIONAL
+EOF
+```
+
+```bash
+# retrieve the Heat template (if you haven't yet)
+git clone https://github.com/redhat-openstack/openshift-on-openstack.git
+
+# create a stack named 'my_openshift
+heat stack-create my_openshift -t 180 \
+  -e openshift_parameters.yaml \
+  -e openshift-on-openstack/env_single.yaml \
+  -f openshift-on-openstack/openshift.yaml
+```
+
+The ``node_count`` parameter specifies how many non-master OpenShift nodes you
+want to deploy. In the example above, we will deploy one master and two nodes.
+
+The templates will report stack completion back to Heat only when the whole
+OpenShift setup is finished.
+
+To confirm that everything is indeed ready, look for ``OpenShift has been
+installed.`` in the OpenShift master node data in the stack output:
+
+```bash
+heat output-show my_openshift master_data
+```
+
+== Multiple Master Nodes
+
+In the example above the `env_single.yaml` file is used to define a null load-balancer and only a single OpenShift master host for the demonstration.
+
+You can deploy OpenShift with multiple master hosts using the 'native'
+HA method by replacing that file with `env_ha.yaml` as seen
+below. (see
+https://docs.openshift.org/latest/install_config/install/advanced_install.html#multiple-masters
+for details):
+
+```bash
+heat stack-create my_openshift \
+   -e openshift_parameters.yaml \
+   -e openshift-on-openstack/env_ha.yaml \
+   -f openshift-on-openstack/openshift.yaml
+```
+
+Three master nodes and a loadbalancer will be deployed. Console and API URLs
+then point to the loadbalancer server which distributes requests across all
+three nodes. You can get the URLs from Heat by running
+`heat output-show my_openshift lb_console_url` and
+`heat output-show my_openshift lb_api_url`.
+
+== LDAP authentication
+
+You can use an external LDAP server to authenticate OpenShift users. Update
+parameters in `env_ldap.yaml` file and include this environment file
+when you create the stack.
+
+Example of `env_ldap.yaml` using an Active Directory server:
+
+```yaml
+parameter_defaults:
+   ldap_hostname: <ldap hostname>
+   ldap_ip: <ip of ldap server>
+   ldap_url: ldap://<ldap hostname>:389/CN=Users,DC=example,DC=openshift,DC=com?sAMAccountName
+   ldap_bind_dn: CN=Administrator,CN=Users,DC=example,DC=openshift,DC=com?sAMAccountName
+   ldap_bind_password: <admin password>
+```
+
+
+```bash
+heat stack-create my_openshift \
+  -e openshift_parameters.yaml \
+  -e openshift-on-openstack/env_ha.yaml \
+  -e openshift-on-openstack/env_ldap.yaml \
+  -f openshift-on-openstack/openshift.yaml
+```
+
+== Accessing the Web UI
+
+You can get the URL for the OpenShift Console (the web UI) from Heat by running
+`heat output-show my_openshift master_console_url`.
+
+Currently, the UI and the resolution for the public hostnames that will be associated
+to services running in OpenShift is dependent on the DNS created internally by
+these Heat templates.
+
+So to access the UI, you can get the DNS IP address by `heat output-show
+my_openshift dns_ip` and put `nameserver $DNS_IP` as the first entry in your
+`/etc/resolv.conf`.
+
+We plan to let you supply your own DNS that has the OpenShift cloud domain and
+all the nodes pre-configured and also to optionally have the UI server bind to
+its IP address instead of the hostname.
+
+== Retrieving the CA certificate
+
+You can retrieve the CA certificate that was generated during the Openshift
+installation by running
+
+```bash
+heat output-show --format=raw my_openshift ca_cert > ca.crt
+heat output-show --format=raw my_openshift ca_key > ca.key
+```
+== Current Status
+
+1. The CA certificate used with OpenShift is currently not configurable.
+2. The apps cloud domain is hardcoded for now. We need to make this configurable.
+
+== Prebuild images
+
+A `customize-disk-image` script is provided to preinstall Openshift packages.
+
+```bash
+./customize-disk-image --disk rhel7.2.qcow2 --sm-credentials user:password
+```
+
+The modified image must be uploaded into Glance and used as the server image
+for the heat stack with the `server_image` and `lb_image` parameters.
+
+== Copyright
+
+Copyright 2016 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
