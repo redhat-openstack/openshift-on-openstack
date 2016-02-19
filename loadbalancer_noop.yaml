@@ -60,6 +60,10 @@ parameters:
   ansible_public_key:
     type: string
 
+  dns_ip:
+    type: string
+    description: IP address of the DNS server
+
 outputs:
   floating_ip:
     value: ''

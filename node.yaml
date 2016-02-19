@@ -83,15 +83,15 @@ parameters:
     type: string
     default: ''
 
-  dns_node:
+  infra_node:
     type: string
     default: ''
 
-  dns_node_add:
+  infra_node_add:
     type: string
     default: ''
 
-  dns_node_cleanup:
+  infra_node_cleanup:
     type: string
     default: ''
 
@@ -149,6 +149,7 @@ resources:
       - config: {get_resource: set_hostname}
       - config: {get_resource: included_files}
       - config: {get_resource: rhn_register}
+      - config: {get_resource: host_update}
       - config: {get_resource: node_boot}
 
   set_hostname:
@@ -187,7 +188,7 @@ resources:
                       SUFFIX: {get_attr: [random_hostname_suffix, value]}
                 $NODE_DOMAIN: {get_param: domain_name}
               template: {get_file: fragments/etc-node-hosts}
-        - path: /usr/bin/retry
+        - path: /usr/local/bin/retry
           permissions: 0755
           content: {get_file: fragments/retry.sh}
         ssh_authorized_keys:
@@ -203,6 +204,12 @@ resources:
             $RHN_PASSWORD: {get_param: rhn_password}
             $POOL_ID: {get_param: rhn_pool}
           template: {get_file: fragments/rhn-register.sh}
+
+  host_update:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        get_file: fragments/host-update.sh
 
   node_boot:
     type: OS::Heat::SoftwareConfig
@@ -275,7 +282,7 @@ resources:
       server:
         get_param: master_node
 
-  deployment_dns_node_cleanup:
+  deployment_infra_node_cleanup:
     type: OS::Heat::SoftwareDeployment
     properties:
       actions: ['DELETE']
@@ -288,17 +295,17 @@ resources:
               SUFFIX: {get_attr: [random_hostname_suffix, value]}
               DOMAIN: {get_param: domain_name}
       config:
-        get_param: dns_node_cleanup
+        get_param: infra_node_cleanup
       server:
-        get_param: dns_node
+        get_param: infra_node
 
-  deployment_dns_node_add:
+  deployment_infra_node_add:
     type: OS::Heat::SoftwareDeployment
     properties:
       config:
-        get_param: dns_node_add
+        get_param: infra_node_add
       server:
-        get_param: dns_node
+        get_param: infra_node
       input_values:
         node_etc_host:
           str_replace:
@@ -310,7 +317,7 @@ resources:
                 DOMAIN: {get_param: domain_name}
 
   deployment_run_ansible:
-    depends_on: [wait_condition, deployment_dns_node_add]
+    depends_on: [wait_condition, deployment_infra_node_add]
     type: OS::Heat::SoftwareDeployment
     properties:
       config:

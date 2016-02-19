@@ -1,6 +1,10 @@
 #!/bin/bash
 set -eux
 
+# on Atomic host os-collect-config runs inside a container which is
+# fetched&started in another step
+[ -e /run/ostree-booted ] && exit 0
+
 if [[ `systemctl` =~ -\.mount ]]; then
 
     # if there is no system unit file, install a local unit
