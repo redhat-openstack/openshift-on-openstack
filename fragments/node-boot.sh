@@ -19,7 +19,7 @@ sed -i "s/^.*requiretty/#Defaults requiretty/" /etc/sudoers
 
 # master and nodes
 # Set the DNS to the one provided
-sed -i 's/search openstacklocal.*/&\nnameserver $DNS_IP/' /etc/resolv.conf
+[ "$SKIP_DNS" = "true" ] || sed -i 's/search openstacklocal.*/&\nnameserver $DNS_IP/' /etc/resolv.conf
 sed -i -e 's/^PEERDNS.*/PEERDNS="no"/' /etc/sysconfig/network-scripts/ifcfg-eth0
 
 # workaround for openshift-ansible - symlinks are created in /usr/local/bin but

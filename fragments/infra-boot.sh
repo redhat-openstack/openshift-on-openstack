@@ -24,7 +24,7 @@ if [ -e /run/ostree-booted ]; then
     # Set the DNS to the one provided
     cp /etc/resolv.conf /etc/resolv.conf.local
     # FIXME - the clean way would be to set nameserver for openstack's neutron network
-    sed -i 's/search openstacklocal.*/&\nnameserver $DNS_IP/' /etc/resolv.conf
+    [ "$SKIP_DNS" = "true" ] || sed -i 's/search openstacklocal.*/&\nnameserver $DNS_IP/' /etc/resolv.conf
 
     HOME=/root
     mv /etc/systemd/system/multi-user.target.wants/docker-storage-setup.service $HOME
@@ -51,9 +51,11 @@ EOF
     docker run -d --privileged --ipc=host --net=host --pid=host -e HOST=/host -e NAME=rhel-tools -v /run:/run -v /var/log:/var/log -v /etc/localtime:/etc/localtime -v ~/.ssh:/root/.ssh -v /:/host -v /etc/ansible:/etc/ansible -v /var/lib/heat-cfntools:/var/lib/heat-cfntools --name heat-agent jprovaznik/ooshift-heat-agent || notify_failure "failed to run heat-agent docker image"
 else
     systemctl is-enabled os-collect-config || notify_failure "os-collect-config service is not installed or enabled"
-    yum install -y dnsmasq || notify_failure "can't install dnsmasq"
-    systemctl enable dnsmasq || notify_failure "can't enable dnsmasq"
-    systemctl restart dnsmasq || notify_failure "can't start dnsmasq"
+    if [ "$SKIP_DNS" != "true" ]; then
+        yum install -y dnsmasq || notify_failure "can't install dnsmasq"
+        systemctl enable dnsmasq || notify_failure "can't enable dnsmasq"
+        systemctl restart dnsmasq || notify_failure "can't start dnsmasq"
+    fi
 
     yum install -y git httpd-tools || notify_failure "could not install httpd-tools"
 

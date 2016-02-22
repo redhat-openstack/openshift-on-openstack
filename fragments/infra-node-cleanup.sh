@@ -1,6 +1,8 @@
 #!/bin/bash
 set -eux
 
+[ "$SKIP_DNS" = "true" ] && exit 0
+
 [ -e /run/ostree-booted ] && etc_file=/host/etc/hosts || etc_file=/etc/hosts
 cp $etc_file ${etc_file}.bkp
 grep -v "$node_name" ${etc_file}.bkp > $etc_file

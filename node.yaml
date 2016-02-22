@@ -137,7 +137,7 @@ parameters:
     default: ''
 
   timeout:
-    description: Time to wait until the master setup is ready.
+    description: Time to wait until the node is ready.
     type: number
     default: 4000
 
@@ -145,6 +145,9 @@ parameters:
     description: >
       A reference to the OpenStack stack id
     type: json
+
+  skip_dns:
+    type: boolean
 
 resources:
 
@@ -270,6 +273,7 @@ resources:
         str_replace:
           params:
             $DNS_IP: {get_param: dns_ip}
+            $SKIP_DNS: {get_param: skip_dns}
             $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
           template: {get_file: fragments/node-boot.sh}
 

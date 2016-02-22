@@ -54,6 +54,9 @@ parameters:
     description: address of a dns nameserver reachable in your environment
     default: 8.8.8.8
 
+  skip_dns:
+    type: boolean
+    default: false
 
   master_count:
     type: number
@@ -312,6 +315,7 @@ resources:
       os_password: {get_param: os_password}
       os_tenant_name: {get_param: os_tenant_name}
       os_region_name: {get_param: os_region_name}
+      skip_dns: {get_param: skip_dns}
       lb_ip: {get_attr: [lb_floating_ip, floating_ip_address]}
       lb_hostname:
         str_replace:
@@ -357,6 +361,7 @@ resources:
           deploy_router: {get_param: deploy_router}
           master_server_group: {get_resource: master_server_group}
           master_security_group: {get_resource: master_security_group}
+          skip_dns: {get_param: skip_dns}
 
   openshift_nodes:
     depends_on: external_router_interface
@@ -393,6 +398,7 @@ resources:
           infra_node: {get_attr: [infra_host, resource.host]}
           infra_node_cleanup: {get_attr: [infra_host, resource.node_cleanup]}
           infra_node_add: {get_attr: [infra_host, resource.node_add]}
+          skip_dns: {get_param: skip_dns}
           metadata: {"metering.stack": {get_param: "OS::stack_id"}}
           all_master_nodes:
             list_join:
