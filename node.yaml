@@ -309,41 +309,8 @@ resources:
       floating_network: {get_param: external_network}
       port_id: {get_resource: port}
 
-  # An operation to remove this node from the Kubernetes cluster
-  master_node_cleanup:
-    type: OS::Heat::SoftwareConfig
-    properties:
-      group: script
-      inputs:
-        - name: node_name
-      outputs:
-        - name: result
-      config: |
-        #!/bin/bash -x
-        oc --config ~/.kube/config delete node "$node_name"
-        cp /var/lib/openshift_nodes /var/lib/openshift_nodes.bkp
-        grep -v "$node_name" /var/lib/openshift_nodes.bkp > /var/lib/openshift_nodes
-        echo "Deleted node $node_name"
-
-  # activation hook for removing the node from the Kubernetes cluster
-  deployment_master_node_cleanup:
-    type: OS::Heat::SoftwareDeployment
-    properties:
-      actions: ['DELETE']
-      input_values:
-        node_name:
-          str_replace:
-            template: "HOST-SUFFIX.DOMAIN"
-            params:
-              HOST: {get_param: hostname}
-              SUFFIX: {get_attr: [random_hostname_suffix, value]}
-              DOMAIN: {get_param: domain_name}
-      config:
-        get_resource: infra_node_cleanup
-      server:
-        get_param: infra_node
-
-  # activation hook for removing the node from DNS
+  # activation hook for removing the node from DNS and from the Kubernetes
+  # cluster
   deployment_infra_node_cleanup:
     type: OS::Heat::SoftwareDeployment
     properties:
@@ -361,7 +328,7 @@ resources:
       server:
         get_param: infra_node
 
-  # activation hook to add the node to DNS
+  # activation hook to add the node to DNS and Kubernetes cluster
   deployment_infra_node_add:
     type: OS::Heat::SoftwareDeployment
     properties:
