@@ -7,12 +7,20 @@ description: >
 
 parameters:
 
+  # Access to the VMs
+  ssh_user:
+    type: string
+    description: >
+      The SSH user available on all nodes.
+    default: 'cloud-user'
+
   ssh_key_name:
     type: string
     description: Name of the SSH keypair registered with Nova
     constraints:
     - custom_constraint: nova.keypair
 
+  # VM characteristics
   server_image:
     type: string
     description: Name or ID of the host image registered with Glance
@@ -32,6 +40,8 @@ parameters:
     constraints:
     - custom_constraint: nova.flavor
 
+
+  # Networks to connect to or create
   external_network:
     type: string
     description: >
@@ -50,11 +60,19 @@ parameters:
     description: address of a dns nameserver reachable in your environment
     default: 8.8.8.8
 
+
   master_count:
     type: number
     description: >
       Number of non-master nodes to create.
     default: 1
+
+  master_server_group_policies:
+    type: comma_delimited_list
+    description: >
+      List of policies applied on master nodes ServerGroup.
+    default: ['anti-affinity']
+
 
   node_count:
     type: number
@@ -62,29 +80,7 @@ parameters:
       Number of non-master nodes to create.
     default: 1
 
-  rhn_username:
-    type: string
-    description: >
-      The username for registering the hosts with RHN. If empty, they will not
-      be registered.
-    default: ''
-
-  rhn_password:
-    type: string
-    description: >
-      The password for registering the hosts with RHN. If empty, they will not
-      be registered.
-    hidden: true
-    default: ''
-
-  rhn_pool:
-    type: string
-    description: >
-      The pool to attach. Will use `subscription-manager attach --auto` if left
-      blank.
-    hidden: true
-    default: ''
-
+  # VM Host naming: root domain and host names
   domain_name:
     type: string
     description: >
@@ -120,23 +116,7 @@ parameters:
       The hostname prefix that is going to be set for the nodes.
     default: "openshift-node"
 
-  deployment_type:
-    type: string
-    description: >
-      The type of Openshift deployment.  origin and openshift-enterprise
-      are valid.
-    default: "origin"
-    constraints:
-      - allowed_values:
-        - origin
-        - openshift-enterprise
-
-  ssh_user:
-    type: string
-    description: >
-      The SSH user available on all nodes.
-    default: 'cloud-user'
-
+  # Persistant(?) Storage for Docker
   master_docker_volume_size_gb:
     type: number
     description: >
@@ -151,19 +131,8 @@ parameters:
       storage
     default: 25
 
-  openshift_ansible_git_url:
-    type: string
-    description: >
-      The URL to the git repository with the openshift-ansible templates to
-      clone.
-    default: ""
 
-  openshift_ansible_git_rev:
-    type: string
-    description: >
-      The git revision of the openshift-ansible repository to check out to.
-    default: ""
-
+  # Node scaling parameters
   autoscaling:
     type: boolean
     description: >
@@ -182,6 +151,7 @@ parameters:
       Maximum number of openshift nodes if autoscaling is enabled.
     default: 5
 
+  # Internal and Auxiliary Services
   openshift_sdn:
     type: string
     description: Software to get an overlay network up and running for Openshift
@@ -204,20 +174,64 @@ parameters:
       Specify if a router should be deployed.
     default: false
 
-  master_server_group_policies:
-    type: comma_delimited_list
-    description: >
-      List of policies applied on master nodes ServerGroup.
-    default: ['anti-affinity']
-
+  # OpenShift configuration: ansible controls
   skip_ansible:
     type: boolean
     description: >
       Do not install Openshift using Ansible
     default: false
 
+  openshift_ansible_git_url:
+    type: string
+    description: >
+      The URL to the git repository with the openshift-ansible templates to
+      clone.
+    default: ""
+
+  openshift_ansible_git_rev:
+    type: string
+    description: >
+      The git revision of the openshift-ansible repository to check out to.
+    default: ""
+
+  deployment_type:
+    type: string
+    description: >
+      The type of Openshift deployment.  origin and openshift-enterprise
+      are valid.
+    default: "origin"
+    constraints:
+      - allowed_values:
+        - origin
+        - openshift-enterprise
+
+  # Red Hat subscription parameters
+  rhn_username:
+    type: string
+    description: >
+      The username for registering the hosts with RHN. If empty, they will not
+      be registered.
+    default: ''
+
+  rhn_password:
+    type: string
+    description: >
+      The password for registering the hosts with RHN. If empty, they will not
+      be registered.
+    hidden: true
+    default: ''
+
+  rhn_pool:
+    type: string
+    description: >
+      The pool to attach. Will use `subscription-manager attach --auto` if left
+      blank.
+    hidden: true
+    default: ''
+
 resources:
 
+  # Network Components
   fixed_network:
     type: OS::Neutron::Net
 
@@ -240,6 +254,7 @@ resources:
       router_id: {get_resource: external_router}
       subnet: {get_resource: fixed_subnet}
 
+  # VM Host definitions
   lb_host:
     depends_on: external_router_interface
     type: OS::LoadBalancer
@@ -362,6 +377,7 @@ resources:
               - " "
               - {get_attr: [openshift_masters, hostname]}
 
+  # Scaling and Operational Controls
   scale_up_policy:
     type: OS::Heat::ScalingPolicy
     properties:
@@ -447,6 +463,7 @@ resources:
             STACK: {get_param: "OS::stack_id"}
       save_private_key: True
 
+  # OpenShift web and REST API network controls
   master_server_group:
     type: OS::Nova::ServerGroup
     properties:
@@ -482,6 +499,8 @@ outputs:
   lb_api_url:
     description: URL entrypoint to the OpenShift API
     value: {get_attr: [lb_host, api_url]}
+
+
   master_console_url:
     description: URL of the OpenShift web console
     value:
@@ -497,9 +516,11 @@ outputs:
   #master_data:
   #  description: Status of boot setup on the master.
   #  value: {get_attr: [openshift_master, wc_data]}
+
   host_ips:
     description: IP addresses of the OpenShift nodes
     value: {get_attr: [openshift_nodes, outputs_list, ip_address]}
+
   scale_up_url:
     description: >
       This URL is the webhook to scale up the autoscaling group.  You
@@ -512,6 +533,7 @@ outputs:
       You can invoke the scale-down operation by doing an HTTP POST to
       this URL; no body nor extra headers are needed.
     value: {get_attr: [scale_down_policy, alarm_url]}
+
   ca_cert:
     description: Openshift CA certificate.
     value: {"Fn::Select": ["0", {get_attr: [openshift_nodes, outputs_list, ca_cert]}]}
