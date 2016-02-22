@@ -257,12 +257,7 @@ resources:
   host:
     type: OS::Nova::Server
     properties:
-      name:
-        str_replace:
-          template: "HOST.DOMAIN"
-          params:
-            HOST: {get_param: hostname}
-            DOMAIN: {get_param: domain_name}
+      name: {get_param: hostname}
       admin_user: {get_param: ssh_user}
       image: {get_param: image}
       flavor: {get_param: flavor}
@@ -297,6 +292,7 @@ resources:
             $SSH_USER: {get_param: ssh_user}
             $DEPLOYMENT_TYPE: {get_param: deployment_type}
             $LB_HOSTNAME: {get_param: lb_hostname}
+            $LB_IP: {get_param: lb_ip}
             $LDAP_URL: {get_param: ldap_url}
             $LDAP_PREFERRED_USERNAME: {get_param: ldap_preferred_username}
             $LDAP_BIND_DN: {get_param: ldap_bind_dn}

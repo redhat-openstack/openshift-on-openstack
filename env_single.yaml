@@ -1,5 +1,0 @@
-# map loadbalancer resource type to a mock definition of loadbalancer which
-# actually doesn't create any resources. This can be replaced in Libery
-# by using OS::Heat::None resource type
-resource_registry:
-    OS::LoadBalancer: loadbalancer_noop.yaml

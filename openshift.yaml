@@ -27,12 +27,6 @@ parameters:
     constraints:
     - custom_constraint: glance.image
 
-  lb_image:
-    type: string
-    description: Name or ID of the loadbalancer host image registered with Glance
-    constraints:
-    - custom_constraint: glance.image
-
   flavor:
     type: string
     description: The Nova flavor to use for the OpenShift nodes
@@ -86,17 +80,11 @@ parameters:
     description: >
       The domain name that is going to be used as the base for all hostnames.
 
-  dns_hostname:
-    type: string
-    description: >
-      The hostname that is going to be set for the DNS server.
-    default: "ns"
-
   lb_hostname:
     type: string
     description: >
       The hostname that is going to be set for the loadbalancer server.
-    default: ''
+    default: 'lb'
 
   infra_hostname:
     type: string
@@ -104,17 +92,17 @@ parameters:
       The hostname that is going to be set for the dedicated infra node.
     default: 'infra'
 
-  master_hostname_prefix:
+  master_hostname:
     type: string
     description: >
       The hostname that is going to be set for the master.
-    default: "openshift-master"
+    default: "master"
 
-  node_hostname_prefix:
+  node_hostname:
     type: string
     description: >
-      The hostname prefix that is going to be set for the nodes.
-    default: "openshift-node"
+      The hostname that is going to be set for the nodes.
+    default: "node"
 
   # Persistant(?) Storage for Docker
   master_docker_volume_size_gb:
@@ -285,25 +273,6 @@ resources:
       subnet: {get_resource: fixed_subnet}
 
   # VM Host definitions
-  lb_host:
-    depends_on: external_router_interface
-    type: OS::LoadBalancer
-    properties:
-      image: {get_param: lb_image}
-      flavor: {get_param: flavor}
-      key_name: {get_param: ssh_key_name}
-      ssh_user: {get_param: ssh_user}
-      rhn_username: {get_param: rhn_username}
-      rhn_password: {get_param: rhn_password}
-      rhn_pool: {get_param: rhn_pool}
-      hostname: {get_param: lb_hostname}
-      domain_name: {get_param: domain_name}
-      external_network: {get_param: external_network}
-      fixed_network: {get_resource: fixed_network}
-      fixed_subnet: {get_resource: fixed_subnet}
-      ansible_public_key: {get_attr: [ansible_keys, public_key]}
-      dns_ip: {get_attr: [infra_floating_ip, floating_ip_address]}
-
   infra_host:
     depends_on: external_router_interface
     type: infra.yaml
@@ -315,7 +284,12 @@ resources:
       rhn_username: {get_param: rhn_username}
       rhn_password: {get_param: rhn_password}
       rhn_pool: {get_param: rhn_pool}
-      hostname: {get_param: infra_hostname}
+      hostname:
+        str_replace:
+          template: "%stackname%-%hostname%"
+          params:
+            '%stackname%': {get_param: 'OS::stack_name'}
+            '%hostname%': {get_param: infra_hostname}
       domain_name: {get_param: domain_name}
       external_network: {get_param: external_network}
       fixed_network: {get_resource: fixed_network}
@@ -328,8 +302,6 @@ resources:
       dns_ip: {get_attr: [infra_floating_ip, floating_ip_address]}
       port: {get_resource: infra_port}
       docker_volume_size: {get_param: master_docker_volume_size_gb}
-      lb_hostname: {get_param: lb_hostname}
-      lb_ip: {get_attr: [lb_host, floating_ip]}
       deploy_registry: {get_param: deploy_registry}
       deploy_router: {get_param: deploy_router}
       skip_ansible: {get_param: skip_ansible}
@@ -340,6 +312,13 @@ resources:
       os_password: {get_param: os_password}
       os_tenant_name: {get_param: os_tenant_name}
       os_region_name: {get_param: os_region_name}
+      lb_ip: {get_attr: [lb_floating_ip, floating_ip_address]}
+      lb_hostname:
+        str_replace:
+          template: "%stackname%-%hostname%"
+          params:
+            '%stackname%': {get_param: 'OS::stack_name'}
+            '%hostname%': {get_param: lb_hostname}
 
   openshift_masters:
     depends_on: external_router_interface
@@ -359,7 +338,12 @@ resources:
           rhn_pool: {get_param: rhn_pool}
           deployment_type: {get_param: deployment_type}
           docker_volume_size: {get_param: master_docker_volume_size_gb}
-          hostname_prefix: {get_param: master_hostname_prefix}
+          hostname:
+            str_replace:
+              template: "%stackname%-%hostname%-%index%"
+              params:
+                '%stackname%': {get_param: 'OS::stack_name'}
+                '%hostname%': {get_param: master_hostname}
           domain_name: {get_param: domain_name}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
           ansible_private_key: {get_attr: [ansible_keys, private_key]}
@@ -368,7 +352,6 @@ resources:
           fixed_network: {get_resource: fixed_network}
           fixed_subnet: {get_resource: fixed_subnet}
           external_network: {get_param: external_network}
-          lb_hostname: {get_param: lb_hostname}
           openshift_sdn: {get_param: openshift_sdn}
           deploy_registry: {get_param: deploy_registry}
           deploy_router: {get_param: deploy_router}
@@ -397,12 +380,16 @@ resources:
           rhn_username: {get_param: rhn_username}
           rhn_password: {get_param: rhn_password}
           rhn_pool: {get_param: rhn_pool}
-          hostname_prefix: {get_param: node_hostname_prefix}
+          hostname:
+            str_replace:
+              template: "%stackname%-%hostname%"
+              params:
+                '%stackname%': {get_param: 'OS::stack_name'}
+                '%hostname%': {get_param: node_hostname}
           domain_name: {get_param: domain_name}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
-          #master_node: {get_attr: [openshift_masters, resource.0.host]}
-          master_node: {get_attr: [infra_host, resource.host]}
-          master_run_ansible: {get_attr: [infra_host, resource.run_ansible]}
+          infra_node: {get_attr: [infra_host, resource.host]}
+          infra_run_ansible: {get_attr: [infra_host, resource.run_ansible]}
           infra_node: {get_attr: [infra_host, resource.host]}
           infra_node_cleanup: {get_attr: [infra_host, resource.node_cleanup]}
           infra_node_add: {get_attr: [infra_host, resource.node_add]}
@@ -518,39 +505,69 @@ resources:
         port_range_min: 0
         port_range_max: 65535
 
+  lb:
+    type: OS::Neutron::LoadBalancer
+    properties:
+      protocol_port: 8443
+      pool_id: {get_resource: lb_pool}
+      members: {get_attr: [openshift_masters, host]}
+
+  lb_pool:
+    type: OS::Neutron::Pool
+    properties:
+      name: lb_pool
+      description: Load balancer for OpenShift hosts.
+      protocol: HTTPS
+      subnet_id: {get_resource: fixed_subnet}
+      lb_method: ROUND_ROBIN
+      monitors: [{get_resource: lb_monitor}]
+      vip:
+        protocol_port: 8443
+        session_persistence:
+          type: SOURCE_IP
+
+  lb_monitor:
+    type: OS::Neutron::HealthMonitor
+    properties:
+      type: TCP
+      delay: 15
+      max_retries: 5
+      timeout: 10
+
+  lb_floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: {get_param: external_network}
+      port_id: {get_attr: [lb_pool, vip, port_id]}
+
 outputs:
-  # TODO: return the master's certificate authority here so we can use the CLI
-  # outside of the host.
-  # It's stored at `/etc/openshift/master/ca.crt`
-  #master_ip:
-  #  description: IP address of the OpenShift master node
-  #  value: {get_attr: [master_floating_ip, floating_ip_address]}
   dns_ip:
     description: IP address of the DNS server OpenShift relies on
     value: {get_attr: [infra_floating_ip, floating_ip_address]}
-  lb_console_url:
-    description: URL of the OpenShift web console
-    value: {get_attr: [lb_host, console_url]}
-  lb_api_url:
-    description: URL entrypoint to the OpenShift API
-    value: {get_attr: [lb_host, api_url]}
 
+  loadbalancer_ip:
+    description: External IP address of the loadbalancer for master nodes.
+    value: {get_attr: [lb_floating_ip, floating_ip_address]}
 
-  master_console_url:
+  console_url:
     description: URL of the OpenShift web console
     value:
-      list_join:
-        - ","
-        - {get_attr: [openshift_masters, console_url]}
-  master_api_url:
+      str_replace:
+        template: "https://%stackname%-%hostname%.%domainname%:8443/console/"
+        params:
+          '%stackname%': {get_param: 'OS::stack_name'}
+          '%hostname%': {get_param: lb_hostname}
+          '%domainname%': {get_param: domain_name}
+
+  api_url:
     description: URL entrypoint to the OpenShift API
     value:
-      list_join:
-        - ","
-        - {get_attr: [openshift_masters, api_url]}
-  #master_data:
-  #  description: Status of boot setup on the master.
-  #  value: {get_attr: [openshift_master, wc_data]}
+      str_replace:
+        template: "https://%stackname%-%hostname%.%domainname%:8443/"
+        params:
+          '%stackname%': {get_param: 'OS::stack_name'}
+          '%hostname%': {get_param: lb_hostname}
+          '%domainname%': {get_param: domain_name}
 
   host_ips:
     description: IP addresses of the OpenShift nodes
@@ -562,6 +579,7 @@ outputs:
       can invoke the scale-up operation by doing an HTTP POST to this
       URL; no body nor extra headers are needed.
     value: {get_attr: [scale_up_policy, alarm_url]}
+
   scale_dn_url:
     description: >
       This URL is the webhook to scale down the autoscaling group.
@@ -572,6 +590,7 @@ outputs:
   ca_cert:
     description: Openshift CA certificate.
     value: {"Fn::Select": ["0", {get_attr: [openshift_nodes, outputs_list, ca_cert]}]}
+
   ca_key:
     description: Openshift CA certificate key.
     value: {"Fn::Select": ["0", {get_attr: [openshift_nodes, outputs_list, ca_key]}]}

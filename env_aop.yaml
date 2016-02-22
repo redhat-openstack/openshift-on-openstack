@@ -1,7 +1,6 @@
 parameters:
   ssh_key_name: default
   server_image: rhel71
-  lb_image: rhel71
   flavor: m1.medium
   external_network: ext_net
   dns_nameserver: 8.8.4.4,8.8.8.8
@@ -11,9 +10,8 @@ parameters:
   rhn_pool: ''
   deployment_type: openshift-enterprise
   domain_name: "example.com"
-  dns_hostname: "ns"
-  master_hostname_prefix: "openshift-master"
-  node_hostname_prefix: "openshift-node"
+  master_hostname: "openshift-master"
+  node_hostname: "openshift-node"
   ssh_user: cloud-user
   master_docker_volume_size_gb: 25
   node_docker_volume_size_gb: 25
