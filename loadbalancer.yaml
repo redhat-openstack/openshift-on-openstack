@@ -8,61 +8,89 @@ description: >
 parameters:
 
   key_name:
+    description: >
+      A pre-submitted SSH key to access the VM hosts
     type: string
     constraints:
     - custom_constraint: nova.keypair
 
   image:
+    description: >
+      Select a base image to use for the infrastructure server
     type: string
     constraints:
     - custom_constraint: glance.image
 
   flavor:
+    description: >
+      Define the hardware characteristics for the VMs: CPU, Memory, base disk
     type: string
     constraints:
     - custom_constraint: nova.flavor
 
   hostname:
+    description: >
+      The load balancer hostname portion of the FQDN
     type: string
 
   domain_name:
+    description: >
+      All VMs will be placed in this domain
     type: string
 
   rhn_username:
+    description: >
+      A valid user with entitlements to RHEL and OpenShift software repos
     type: string
 
   rhn_password:
+    description: >
+      The password for the RHN user
     type: string
     hidden: true
 
   rhn_pool:
+    description: >
+      A subscription pool containing the RHEL and OpenShift software repos
+      OPTIONAL
     type: string
     hidden: true
 
   ssh_user:
+    description: >
+      The user for SSH access to the VM hosts
     type: string
 
   external_network:
+    description: >
+      The name of the inbound access network
     type: string
     constraints:
     - custom_constraint: neutron.network
 
   fixed_network:
+    description: >
+      The name or ID of the internal network
     type: string
     constraints:
     - custom_constraint: neutron.network
 
   fixed_subnet:
+    description: >
+      The name or ID of the internal IPv4 space
     type: string
     constraints:
     - custom_constraint: neutron.subnet
 
   ansible_public_key:
+    description: >
+      The SSH public key that Ansible will use to access master and node hosts
+      This will be placed on each VM host in /root/.ssh/authorized_keys
     type: string
 
   dns_ip:
+    description: IP address of the DNS server for the OpenShift service
     type: string
-    description: IP address of the DNS server
 
   timeout:
     description: Time to wait until the master setup is ready.
@@ -71,12 +99,14 @@ parameters:
 
 resources:
 
+  # The inbound IP address of the load balancer on the public network
   floating_ip:
     type: OS::Neutron::FloatingIP
     properties:
       floating_network: {get_param: external_network}
       port_id: {get_resource: port}
 
+  # bind the IP to the host with security port filters
   port:
     type: OS::Neutron::Port
     properties:
@@ -87,6 +117,7 @@ resources:
       - subnet: {get_param: fixed_subnet}
       replacement_policy: AUTO
 
+  # Define network access policy for access to the laod balancer
   security_group:
     type: OS::Neutron::SecurityGroup
     properties:
@@ -100,6 +131,7 @@ resources:
         port_range_min: 0
         port_range_max: 65535
 
+  # The VM which will host the load balancer service
   host:
     type: OS::Nova::Server
     properties:
@@ -118,6 +150,7 @@ resources:
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
 
+  # Collect a set of host configuration information in a single structure
   init:
     type: OS::Heat::MultipartMime
     properties:
@@ -128,6 +161,7 @@ resources:
       - config: {get_resource: host_update}
       - config: {get_resource: lb_boot}
 
+  # Compose the FQDN and set the hostname in the cloud-init data structure
   set_hostname:
     type: OS::Heat::CloudConfig
     properties:
@@ -140,6 +174,7 @@ resources:
               HOST: {get_param: hostname}
               DOMAIN: {get_param: domain_name}
 
+  # Compile a set of standard configuration files to provide identity and access
   included_files:
     type: OS::Heat::CloudConfig
     properties:
@@ -151,6 +186,7 @@ resources:
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
 
+  # Connect to a software source for updates on RHEL
   rhn_register:
     type: OS::Heat::SoftwareConfig
     properties:
@@ -162,12 +198,14 @@ resources:
             $POOL_ID: {get_param: rhn_pool}
           template: {get_file: fragments/rhn-register.sh}
 
+  # Insure that the host software is current
   host_update:
     type: OS::Heat::SoftwareConfig
     properties:
       config:
         get_file: fragments/host-update.sh
 
+  # Prepare the host for SSH access for ansible
   lb_boot:
     type: OS::Heat::SoftwareConfig
     properties:
@@ -178,20 +216,26 @@ resources:
             $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
           template: {get_file: fragments/lb-boot.sh}
 
+  # Wait for the load balancer host to complete cloud-init or time out
   wait_condition:
     type: OS::Heat::WaitCondition
     properties:
       handle: {get_resource: wait_handle}
       timeout: {get_param: timeout}
 
+  # Provide a curl CLI to the cloud-init script.  On completion, notify Heat
   wait_handle:
     type: OS::Heat::WaitConditionHandle
 
 outputs:
   floating_ip:
+    description: >
+      The inbound IP address on the public network for the load balancer
     value: {get_attr: [floating_ip, floating_ip_address]}
 
   console_url:
+    description: >
+      Compose the full URL for the Web UI on the load balancer
     value:
       str_replace:
         params:
@@ -200,6 +244,8 @@ outputs:
         template: "https://HOSTNAME.DOMAINNAME:8443/console/"
 
   api_url:
+    description: >
+      Compose the full URL for the REST API on the load balancer
     value:
       str_replace:
         params:
