@@ -8,90 +8,131 @@ description: >
 parameters:
 
   key_name:
+    description: >
+      A pre-submitted SSH key to access the VM hosts
     type: string
     constraints:
     - custom_constraint: nova.keypair
 
   image:
+    description: >
+      Select a base image to use for the infrastructure server
     type: string
     constraints:
     - custom_constraint: glance.image
 
   flavor:
+    description: >
+      Define the hardware characteristics for the VMs: CPU, Memory, base disk
     type: string
     constraints:
     - custom_constraint: nova.flavor
 
   external_network:
+    description: >
+      The name of the inbound access network
     type: string
     constraints:
     - custom_constraint: neutron.network
 
   fixed_network:
+    description: >
+      The name or ID of the internal network
     type: string
     constraints:
     - custom_constraint: neutron.network
 
   fixed_subnet:
+    description: >
+      The name or ID of the internal IPv4 space
     type: string
     constraints:
     - custom_constraint: neutron.subnet
 
   dns_ip:
+    description: IP address of the DNS server which serves this domain
     type: string
-    description: IP address of the DNS server
 
   docker_volume_size:
-    type: number
     description: >
       size of a cinder volume in GB to allocate to docker for container/image
       storage
+    type: number
     default: 25
 
   rhn_username:
+    description: >
+      A valid user with entitlements to RHEL and OpenShift software repos
     type: string
 
   rhn_password:
+    description: >
+      The password for the RHN user
     type: string
     hidden: true
   
   rhn_pool:
+    description: >
+      A subscription pool containing the RHEL and OpenShift software repos
+      OPTIONAL
     type: string
     hidden: true
 
   hostname_prefix:
+    description: >
+      A string to identify node hostnames.  Each node will also have a
+      unique random substring attached
     type: string
 
   domain_name:
+    description: >
+      The DNS domain suffix. All VMs will be placed in this domain
     type: string
 
   ansible_public_key:
+    description: >
+      The SSH public key that Ansible will use to access master and node hosts
+      This will be placed on each VM host in /root/.ssh/authorized_keys
     type: string
 
   ssh_user:
+    description: >
+      The user for SSH access to the VM hosts
     type: string
 
   master_node:
+    description: >
+      The name or ID of an OpenShift master instance
     type: string
     default: ''
 
   all_master_nodes:
+    description: >
+      A list of all the master host replicas
     type: string
     default: ''
 
   master_run_ansible:
+    description: >
+      Operation that runs the ansible playbooks to configure this node.
     type: string
     default: ''
 
   infra_node:
+    description:
+      A reference to the infrastructure VM resource
     type: string
     default: ''
 
   infra_node_add:
+    description: >
+      Operation that adds the node to the infrastructure server DNS
     type: string
     default: ''
 
   infra_node_cleanup:
+    description: >
+      Operation that removes the node from the infrastructure DNS
     type: string
     default: ''
 
@@ -101,16 +142,20 @@ parameters:
     default: 4000
 
   metadata:
+    description: >
+      A reference to the OpenStack stack id
     type: json
 
 resources:
 
+  # Generate a string to distinguish one node from the others
   random_hostname_suffix:
     type: OS::Heat::RandomString
     properties:
       character_classes: [{"class": lowercase}, {"class": digits}]
       length: 8
 
+  # Create the VM to house the OpenShift node
   host:
     type: OS::Nova::Server
     properties:
@@ -131,17 +176,20 @@ resources:
       user_data: {get_resource: init}
       metadata: {get_param: metadata}
 
+  # Create an external volume to contain the Docker containers and images
   docker_volume:
     type: OS::Cinder::Volume
     properties:
       size: {get_param: docker_volume_size}
 
+  # Bind the external storage to the VM
   docker_volume_attach:
     type: OS::Cinder::VolumeAttachment
     properties:
       instance_uuid: {get_resource: host}
       volume_id: {get_resource: docker_volume}
 
+  # Collect the node configuration information in one structure
   init:
     type: OS::Heat::MultipartMime
     properties:
@@ -152,6 +200,7 @@ resources:
       - config: {get_resource: host_update}
       - config: {get_resource: node_boot}
 
+  # Compose the node identifiers: hostname and FQDN: provide them to cloud-init
   set_hostname:
     type: OS::Heat::CloudConfig
     properties:
@@ -170,6 +219,7 @@ resources:
               SUFFIX: {get_attr: [random_hostname_suffix, value]}
               DOMAIN: {get_param: domain_name}
 
+  # A set of files to place on the node VM on creation
   included_files:
     type: OS::Heat::CloudConfig
     properties:
@@ -194,6 +244,7 @@ resources:
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
 
+  # Connect to software update source for RHEL
   rhn_register:
     type: OS::Heat::SoftwareConfig
     properties:
@@ -205,12 +256,14 @@ resources:
             $POOL_ID: {get_param: rhn_pool}
           template: {get_file: fragments/rhn-register.sh}
 
+  # Insure that the node VM has current software installed
   host_update:
     type: OS::Heat::SoftwareConfig
     properties:
       config:
         get_file: fragments/host-update.sh
 
+  # Prepare the node to run Docker and Ansible on first boot
   node_boot:
     type: OS::Heat::SoftwareConfig
     properties:
@@ -221,6 +274,7 @@ resources:
             $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
           template: {get_file: fragments/node-boot.sh}
 
+  # Create a network connection on the internal and apply security
   port:
     type: OS::Neutron::Port
     properties:
@@ -231,6 +285,7 @@ resources:
       - subnet: {get_param: fixed_subnet}
       replacement_policy: AUTO
 
+  # Define the network access policy for the node
   security_group:
     type: OS::Neutron::SecurityGroup
     properties:
@@ -244,12 +299,14 @@ resources:
         port_range_min: 0
         port_range_max: 65535
 
+  # Create an IP on the public network for inbound access to applications
   floating_ip:
     type: OS::Neutron::FloatingIP
     properties:
       floating_network: {get_param: external_network}
       port_id: {get_resource: port}
 
+  # An operation to remove this node from the Kubernetes cluster
   master_node_cleanup:
     type: OS::Heat::SoftwareConfig
     properties:
@@ -265,6 +322,7 @@ resources:
         grep -v "$node_name" /var/lib/openshift_nodes.bkp > /var/lib/openshift_nodes
         echo "Deleted node $node_name"
 
+  # activation hook for removing the node from the Kubernetes cluster
   deployment_master_node_cleanup:
     type: OS::Heat::SoftwareDeployment
     properties:
@@ -282,6 +340,7 @@ resources:
       server:
         get_param: master_node
 
+  # activation hook for removing the node from DNS
   deployment_infra_node_cleanup:
     type: OS::Heat::SoftwareDeployment
     properties:
@@ -299,6 +358,7 @@ resources:
       server:
         get_param: infra_node
 
+  # activation hook to add the node to DNS
   deployment_infra_node_add:
     type: OS::Heat::SoftwareDeployment
     properties:
@@ -316,6 +376,7 @@ resources:
                 SUFFIX: {get_attr: [random_hostname_suffix, value]}
                 DOMAIN: {get_param: domain_name}
 
+  # activation hook to run the ansible playbooks to install and config a node
   deployment_run_ansible:
     depends_on: [wait_condition, deployment_infra_node_add]
     type: OS::Heat::SoftwareDeployment
@@ -334,12 +395,15 @@ resources:
               DOMAIN: {get_param: domain_name}
         all_master_nodes: {get_param: all_master_nodes}
 
+  # Wait for the node_boot (cloud-init) process to complete or time out
   wait_condition:
     type: OS::Heat::WaitCondition
     properties:
       handle: {get_resource: wait_handle}
       timeout: {get_param: timeout}
 
+  # Provide a curl CLI command to the cloud-init script.  Called on completion
+  # to indicate the status of the cloud-init process
   wait_handle:
     type: OS::Heat::WaitConditionHandle
 
@@ -376,8 +440,11 @@ outputs:
     description: IP address of the node
     value: {get_attr: [floating_ip, floating_ip_address]}
   wc_data:
+    description: The completion status from the cloud-init sync condition
     value: {get_attr: ['wait_condition', 'data']}
   ca_cert:
+    description: SSL CA signing certificate
     value: {get_attr: [deployment_run_ansible, ca_cert]}
   ca_key:
+    description: SSL CA signing key
     value: {get_attr: [deployment_run_ansible, ca_key]}
