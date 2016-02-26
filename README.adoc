@@ -12,6 +12,35 @@ This template uses Heat to create the OpenStack infrastructure
 components, then calls the https://github.com/openshift/openshift-ansible[OpenShift Ansible] installer playbooks to
 install and configure OpenShift on the VMs.
 
+== Architecture
+
+All of the OpenShift VMs will share a private network. This network is
+connected to the public network by a router.
+
+The deployed OpenShift environment is composed of a replicated
+set of _OpenShift master_ VMs fronted by a  _load_balancer_. This provides
+both a single point of access and some HA capabilities. The
+applications run on one or more _OpenShift node_ VMs.  These are
+connected by a private _software defined network_ (SDN) which can be
+implemented either with http://openvswitch.org/[OpenVSwitch] or https://github.com/coreos/flannel[Flannel].
+
+An _infrastructure server_ is used to control the host and service
+configuration.  It can also run local DNS services as
+needed. The host and service configuration is run using
+http://kubernetes.io/[Ansible] playbooks executed from the infrastructure host.
+
+Every VM in this configuration is also given a _floating IP_ address
+on the public network.  This provides direct access to the master and
+node hosts when needed.
+
+All of the OpenShift hosts (master and node) have block storage for
+Docker images and containers provided by Cinder.  OpenShift will run a
+local Docker registry, also backed by Cinder block storage.  Finally
+all nodes will have access to Cinder volumes which can be created by
+OpenStack users and mounted into containers by http://kubernetes.io/[Kubernetes].
+
+image:graphics/architecture.png[caption="VM and Network Layout",
+title="OpenShift Architecture"]
 
 == Prerequisites
 
