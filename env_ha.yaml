@@ -1,6 +1,0 @@
-parameters:
-    master_count: 3
-    lb_hostname: 'lb'
-
-resource_registry:
-    OS::LoadBalancer: loadbalancer.yaml

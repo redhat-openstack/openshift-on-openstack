@@ -114,7 +114,6 @@ parameters:
 
    # Set the image type and size for the VMs
    server_image: centos72
-   lb_image: centos72
    flavor: m1.medium
 
    # Set an existing network for inbound and outbound traffic
@@ -123,9 +122,8 @@ parameters:
 
    # Define the host name templates for master and nodes
    domain_name: "example.com"
-   dns_hostname: "ns"
-   master_hostname_prefix: "origin-master"
-   node_hostname_prefix: "origin-node"
+   master_hostname: "origin-master"
+   node_hostname: "origin-node"
 
    # Allocate additional space for Docker images
    master_docker_volume_size_gb: 25
@@ -152,7 +150,6 @@ git clone https://github.com/redhat-openstack/openshift-on-openstack.git
 # create a stack named 'my_openshift
 heat stack-create my_openshift -t 180 \
   -e openshift_parameters.yaml \
-  -e openshift-on-openstack/env_single.yaml \
   -f openshift-on-openstack/openshift.yaml
 ```
 
@@ -171,26 +168,24 @@ heat output-show my_openshift master_data
 
 == Multiple Master Nodes
 
-In the example above the `env_single.yaml` file is used to define a null load-balancer and only a single OpenShift master host for the demonstration.
-
 You can deploy OpenShift with multiple master hosts using the 'native'
-HA method by replacing that file with `env_ha.yaml` as seen
-below. (see
+HA method (see
 https://docs.openshift.org/latest/install_config/install/advanced_install.html#multiple-masters
-for details):
+for details) by increasing number of master nodes. This can be done by setting
+heat parameter ``master_count`` heat parameter:
 
 ```bash
 heat stack-create my_openshift \
    -e openshift_parameters.yaml \
-   -e openshift-on-openstack/env_ha.yaml \
+   -P master_count=3 \
    -f openshift-on-openstack/openshift.yaml
 ```
 
-Three master nodes and a loadbalancer will be deployed. Console and API URLs
-then point to the loadbalancer server which distributes requests across all
+Three master nodes will be deployed. Console and API URLs
+point to the loadbalancer server which distributes requests across all
 three nodes. You can get the URLs from Heat by running
-`heat output-show my_openshift lb_console_url` and
-`heat output-show my_openshift lb_api_url`.
+`heat output-show my_openshift console_url` and
+`heat output-show my_openshift api_url`.
 
 == LDAP authentication
 
@@ -213,7 +208,6 @@ parameter_defaults:
 ```bash
 heat stack-create my_openshift \
   -e openshift_parameters.yaml \
-  -e openshift-on-openstack/env_ha.yaml \
   -e openshift-on-openstack/env_ldap.yaml \
   -f openshift-on-openstack/openshift.yaml
 ```
@@ -258,7 +252,7 @@ A `customize-disk-image` script is provided to preinstall Openshift packages.
 ```
 
 The modified image must be uploaded into Glance and used as the server image
-for the heat stack with the `server_image` and `lb_image` parameters.
+for the heat stack with the `server_image` parameter.
 
 == Copyright
 

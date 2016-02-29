@@ -62,10 +62,9 @@ parameters:
       Select the community or enterprise version of OpenShift
     type: string
 
-  hostname_prefix:
+  hostname:
     description: >
-      A string to identify master hostnames.  Each replica will also have a
-      unique random substring attached
+      A string to identify master hostnames.
     type: string
 
   domain_name:
@@ -84,12 +83,6 @@ parameters:
       The private key that Ansible will use to access master and node hosts
       This file will be placed on the infrastructure host and protected
     type: string
-
-  node_hostnames:
-    description: >
-      A list of openshift nodes to control
-    type: string
-    default: ''
 
   ssh_user:
     description: >
@@ -133,12 +126,6 @@ parameters:
     type: string
     constraints:
     - custom_constraint: neutron.subnet
-
-  lb_hostname:
-    description: >
-      The hostname of the load balancer feeding the OpenShift master traffic
-    type: string
-    default: ''
 
   ldap_url:
     description: >
@@ -201,6 +188,9 @@ parameters:
       ID of the network access policies for the OpenShift master hosts
     type: string
 
+  skip_dns:
+    type: boolean
+
 resources:
 
   # Create a network connection on the internal communications network
@@ -214,24 +204,11 @@ resources:
       - subnet: {get_param: fixed_subnet}
       replacement_policy: AUTO
 
-  # Generate a unique ID string to distinguish master replicas
-  random_hostname_suffix:
-    type: OS::Heat::RandomString
-    properties:
-      character_classes: [{"class": lowercase}, {"class": digits}]
-      length: 8
-
   # Create the VM instance to host the OpenShift master service
   host:
     type: OS::Nova::Server
     properties:
-      name:
-        str_replace:
-          template: "HOST-SUFFIX.DOMAIN"
-          params:
-            HOST: {get_param: hostname_prefix}
-            SUFFIX: {get_attr: [random_hostname_suffix, value]}
-            DOMAIN: {get_param: domain_name}
+      name: {get_param: hostname}
       admin_user: {get_param: ssh_user}
       image: {get_param: image}
       flavor: {get_param: flavor}
@@ -279,18 +256,12 @@ resources:
     type: OS::Heat::CloudConfig
     properties:
       cloud_config:
-        hostname:
-          str_replace:
-            template: "HOST-SUFFIX"
-            params:
-              HOST: {get_param: hostname_prefix}
-              SUFFIX: {get_attr: [random_hostname_suffix, value]}
+        hostname: {get_param: hostname}
         fqdn:
           str_replace:
-            template: "HOST-SUFFIX.DOMAIN"
+            template: "HOST.DOMAIN"
             params:
-              HOST: {get_param: hostname_prefix}
-              SUFFIX: {get_attr: [random_hostname_suffix, value]}
+              HOST: {get_param: hostname}
               DOMAIN: {get_param: domain_name}
 
   # Compile a set of standard configuration files to provide identity and access
@@ -304,12 +275,7 @@ resources:
             str_replace:
               params:
                 $NODE_IP: {get_attr: [floating_ip, floating_ip_address]}
-                $NODE_HOSTNAME:
-                  str_replace:
-                    template: "HOST-SUFFIX"
-                    params:
-                      HOST: {get_param: hostname_prefix}
-                      SUFFIX: {get_attr: [random_hostname_suffix, value]}
+                $NODE_HOSTNAME: {get_param: hostname}
                 $NODE_DOMAIN: {get_param: domain_name}
               template: {get_file: fragments/etc-node-hosts}
         - path: /root/.ssh/id_rsa
@@ -352,6 +318,7 @@ resources:
         str_replace:
           params:
             $DNS_IP: {get_param: dns_ip}
+            $SKIP_DNS: {get_param: skip_dns}
             $MASTER_IP: {get_attr: [floating_ip, floating_ip_address]}
             $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
           template: {get_file: fragments/master-boot.sh}
@@ -367,11 +334,10 @@ resources:
       input_values:
         node_etc_host:
           str_replace:
-              template: "IP HOST-SUFFIX.DOMAIN HOST-SUFFIX #openshift"
+              template: "IP HOST.DOMAIN HOST #openshift"
               params:
                 IP: {get_attr: [floating_ip, floating_ip_address]}
-                HOST: {get_param: hostname_prefix}
-                SUFFIX: {get_attr: [random_hostname_suffix, value]}
+                HOST: {get_param: hostname}
                 DOMAIN: {get_param: domain_name}
 
   # Wait for master_boot (cloud-init) to complete or time out
@@ -392,30 +358,23 @@ outputs:
     value:
       str_replace:
         params:
-          HOSTNAME: {get_param: hostname_prefix}
-          SUFFIX: {get_attr: [random_hostname_suffix, value]}
+          HOSTNAME: {get_param: hostname}
           DOMAINNAME: {get_param: domain_name}
-        template: "https://HOSTNAME-SUFFIX.DOMAINNAME:8443/console/"
+        template: "https://HOSTNAME.DOMAINNAME:8443/console/"
   api_url:
     description: Compose the access URL for the OpenShift REST API
     value:
       str_replace:
         params:
-          HOSTNAME: {get_param: hostname_prefix}
-          SUFFIX: {get_attr: [random_hostname_suffix, value]}
+          HOSTNAME: {get_param: hostname}
           DOMAINNAME: {get_param: domain_name}
-        template: "https://HOSTNAME-SUFFIX.DOMAINNAME:8443/"
+        template: "https://HOSTNAME.DOMAINNAME:8443/"
   wc_data:
     description: Syncronization data
     value: { get_attr: ['wait_condition', 'data'] }
   hostname:
-    description: The actual short name and random suffix for the host
-    value:
-      str_replace:
-        template: "HOST-SUFFIX"
-        params:
-          HOST: {get_param: hostname_prefix}
-          SUFFIX: {get_attr: [random_hostname_suffix, value]}
+    description: The actual short name for the host
+    value: {get_param: hostname}
   host:
     description: A reference to the master host identifier
     value: {get_resource: host}

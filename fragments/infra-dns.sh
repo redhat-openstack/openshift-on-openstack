@@ -3,6 +3,8 @@
 set -eu
 set -o pipefail
 
+[ "$SKIP_DNS" = "true" ] && exit 0
+
 cat <<EOF >/etc/dnsmasq.conf
 # this file is generated/overwritten by os-collect-config
 strict-order

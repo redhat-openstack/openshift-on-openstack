@@ -78,7 +78,7 @@ parameters:
     type: string
     hidden: true
 
-  hostname_prefix:
+  hostname:
     description: >
       A string to identify node hostnames.  Each node will also have a
       unique random substring attached
@@ -100,10 +100,10 @@ parameters:
       The user for SSH access to the VM hosts
     type: string
 
-  master_node:
-    description: >
-      The name or ID of an OpenShift master instance
+  infra_node:
     type: string
+    description: >
+      The name or ID of an infrastructure instance.
     default: ''
 
   all_master_nodes:
@@ -112,7 +112,7 @@ parameters:
     type: string
     default: ''
 
-  master_run_ansible:
+  infra_run_ansible:
     description: >
       Operation that runs the ansible playbooks to configure this node.
     type: string
@@ -137,7 +137,7 @@ parameters:
     default: ''
 
   timeout:
-    description: Time to wait until the master setup is ready.
+    description: Time to wait until the node is ready.
     type: number
     default: 4000
 
@@ -145,6 +145,9 @@ parameters:
     description: >
       A reference to the OpenStack stack id
     type: json
+
+  skip_dns:
+    type: boolean
 
 resources:
 
@@ -161,11 +164,10 @@ resources:
     properties:
       name:
         str_replace:
-          template: "HOST-SUFFIX.DOMAIN"
+          template: "HOST-SUFFIX"
           params:
-            HOST: {get_param: hostname_prefix}
+            HOST: {get_param: hostname}
             SUFFIX: {get_attr: [random_hostname_suffix, value]}
-            DOMAIN: {get_param: domain_name}
       admin_user: {get_param: ssh_user}
       image: {get_param: image}
       flavor: {get_param: flavor}
@@ -209,13 +211,13 @@ resources:
           str_replace:
             template: "HOST-SUFFIX"
             params:
-              HOST: {get_param: hostname_prefix}
+              HOST: {get_param: hostname}
               SUFFIX: {get_attr: [random_hostname_suffix, value]}
         fqdn:
           str_replace:
             template: "HOST-SUFFIX.DOMAIN"
             params:
-              HOST: {get_param: hostname_prefix}
+              HOST: {get_param: hostname}
               SUFFIX: {get_attr: [random_hostname_suffix, value]}
               DOMAIN: {get_param: domain_name}
 
@@ -234,7 +236,7 @@ resources:
                   str_replace:
                     template: "HOST-SUFFIX"
                     params:
-                      HOST: {get_param: hostname_prefix}
+                      HOST: {get_param: hostname}
                       SUFFIX: {get_attr: [random_hostname_suffix, value]}
                 $NODE_DOMAIN: {get_param: domain_name}
               template: {get_file: fragments/etc-node-hosts}
@@ -271,6 +273,7 @@ resources:
         str_replace:
           params:
             $DNS_IP: {get_param: dns_ip}
+            $SKIP_DNS: {get_param: skip_dns}
             $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
           template: {get_file: fragments/node-boot.sh}
 
@@ -306,41 +309,8 @@ resources:
       floating_network: {get_param: external_network}
       port_id: {get_resource: port}
 
-  # An operation to remove this node from the Kubernetes cluster
-  master_node_cleanup:
-    type: OS::Heat::SoftwareConfig
-    properties:
-      group: script
-      inputs:
-        - name: node_name
-      outputs:
-        - name: result
-      config: |
-        #!/bin/bash -x
-        oc --config ~/.kube/config delete node "$node_name"
-        cp /var/lib/openshift_nodes /var/lib/openshift_nodes.bkp
-        grep -v "$node_name" /var/lib/openshift_nodes.bkp > /var/lib/openshift_nodes
-        echo "Deleted node $node_name"
-
-  # activation hook for removing the node from the Kubernetes cluster
-  deployment_master_node_cleanup:
-    type: OS::Heat::SoftwareDeployment
-    properties:
-      actions: ['DELETE']
-      input_values:
-        node_name:
-          str_replace:
-            template: "HOST-SUFFIX.DOMAIN"
-            params:
-              HOST: {get_param: hostname_prefix}
-              SUFFIX: {get_attr: [random_hostname_suffix, value]}
-              DOMAIN: {get_param: domain_name}
-      config:
-        get_resource: master_node_cleanup
-      server:
-        get_param: master_node
-
-  # activation hook for removing the node from DNS
+  # activation hook for removing the node from DNS and from the Kubernetes
+  # cluster
   deployment_infra_node_cleanup:
     type: OS::Heat::SoftwareDeployment
     properties:
@@ -350,7 +320,7 @@ resources:
           str_replace:
             template: "HOST-SUFFIX.DOMAIN"
             params:
-              HOST: {get_param: hostname_prefix}
+              HOST: {get_param: hostname}
               SUFFIX: {get_attr: [random_hostname_suffix, value]}
               DOMAIN: {get_param: domain_name}
       config:
@@ -358,7 +328,7 @@ resources:
       server:
         get_param: infra_node
 
-  # activation hook to add the node to DNS
+  # activation hook to add the node to DNS and Kubernetes cluster
   deployment_infra_node_add:
     type: OS::Heat::SoftwareDeployment
     properties:
@@ -372,7 +342,7 @@ resources:
               template: "IP HOST-SUFFIX.DOMAIN HOST-SUFFIX #openshift"
               params:
                 IP: {get_attr: [floating_ip, floating_ip_address]}
-                HOST: {get_param: hostname_prefix}
+                HOST: {get_param: hostname}
                 SUFFIX: {get_attr: [random_hostname_suffix, value]}
                 DOMAIN: {get_param: domain_name}
 
@@ -382,15 +352,15 @@ resources:
     type: OS::Heat::SoftwareDeployment
     properties:
       config:
-        get_param: master_run_ansible
+        get_param: infra_run_ansible
       server:
-        get_param: master_node
+        get_param: infra_node
       input_values:
         node_hostname:
           str_replace:
             template: "HOST-SUFFIX.DOMAIN"
             params:
-              HOST: {get_param: hostname_prefix}
+              HOST: {get_param: hostname}
               SUFFIX: {get_attr: [random_hostname_suffix, value]}
               DOMAIN: {get_param: domain_name}
         all_master_nodes: {get_param: all_master_nodes}
@@ -414,7 +384,7 @@ outputs:
       str_replace:
         template: "HOST-SUFFIX.DOMAIN"
         params:
-          HOST: {get_param: hostname_prefix}
+          HOST: {get_param: hostname}
           SUFFIX: {get_attr: [random_hostname_suffix, value]}
           DOMAIN: {get_param: domain_name}
   ansible_entry:
@@ -423,7 +393,7 @@ outputs:
       str_replace:
         template: "HOST-SUFFIX.DOMAIN openshift_hostname=HOST-SUFFIX.DOMAIN openshift_public_hostname=HOST-SUFFIX.DOMAIN"
         params:
-          HOST: {get_param: hostname_prefix}
+          HOST: {get_param: hostname}
           SUFFIX: {get_attr: [random_hostname_suffix, value]}
           DOMAIN: {get_param: domain_name}
   etc_hosts:
@@ -433,7 +403,7 @@ outputs:
         template: "IP HOST-SUFFIX.DOMAIN HOST-SUFFIX #openshift"
         params:
           IP: {get_attr: [floating_ip, floating_ip_address]}
-          HOST: {get_param: hostname_prefix}
+          HOST: {get_param: hostname}
           SUFFIX: {get_attr: [random_hostname_suffix, value]}
           DOMAIN: {get_param: domain_name}
   ip_address:

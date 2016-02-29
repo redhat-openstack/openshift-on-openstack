@@ -43,16 +43,15 @@ osm_default_subdomain: cloudapps.$DOMAINNAME # default subdomain to use for expo
 openshift_override_hostname_check: true
 EOF
 
-if [ -n "$LB_HOSTNAME" ]; then
-    LB_CHILDREN=lb
+MASTER_ARR=($ALL_MASTER_NODES)
+MASTER_COUNT=${#MASTER_ARR[@]}
+if [ $MASTER_COUNT -gt 1 ]; then
     cat << EOF >> /var/lib/ansible/group_vars/OSv3.yml
 openshift_master_cluster_password: openshift_cluster
 openshift_master_cluster_method: native
 openshift_master_cluster_hostname: $LB_HOSTNAME.$DOMAINNAME
 openshift_master_cluster_public_hostname: $LB_HOSTNAME.$DOMAINNAME
 EOF
-else
-    LB_CHILDREN=''
 fi
 
 if [ -n "$LDAP_URL" ]; then
@@ -100,7 +99,6 @@ cat << EOF > /var/lib/ansible/inventory
 masters
 nodes
 etcd
-$LB_CHILDREN
 
 [masters]
 EOF
@@ -109,13 +107,7 @@ num_infra=0
 for node in $ALL_MASTER_NODES
 do
     num_infra=$((num_infra+1))
-
-    if [ -n "$LB_HOSTNAME" ]
-    then
-        public_name="$LB_HOSTNAME.$DOMAINNAME"
-    else
-        public_name="$node.$DOMAINNAME"
-    fi
+    public_name="$LB_HOSTNAME.$DOMAINNAME"
 
     # Set variables for master node
     cat << EOF > /var/lib/ansible/host_vars/$node.$DOMAINNAME.yml
@@ -154,13 +146,6 @@ for node in `cat /var/lib/openshift_nodes`; do
   echo "$node" >> /var/lib/ansible/inventory
   echo -e "openshift_hostname: $node\nopenshift_public_hostname: $node" >> /var/lib/ansible/host_vars/$node
 done
-
-if [ -n "$LB_HOSTNAME" ]; then
-    cat << EOF >> /var/lib/ansible/inventory
-[lb]
-$LB_HOSTNAME.$DOMAINNAME
-EOF
-fi
 
 while pidof -x /bin/ansible-playbook; do
   echo "waiting for another ansible-playbook to finish"

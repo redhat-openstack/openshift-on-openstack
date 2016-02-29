@@ -213,6 +213,9 @@ parameters:
       Disable host based installation/configuration
     type: boolean
 
+  skip_dns:
+    type: boolean
+
   openshift_ansible_git_url:
     description: >
       The location of the OpenShift Ansible playbooks. A Git respository URL
@@ -257,12 +260,7 @@ resources:
   host:
     type: OS::Nova::Server
     properties:
-      name:
-        str_replace:
-          template: "HOST.DOMAIN"
-          params:
-            HOST: {get_param: hostname}
-            DOMAIN: {get_param: domain_name}
+      name: {get_param: hostname}
       admin_user: {get_param: ssh_user}
       image: {get_param: image}
       flavor: {get_param: flavor}
@@ -297,6 +295,7 @@ resources:
             $SSH_USER: {get_param: ssh_user}
             $DEPLOYMENT_TYPE: {get_param: deployment_type}
             $LB_HOSTNAME: {get_param: lb_hostname}
+            $LB_IP: {get_param: lb_ip}
             $LDAP_URL: {get_param: ldap_url}
             $LDAP_PREFERRED_USERNAME: {get_param: ldap_preferred_username}
             $LDAP_BIND_DN: {get_param: ldap_bind_dn}
@@ -337,6 +336,7 @@ resources:
         str_replace:
           params:
             $DNS_IP: {get_param: dns_ip}
+            $SKIP_DNS: {get_param: skip_dns}
             $OPENSHIFT_ANSIBLE_GIT_URL: {get_param: openshift_ansible_git_url}
             $OPENSHIFT_ANSIBLE_GIT_REV: {get_param: openshift_ansible_git_rev}
             $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
@@ -422,6 +422,7 @@ resources:
             $LDAP_HOSTNAME: {get_param: ldap_hostname}
             $LDAP_IP: {get_param: ldap_ip}
             $DOMAINNAME: {get_param: domain_name}
+            $SKIP_DNS: {get_param: skip_dns}
           template: {get_file: fragments/infra-dns.sh}
 
   # Apply ansible performance tuning values
@@ -452,7 +453,10 @@ resources:
       outputs:
       - name: result
       config:
-        get_file: fragments/infra-node-add.sh
+        str_replace:
+          params:
+            $SKIP_DNS: {get_param: skip_dns}
+          template: {get_file: fragments/infra-node-add.sh}
 
   # Remove a node's IP/Name mapping from DNS
   node_cleanup:
@@ -464,7 +468,10 @@ resources:
       outputs:
       - name: result
       config:
-        get_file: fragments/infra-node-cleanup.sh
+        str_replace:
+          params:
+            $SKIP_DNS: {get_param: skip_dns}
+          template: {get_file: fragments/infra-node-cleanup.sh}
 
   # Additional space for Docker container and image storage
   docker_volume:
