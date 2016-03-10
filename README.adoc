@@ -73,6 +73,7 @@ ln -s /home/images /var/lib/libvirt/images
 #   This produces the keystonrc_admin file used below
 packstack --allinone --provision-all-in-one-ovs-bridge=y \
   --os-heat-install=y --os-heat-cfn-install=y \
+  --os-neutron-lbaas-install=y \
   --keystone-admin-passwd=password --keystone-demo-passwd=password
 
 # Retrieve the Heat templates for OpenShift
