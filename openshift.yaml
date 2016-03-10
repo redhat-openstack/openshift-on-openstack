@@ -250,6 +250,11 @@ parameters:
       The Openstack region name to by used by Openshift
     default: ''
 
+  extra_repository_urls:
+    type: comma_delimited_list
+    description: List of repository URLs which will be installed on each node.
+    default: ''
+
 resources:
 
   # Network Components
@@ -316,6 +321,7 @@ resources:
       os_tenant_name: {get_param: os_tenant_name}
       os_region_name: {get_param: os_region_name}
       skip_dns: {get_param: skip_dns}
+      extra_repository_urls: {get_param: extra_repository_urls}
       lb_ip: {get_attr: [lb_floating_ip, floating_ip_address]}
       lb_hostname:
         str_replace:
@@ -362,6 +368,7 @@ resources:
           master_server_group: {get_resource: master_server_group}
           master_security_group: {get_resource: master_security_group}
           skip_dns: {get_param: skip_dns}
+          extra_repository_urls: {get_param: extra_repository_urls}
 
   openshift_nodes:
     depends_on: external_router_interface
@@ -400,6 +407,7 @@ resources:
           infra_node_add: {get_attr: [infra_host, resource.node_add]}
           skip_dns: {get_param: skip_dns}
           metadata: {"metering.stack": {get_param: "OS::stack_id"}}
+          extra_repository_urls: {get_param: extra_repository_urls}
           all_master_nodes:
             list_join:
               - " "

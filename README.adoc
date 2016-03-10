@@ -212,6 +212,18 @@ heat stack-create my_openshift \
   -f openshift-on-openstack/openshift.yaml
 ```
 
+== Using Custom Yum Respositories
+
+You can set additional Yum repositories on deployed nodes by passing `extra_repository_urls`
+parameter which contains list of Yum repository URLs delimited by comma:
+
+```bash
+heat stack-create my_openshift \
+  -e openshift_parameters.yaml \
+  -P extra_repository_urls=http://server/my/own/repo1.repo,http://server/my/own/repo2.repo
+  -f openshift-on-openstack/openshift.yaml
+```
+
 == Accessing the Web UI
 
 You can get the URL for the OpenShift Console (the web UI) from Heat by running

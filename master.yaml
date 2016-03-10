@@ -191,6 +191,11 @@ parameters:
   skip_dns:
     type: boolean
 
+  extra_repository_urls:
+    type: comma_delimited_list
+    description: List of repository URLs which will be installed on each node.
+    default: ''
+
 resources:
 
   # Create a network connection on the internal communications network
@@ -248,6 +253,7 @@ resources:
       - config: {get_resource: set_hostname}
       - config: {get_resource: included_files}
       - config: {get_resource: rhn_register}
+      - config: {get_resource: set_extra_repos}
       - config: {get_resource: host_update}
       - config: {get_resource: master_boot}
 
@@ -301,6 +307,19 @@ resources:
             $RHN_PASSWORD: {get_param: rhn_password}
             $POOL_ID: {get_param: rhn_pool}
           template: {get_file: fragments/rhn-register.sh}
+
+  # Enable any extra repositories
+  set_extra_repos:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            $REPOLIST:
+              list_join:
+                - " "
+                - {get_param: extra_repository_urls}
+          template: {get_file: fragments/set-extra-repos.sh}
 
   # Insure that the host software is current
   host_update:
