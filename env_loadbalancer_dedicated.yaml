@@ -1,0 +1,8 @@
+parameters:
+    loadbalancer_type: dedicated
+    # once openshift-ansible supports containerzed loadbalancer node setup
+    # this can be deleted
+    loadbalancer_image: centos72
+
+resource_registry:
+    OOShift::LoadBalancer: loadbalancer_dedicated.yaml

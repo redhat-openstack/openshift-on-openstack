@@ -27,6 +27,13 @@ parameters:
     constraints:
     - custom_constraint: glance.image
 
+  loadbalancer_image:
+    description: >
+      Select a base image to use for the loadbalancer nodes, this is required
+      only if 'dedicated' loadbalancer_type is used.
+    type: string
+    default: ''
+
   flavor:
     type: string
     description: The Nova flavor to use for the OpenShift nodes
@@ -57,6 +64,15 @@ parameters:
   skip_dns:
     type: boolean
     default: false
+
+  loadbalancer_type:
+    type: string
+    default: neutron
+    constraints:
+      - allowed_values:
+        - neutron
+        - dedicated
+        - none
 
   master_count:
     type: number
@@ -321,6 +337,7 @@ resources:
       os_tenant_name: {get_param: os_tenant_name}
       os_region_name: {get_param: os_region_name}
       skip_dns: {get_param: skip_dns}
+      loadbalancer_type: {get_param: loadbalancer_type}
       extra_repository_urls: {get_param: extra_repository_urls}
       lb_ip: {get_attr: [lb_floating_ip, floating_ip_address]}
       lb_hostname:
@@ -519,40 +536,32 @@ resources:
         port_range_min: 0
         port_range_max: 65535
 
-  lb:
-    type: OS::Neutron::LoadBalancer
-    properties:
-      protocol_port: 8443
-      pool_id: {get_resource: lb_pool}
-      members: {get_attr: [openshift_masters, host]}
-
-  lb_pool:
-    type: OS::Neutron::Pool
-    properties:
-      name: lb_pool
-      description: Load balancer for OpenShift hosts.
-      protocol: HTTPS
-      subnet_id: {get_resource: fixed_subnet}
-      lb_method: ROUND_ROBIN
-      monitors: [{get_resource: lb_monitor}]
-      vip:
-        protocol_port: 8443
-        session_persistence:
-          type: SOURCE_IP
-
-  lb_monitor:
-    type: OS::Neutron::HealthMonitor
-    properties:
-      type: TCP
-      delay: 15
-      max_retries: 5
-      timeout: 10
-
   lb_floating_ip:
     type: OS::Neutron::FloatingIP
     properties:
       floating_network: {get_param: external_network}
-      port_id: {get_attr: [lb_pool, vip, port_id]}
+
+  loadbalancer:
+    type:  OOShift::LoadBalancer
+    properties:
+      image: {get_param: loadbalancer_image}
+      flavor: {get_param: flavor}
+      key_name: {get_param: ssh_key_name}
+      ssh_user: {get_param: ssh_user}
+      rhn_username: {get_param: rhn_username}
+      rhn_password: {get_param: rhn_password}
+      rhn_pool: {get_param: rhn_pool}
+      hostname: {get_param: lb_hostname}
+      domain_name: {get_param: domain_name}
+      ansible_public_key: {get_attr: [ansible_keys, public_key]}
+      dns_ip: {get_attr: [infra_floating_ip, floating_ip_address]}
+      fixed_subnet: {get_resource: fixed_subnet}
+      members: {get_attr: [openshift_masters, host]}
+      master_hostname: {get_attr: [openshift_masters, resource.0.hostname]}
+      floatingip_id: {get_resource: lb_floating_ip}
+      fixed_network: {get_resource: fixed_network}
+      fixed_subnet: {get_resource: fixed_subnet}
+      extra_repository_urls: {get_param: extra_repository_urls}
 
 outputs:
   dns_ip:
@@ -565,23 +574,11 @@ outputs:
 
   console_url:
     description: URL of the OpenShift web console
-    value:
-      str_replace:
-        template: "https://%stackname%-%hostname%.%domainname%:8443/console/"
-        params:
-          '%stackname%': {get_param: 'OS::stack_name'}
-          '%hostname%': {get_param: lb_hostname}
-          '%domainname%': {get_param: domain_name}
+    value: {get_attr: [loadbalancer, console_url]}
 
   api_url:
     description: URL entrypoint to the OpenShift API
-    value:
-      str_replace:
-        template: "https://%stackname%-%hostname%.%domainname%:8443/"
-        params:
-          '%stackname%': {get_param: 'OS::stack_name'}
-          '%hostname%': {get_param: lb_hostname}
-          '%domainname%': {get_param: domain_name}
+    value: {get_attr: [loadbalancer, api_url]}
 
   host_ips:
     description: IP addresses of the OpenShift nodes

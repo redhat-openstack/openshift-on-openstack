@@ -45,7 +45,7 @@ EOF
 
 MASTER_ARR=($ALL_MASTER_NODES)
 MASTER_COUNT=${#MASTER_ARR[@]}
-if [ $MASTER_COUNT -gt 1 ]; then
+if [ "$LB_TYPE" != "none" -a $MASTER_COUNT -gt 1 ]; then
     cat << EOF >> /var/lib/ansible/group_vars/OSv3.yml
 openshift_master_cluster_password: openshift_cluster
 openshift_master_cluster_method: native
@@ -99,15 +99,21 @@ cat << EOF > /var/lib/ansible/inventory
 masters
 nodes
 etcd
-
-[masters]
 EOF
 
+# if we deploy a loadbalancer node, add 'lb' group
+[ "$LB_TYPE" == "dedicated" ] && echo -e "lb" >> /var/lib/ansible/inventory
+
 num_infra=0
+echo -e "\n[masters]" >> /var/lib/ansible/inventory
 for node in $ALL_MASTER_NODES
 do
     num_infra=$((num_infra+1))
-    public_name="$LB_HOSTNAME.$DOMAINNAME"
+    if [ "$LB_TYPE" == "none" ]; then
+        public_name="$node.$DOMAINNAME"
+    else
+        public_name="$LB_HOSTNAME.$DOMAINNAME"
+    fi
 
     # Set variables for master node
     cat << EOF > /var/lib/ansible/host_vars/$node.$DOMAINNAME.yml
@@ -127,6 +133,9 @@ echo -e "\n[etcd]" >> /var/lib/ansible/inventory
 for node in $ALL_MASTER_NODES; do
     echo "$node.$DOMAINNAME" >> /var/lib/ansible/inventory
 done
+
+
+[ "$LB_TYPE" == "dedicated" ] && echo -e "\n[lb]\n$LB_HOSTNAME.$DOMAINNAME" >> /var/lib/ansible/inventory
 
 # host group for nodes
 echo -e "\n[nodes]" >> /var/lib/ansible/inventory
