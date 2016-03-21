@@ -169,10 +169,11 @@ resources:
     properties:
       name:
         str_replace:
-          template: "HOST-SUFFIX"
+          template: "HOST-SUFFIX.DOMAIN"
           params:
             HOST: {get_param: hostname}
             SUFFIX: {get_attr: [random_hostname_suffix, value]}
+            DOMAIN: {get_param: domain_name}
       admin_user: {get_param: ssh_user}
       image: {get_param: image}
       flavor: {get_param: flavor}

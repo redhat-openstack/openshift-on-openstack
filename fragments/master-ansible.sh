@@ -85,6 +85,10 @@ openshift_use_flannel: $openshift_use_flannel
 EOF
 fi
 
+if [ -n "$OS_USERNAME" ] && [ -n "$OS_PASSWORD" ] && [ -n "$OS_AUTH_URL" ] && [ -n "$OS_TENANT_NAME" ]; then
+    echo "openshift_cloud_provider: openstack" >> /var/lib/ansible/group_vars/OSv3.yml
+fi
+
 # Set variables common for all nodes
 cat << EOF > /var/lib/ansible/group_vars/nodes.yml
 openshift_node_labels:

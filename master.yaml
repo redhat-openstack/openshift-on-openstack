@@ -213,7 +213,12 @@ resources:
   host:
     type: OS::Nova::Server
     properties:
-      name: {get_param: hostname}
+      name:
+        str_replace:
+          template: "HOST.DOMAIN"
+          params:
+            HOST: {get_param: hostname}
+            DOMAIN: {get_param: domain_name}
       admin_user: {get_param: ssh_user}
       image: {get_param: image}
       flavor: {get_param: flavor}
