@@ -6,5 +6,6 @@ set -o pipefail
 [ -z "$REPOLIST" ] && exit 0
 cd /etc/yum.repos.d
 for repo in $REPOLIST;do
-    curl -O $repo
+    fname=`echo "$repo"|md5sum |awk '{ print $1}'`.repo
+    curl -o $fname $repo
 done
