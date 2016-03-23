@@ -148,8 +148,9 @@ EOF
 # retrieve the Heat template (if you haven't yet)
 git clone https://github.com/redhat-openstack/openshift-on-openstack.git
 
-# create a stack named 'my_openshift
-heat stack-create my_openshift -t 180 \
+# create a stack named 'my-openshift'  Kubernetes does not allow underscores
+# in hostnames.
+heat stack-create my-openshift -t 180 \
   -e openshift_parameters.yaml \
   -f openshift-on-openstack/openshift.yaml
 ```
