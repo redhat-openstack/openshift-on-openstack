@@ -148,8 +148,8 @@ EOF
 # retrieve the Heat template (if you haven't yet)
 git clone https://github.com/redhat-openstack/openshift-on-openstack.git
 
-# create a stack named 'my_openshift
-heat stack-create my_openshift -t 180 \
+# create a stack named 'my-openshift'
+heat stack-create my-openshift -t 180 \
   -e openshift_parameters.yaml \
   -f openshift-on-openstack/openshift.yaml
 ```
@@ -164,7 +164,7 @@ To confirm that everything is indeed ready, look for ``OpenShift has been
 installed.`` in the OpenShift master node data in the stack output:
 
 ```bash
-heat output-show my_openshift master_data
+heat output-show my-openshift master_data
 ```
 
 == Multiple Master Nodes
@@ -176,7 +176,7 @@ for details) by increasing number of master nodes. This can be done by setting
 heat parameter ``master_count`` heat parameter:
 
 ```bash
-heat stack-create my_openshift \
+heat stack-create my-openshift \
    -e openshift_parameters.yaml \
    -P master_count=3 \
    -f openshift-on-openstack/openshift.yaml
@@ -185,8 +185,8 @@ heat stack-create my_openshift \
 Three master nodes will be deployed. Console and API URLs
 point to the loadbalancer server which distributes requests across all
 three nodes. You can get the URLs from Heat by running
-`heat output-show my_openshift console_url` and
-`heat output-show my_openshift api_url`.
+`heat output-show my-openshift console_url` and
+`heat output-show my-openshift api_url`.
 
 == LDAP authentication
 
@@ -207,7 +207,7 @@ parameter_defaults:
 
 
 ```bash
-heat stack-create my_openshift \
+heat stack-create my-openshift \
   -e openshift_parameters.yaml \
   -e openshift-on-openstack/env_ldap.yaml \
   -f openshift-on-openstack/openshift.yaml
@@ -219,7 +219,7 @@ You can set additional Yum repositories on deployed nodes by passing `extra_repo
 parameter which contains list of Yum repository URLs delimited by comma:
 
 ```bash
-heat stack-create my_openshift \
+heat stack-create my-openshift \
   -e openshift_parameters.yaml \
   -P extra_repository_urls=http://server/my/own/repo1.repo,http://server/my/own/repo2.repo
   -f openshift-on-openstack/openshift.yaml
@@ -228,14 +228,14 @@ heat stack-create my_openshift \
 == Accessing the Web UI
 
 You can get the URL for the OpenShift Console (the web UI) from Heat by running
-`heat output-show my_openshift master_console_url`.
+`heat output-show my-openshift master_console_url`.
 
 Currently, the UI and the resolution for the public hostnames that will be associated
 to services running in OpenShift is dependent on the DNS created internally by
 these Heat templates.
 
 So to access the UI, you can get the DNS IP address by `heat output-show
-my_openshift dns_ip` and put `nameserver $DNS_IP` as the first entry in your
+my-openshift dns_ip` and put `nameserver $DNS_IP` as the first entry in your
 `/etc/resolv.conf`.
 
 We plan to let you supply your own DNS that has the OpenShift cloud domain and
@@ -248,8 +248,8 @@ You can retrieve the CA certificate that was generated during the Openshift
 installation by running
 
 ```bash
-heat output-show --format=raw my_openshift ca_cert > ca.crt
-heat output-show --format=raw my_openshift ca_key > ca.key
+heat output-show --format=raw my-openshift ca_cert > ca.crt
+heat output-show --format=raw my-openshift ca_key > ca.key
 ```
 == Current Status
 
