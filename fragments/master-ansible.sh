@@ -172,7 +172,11 @@ export OS_REGION_NAME=$OS_REGION_NAME
 
 # NOTE: Ignore the known_hosts check/propmt for now:
 export ANSIBLE_HOST_KEY_CHECKING=False
-ansible-playbook -vvvv --inventory /var/lib/ansible/inventory /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml > /var/log/ansible.$$ 2>&1
+ansible-playbook \
+    -vvvv \
+    --inventory /var/lib/ansible/inventory \
+    /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml \
+    > /var/log/ansible.$$ 2>&1
 
 # Deploy registry and/or router
 if [ "$DEPLOY_ROUTER" == "True" ] || [ "$DEPLOY_REGISTRY" == "True" ]; then
@@ -238,15 +242,34 @@ EOF
 EOF
     fi
 
-    ansible-playbook --inventory /var/lib/ansible/inventory /var/lib/ansible/services.yml
+    ansible-playbook \
+        --inventory /var/lib/ansible/inventory \
+        /var/lib/ansible/services.yml \
+        > /var/log/ansible-services-$$.log 2>&1
 
     # Give a little time to Openshift to schedule the registry and/or the router
     sleep 180
 fi
 
-ansible masters -m shell -a 'oadm manage-node $HOSTNAME --schedulable=false || true' -u cloud-user --sudo -i /var/lib/ansible/inventory
+ansible masters \
+        -m shell \
+        -a 'oadm manage-node $HOSTNAME --schedulable=false || true' \
+        -u cloud-user --sudo \
+        -i /var/lib/ansible/inventory \
+        > /var/log/ansible-manage-node-$$.log 2>&1
 
 mv /var/lib/ansible/inventory.started /var/lib/ansible/inventory.deployed
 
-ansible masters[0] -m fetch -a "src=/etc/origin/master/ca.crt dest=$heat_outputs_path.ca_cert flat=yes" -u cloud-user --sudo -i /var/lib/ansible/inventory
-ansible masters[0] -m fetch -a "src=/etc/origin/master/ca.key dest=$heat_outputs_path.ca_key flat=yes" -u cloud-user --sudo -i /var/lib/ansible/inventory
+ansible masters[0] \
+        -m fetch \
+        -a "src=/etc/origin/master/ca.crt dest=$heat_outputs_path.ca_cert flat=yes" \
+        -u cloud-user --sudo \
+        -i /var/lib/ansible/inventory \
+        > /var/log/ansible-fetch-ca-crt-$$.log 2>&1
+
+ansible masters[0] \
+        -m fetch \
+        -a "src=/etc/origin/master/ca.key dest=$heat_outputs_path.ca_key flat=yes" \
+        -u cloud-user --sudo \
+        -i /var/lib/ansible/inventory \
+        > /var/log/ansible-fetch-ca-key-$$.log 2>&1
