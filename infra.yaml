@@ -216,6 +216,9 @@ parameters:
   skip_dns:
     type: boolean
 
+  loadbalancer_type:
+    type: string
+
   openshift_ansible_git_url:
     description: >
       The location of the OpenShift Ansible playbooks. A Git respository URL
@@ -321,6 +324,7 @@ resources:
             $OS_PASSWORD: {get_param: os_password}
             $OS_TENANT_NAME: {get_param: os_tenant_name}
             $OS_REGION_NAME: {get_param: os_region_name}
+            $LB_TYPE: {get_param: loadbalancer_type}
           template: {get_file: fragments/master-ansible.sh}
 
   # Collect the results from a set of resources

@@ -1,0 +1,157 @@
+heat_template_version: 2014-10-16
+
+description: >
+  A template which provides a creates a loadbalancer using neutron's LBaaS.
+
+parameters:
+
+  key_name:
+    description: >
+      A pre-submitted SSH key to access the VM hosts
+    type: string
+    constraints:
+    - custom_constraint: nova.keypair
+
+  image:
+    type: string
+    default: ''
+
+  flavor:
+    description: >
+      Define the hardware characteristics for the VMs: CPU, Memory, base disk
+    type: string
+    constraints:
+    - custom_constraint: nova.flavor
+
+  hostname:
+    description: >
+      The load balancer hostname portion of the FQDN
+    type: string
+
+  domain_name:
+    description: >
+      All VMs will be placed in this domain
+    type: string
+
+  rhn_username:
+    description: >
+      A valid user with entitlements to RHEL and OpenShift software repos
+    type: string
+
+  rhn_password:
+    description: >
+      The password for the RHN user
+    type: string
+    hidden: true
+
+  rhn_pool:
+    description: >
+      A subscription pool containing the RHEL and OpenShift software repos
+      OPTIONAL
+    type: string
+    hidden: true
+
+  dns_ip:
+    description: IP address of the DNS server
+    type: string
+
+  ssh_user:
+    description: >
+      The user for SSH access to the VM hosts
+    type: string
+
+  ansible_public_key:
+    description: >
+      The SSH public key that Ansible will use to access master and node hosts
+      This will be placed on each VM host in /root/.ssh/authorized_keys
+    type: string
+
+  fixed_subnet:
+    description: >
+      The name or ID of the internal IPv4 space
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  members:
+    type: comma_delimited_list
+
+  master_hostname:
+    type: string
+
+  floatingip_id:
+    type: string
+
+  fixed_network:
+    description: >
+      The name or ID of the internal network
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  fixed_subnet:
+    description: >
+      The name or ID of the internal IPv4 space
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  extra_repository_urls:
+    type: comma_delimited_list
+    description: List of repository URLs which will be installed on each node.
+    default: ''
+
+resources:
+  lb:
+    type: OS::Neutron::LoadBalancer
+    properties:
+      protocol_port: 8443
+      pool_id: {get_resource: lb_pool}
+      members: {get_param: members}
+
+  lb_pool:
+    type: OS::Neutron::Pool
+    properties:
+      name: lb_pool
+      description: Load balancer for OpenShift hosts.
+      protocol: HTTPS
+      subnet_id: {get_param: fixed_subnet}
+      lb_method: ROUND_ROBIN
+      monitors: [{get_resource: lb_monitor}]
+      vip:
+        protocol_port: 8443
+        session_persistence:
+          type: SOURCE_IP
+
+  lb_monitor:
+    type: OS::Neutron::HealthMonitor
+    properties:
+      type: TCP
+      delay: 15
+      max_retries: 5
+      timeout: 10
+
+  floating_ip_assoc:
+    type: OS::Neutron::FloatingIPAssociation
+    properties:
+      port_id: {get_attr: [lb_pool, vip, port_id]}
+      floatingip_id: {get_param: floatingip_id}
+
+outputs:
+  console_url:
+    description: URL of the OpenShift web console
+    value:
+      str_replace:
+        template: "https://%hostname%.%domainname%:8443/console/"
+        params:
+          '%hostname%': {get_param: hostname}
+          '%domainname%': {get_param: domain_name}
+
+  api_url:
+    description: URL entrypoint to the OpenShift API
+    value:
+      str_replace:
+        template: "https://%hostname%.%domainname%:8443/"
+        params:
+          '%hostname%': {get_param: hostname}
+          '%domainname%': {get_param: domain_name}
