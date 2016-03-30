@@ -346,6 +346,7 @@ resources:
           params:
             '%stackname%': {get_param: 'OS::stack_name'}
             '%hostname%': {get_param: lb_hostname}
+      node_count: {get_param: node_count}
 
   openshift_masters:
     depends_on: external_router_interface
