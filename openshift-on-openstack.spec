@@ -1,5 +1,5 @@
 Name: openshift-on-openstack
-Version: 0.3.0
+Version: 0.4.0
 Release: 1%{?dist}
 Summary: Set of Openstack Heat templates to deploy OpenShift
 Group: System Environment/Base
@@ -30,6 +30,10 @@ cp -aR fragments/ %{buildroot}%{_datadir}/%{name}
 %{_bindir}/customize-disk-image
 
 %changelog
+* Tue Mar 22 2016 Sylvain Baubeau <sbaubeau@redhat.com> - 0.4.0-1
+- Bump to version 0.4.0
+- Enable dedicated loadbalancer node (again)
+
 * Tue Mar 22 2016 Sylvain Baubeau <sbaubeau@redhat.com> - 0.3.0-1
 - Bump to version 0.3.0
 
