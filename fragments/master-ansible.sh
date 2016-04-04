@@ -11,7 +11,17 @@ systemctl status crond && systemctl restart crond
 
 [ "$SKIP_ANSIBLE" == "True" ] && exit 0
 
-echo $NODE_HOSTNAME >> /var/lib/openshift_nodes
+grep -q "$NODE_HOSTNAME" /var/lib/openshift_nodes || echo $NODE_HOSTNAME >> /var/lib/openshift_nodes
+
+# this script is triggered by each newly added node, to
+# avoid running this script multiple times when creating
+# stack, run this script only if all nodes are already "registered"
+# /var/lib/openshift_nodes
+current_nodes=`cat /var/lib/openshift_nodes|wc -l`
+if [ $current_nodes -lt $NODE_COUNT ]; then
+    echo "$current_nodes -lt $NODE_COUNT - skipping ansible until all nodes are added"
+    exit 0
+fi
 
 export HOME=/root
 export ANSIBLE_ROLES_PATH=/usr/share/ansible/openshift-ansible/roles
@@ -146,11 +156,6 @@ echo -e "\n[nodes]" >> /var/lib/ansible/inventory
 for node in $ALL_MASTER_NODES;do
     echo "$node.$DOMAINNAME" >> /var/lib/ansible/inventory
 done
-
-# this script is triggered for each node being added, let's
-# give all nodes some time to write their hostnames into the list (this
-# minimizes number of ansible-playbook re-runs)
-sleep 60
 
 ### Note - openshift_hostname and openshift_public_hostname are overrides used because OpenStack instance metadata appends .novalocal by default to hostnames
 

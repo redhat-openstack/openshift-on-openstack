@@ -262,6 +262,12 @@ parameters:
     description: List of repository URLs which will be installed on each node.
     default: ''
 
+  node_count:
+    type: number
+    description: >
+      Number of non-master nodes to create.
+    default: 1
+
 resources:
 
   # A VM to provide host based orchestration and other sub-services
@@ -325,6 +331,7 @@ resources:
             $OS_TENANT_NAME: {get_param: os_tenant_name}
             $OS_REGION_NAME: {get_param: os_region_name}
             $LB_TYPE: {get_param: loadbalancer_type}
+            $NODE_COUNT: {get_param: node_count}
           template: {get_file: fragments/master-ansible.sh}
 
   # Collect the results from a set of resources
