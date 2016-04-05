@@ -41,6 +41,8 @@ ansible_sudo: true
 deployment_type: $DEPLOYMENT_TYPE # deployment type valid values are origin, online and openshif-enterprise
 osm_default_subdomain: cloudapps.$DOMAINNAME # default subdomain to use for exposed routes
 openshift_override_hostname_check: true
+openshift_use_openshift_sdn: $openshift_use_openshift_sdn
+openshift_use_flannel: $openshift_use_flannel
 EOF
 
 MASTER_ARR=($ALL_MASTER_NODES)
@@ -80,8 +82,6 @@ openshift_master_identity_providers:
     challenge: true
     kind: HTPasswdPasswordIdentityProvider
     filename: /etc/origin/openshift-passwd
-openshift_use_openshift_sdn: $openshift_use_openshift_sdn
-openshift_use_flannel: $openshift_use_flannel
 EOF
 fi
 
