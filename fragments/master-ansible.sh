@@ -108,11 +108,9 @@ EOF
 # if we deploy a loadbalancer node, add 'lb' group
 [ "$LB_TYPE" == "dedicated" ] && echo -e "lb" >> /var/lib/ansible/inventory
 
-num_infra=0
 echo -e "\n[masters]" >> /var/lib/ansible/inventory
 for node in $ALL_MASTER_NODES
 do
-    num_infra=$((num_infra+1))
     if [ "$LB_TYPE" == "none" ]; then
         public_name="$node.$DOMAINNAME"
     else
@@ -221,7 +219,7 @@ if [ "$DEPLOY_ROUTER" == "True" ] || [ "$DEPLOY_REGISTRY" == "True" ]; then
           infra_nodes: "{{ num_infra | default(None) }}"
 EOF
 
-    echo "num_infra: $num_infra" >> /var/lib/ansible/group_vars/masters.yml
+    echo "num_infra: $MASTER_COUNT" >> /var/lib/ansible/group_vars/masters.yml
 
     if [ "$DEPLOY_REGISTRY" == "True" ]; then
         echo "openshift_registry_selector: region=infra" >> /var/lib/ansible/group_vars/masters.yml
