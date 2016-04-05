@@ -9,14 +9,14 @@ set -o pipefail
 # crond was stopped in cloud-init before yum update, make sure it's running
 systemctl status crond && systemctl restart crond
 
-[ "$SKIP_ANSIBLE" == "True" ] && exit 0
+[ "$skip_ansible" == "True" ] && exit 0
 
-echo $NODE_HOSTNAME >> /var/lib/openshift_nodes
+echo $node_hostname >> /var/lib/openshift_nodes
 
 export HOME=/root
 export ANSIBLE_ROLES_PATH=/usr/share/ansible/openshift-ansible/roles
 
-case "$OPENSHIFT_SDN" in
+case "$openshift_sdn" in
 	openshift-sdn)
 		openshift_use_openshift_sdn=true
 		openshift_use_flannel=false
@@ -36,43 +36,43 @@ mkdir -p /var/lib/ansible/host_vars
 
 # Set variables common for all OSEv3 hosts
 cat << EOF > /var/lib/ansible/group_vars/OSv3.yml
-ansible_ssh_user: $SSH_USER
+ansible_ssh_user: $ssh_user
 ansible_sudo: true
-deployment_type: $DEPLOYMENT_TYPE # deployment type valid values are origin, online and openshif-enterprise
-osm_default_subdomain: cloudapps.$DOMAINNAME # default subdomain to use for exposed routes
+deployment_type: $deployment_type # deployment type valid values are origin, online and openshif-enterprise
+osm_default_subdomain: cloudapps.$domainname # default subdomain to use for exposed routes
 openshift_override_hostname_check: true
 openshift_use_openshift_sdn: $openshift_use_openshift_sdn
 openshift_use_flannel: $openshift_use_flannel
 EOF
 
-MASTER_ARR=($ALL_MASTER_NODES)
+MASTER_ARR=($all_master_nodes)
 MASTER_COUNT=${#MASTER_ARR[@]}
-if [ "$LB_TYPE" != "none" -a $MASTER_COUNT -gt 1 ]; then
+if [ "$lb_type" != "none" -a $MASTER_COUNT -gt 1 ]; then
     cat << EOF >> /var/lib/ansible/group_vars/OSv3.yml
 openshift_master_cluster_password: openshift_cluster
 openshift_master_cluster_method: native
-openshift_master_cluster_hostname: $LB_HOSTNAME.$DOMAINNAME
-openshift_master_cluster_public_hostname: $LB_HOSTNAME.$DOMAINNAME
+openshift_master_cluster_hostname: $lb_hostname.$domainname
+openshift_master_cluster_public_hostname: $lb_hostname.$domainname
 EOF
 fi
 
-if [ -n "$LDAP_URL" ]; then
+if [ -n "$ldap_url" ]; then
     cat << EOF >> /var/lib/ansible/group_vars/OSv3.yml
 openshift_master_identity_providers:
   - name: ldap_auth
     kind: LDAPPasswordIdentityProvider
     challenge: true
     login: true
-    bindDN: $LDAP_BIND_DN
-    bindPassword: $LDAP_BIND_PASSWORD
-    ca: '$LDAP_CA'
-    insecure: $LDAP_INSECURE
-    url: $LDAP_URL
+    bindDN: $ldap_bind_dn
+    bindPassword: $ldap_bind_password
+    ca: '$ldap_ca'
+    insecure: $ldap_insecure
+    url: $ldap_url
     attributes:
       id: ['dn']
       email: ['mail']
       name: ['cn']
-      preferredUsername: ['$LDAP_PREFERRED_USERNAME']
+      preferredUsername: ['$ldap_preferred_username']
 EOF
 else
     cat << EOF >> /var/lib/ansible/group_vars/OSv3.yml
@@ -85,7 +85,7 @@ openshift_master_identity_providers:
 EOF
 fi
 
-if [ -n "$OS_USERNAME" ] && [ -n "$OS_PASSWORD" ] && [ -n "$OS_AUTH_URL" ] && [ -n "$OS_TENANT_NAME" ]; then
+if [ -n "$os_username" ] && [ -n "$os_password" ] && [ -n "$os_auth_url" ] && [ -n "$os_tenant_name" ]; then
     echo "openshift_cloud_provider: openstack" >> /var/lib/ansible/group_vars/OSv3.yml
 fi
 
@@ -106,20 +106,20 @@ etcd
 EOF
 
 # if we deploy a loadbalancer node, add 'lb' group
-[ "$LB_TYPE" == "dedicated" ] && echo -e "lb" >> /var/lib/ansible/inventory
+[ "$lb_type" == "dedicated" ] && echo -e "lb" >> /var/lib/ansible/inventory
 
 echo -e "\n[masters]" >> /var/lib/ansible/inventory
-for node in $ALL_MASTER_NODES
+for node in $all_master_nodes
 do
-    if [ "$LB_TYPE" == "none" ]; then
-        public_name="$node.$DOMAINNAME"
+    if [ "$lb_type" == "none" ]; then
+        public_name="$node.$domainname"
     else
-        public_name="$LB_HOSTNAME.$DOMAINNAME"
+        public_name="$lb_hostname.$domainname"
     fi
 
     # Set variables for master node
-    cat << EOF > /var/lib/ansible/host_vars/$node.$DOMAINNAME.yml
-openshift_hostname: $node.$DOMAINNAME
+    cat << EOF > /var/lib/ansible/host_vars/$node.$domainname.yml
+openshift_hostname: $node.$domainname
 openshift_public_hostname: $public_name
 openshift_master_public_console_url: https://$public_name:8443/console
 openshift_master_public_api_url: https://$public_name:8443
@@ -128,21 +128,21 @@ openshift_node_labels:
   region: infra
   zone: default
 EOF
-    echo -e "$node.$DOMAINNAME" >> /var/lib/ansible/inventory
+    echo -e "$node.$domainname" >> /var/lib/ansible/inventory
 done
 
 echo -e "\n[etcd]" >> /var/lib/ansible/inventory
-for node in $ALL_MASTER_NODES; do
-    echo "$node.$DOMAINNAME" >> /var/lib/ansible/inventory
+for node in $all_master_nodes; do
+    echo "$node.$domainname" >> /var/lib/ansible/inventory
 done
 
 
-[ "$LB_TYPE" == "dedicated" ] && echo -e "\n[lb]\n$LB_HOSTNAME.$DOMAINNAME" >> /var/lib/ansible/inventory
+[ "$lb_type" == "dedicated" ] && echo -e "\n[lb]\n$lb_hostname.$domainname" >> /var/lib/ansible/inventory
 
 # host group for nodes
 echo -e "\n[nodes]" >> /var/lib/ansible/inventory
-for node in $ALL_MASTER_NODES;do
-    echo "$node.$DOMAINNAME" >> /var/lib/ansible/inventory
+for node in $all_master_nodes;do
+    echo "$node.$domainname" >> /var/lib/ansible/inventory
 done
 
 # this script is triggered for each node being added, let's
@@ -171,11 +171,11 @@ fi
 cp /var/lib/ansible/inventory /var/lib/ansible/inventory.started
 
 # Export Openstack environment variables
-export OS_USERNAME=$OS_USERNAME
-export OS_PASSWORD=$OS_PASSWORD
-export OS_AUTH_URL=$OS_AUTH_URL
-export OS_TENANT_NAME=$OS_TENANT_NAME
-export OS_REGION_NAME=$OS_REGION_NAME
+export OS_USERNAME=$os_username
+export OS_PASSWORD=$os_password
+export OS_AUTH_URL=$os_auth_url
+export OS_TENANT_NAME=$os_tenant_name
+export OS_REGION_NAME=$os_region_name
 
 # NOTE: Ignore the known_hosts check/propmt for now:
 export ANSIBLE_HOST_KEY_CHECKING=False
@@ -186,7 +186,7 @@ ansible-playbook \
     > /var/log/ansible.$$ 2>&1
 
 # Deploy registry and/or router
-if [ "$DEPLOY_ROUTER" == "True" ] || [ "$DEPLOY_REGISTRY" == "True" ]; then
+if [ "$deploy_router" == "True" ] || [ "$deploy_registry" == "True" ]; then
     cat << EOF > /var/lib/ansible/services.yml
 ---
 - include: /usr/share/ansible/openshift-ansible/playbooks/common/openshift-cluster/evaluate_groups.yml
@@ -221,7 +221,7 @@ EOF
 
     echo "num_infra: $MASTER_COUNT" >> /var/lib/ansible/group_vars/masters.yml
 
-    if [ "$DEPLOY_REGISTRY" == "True" ]; then
+    if [ "$deploy_registry" == "True" ]; then
         echo "openshift_registry_selector: region=infra" >> /var/lib/ansible/group_vars/masters.yml
         cat << EOF >> /var/lib/ansible/services.yml
 - name: Create registry
@@ -238,7 +238,7 @@ EOF
         service iptables save || true; service iptables restart || true
     fi
 
-    if [ "$DEPLOY_ROUTER" == "True" ]; then
+    if [ "$deploy_router" == "True" ]; then
         echo "openshift_router_selector: region=infra" >> /var/lib/ansible/group_vars/masters.yml
         cat << EOF >> /var/lib/ansible/services.yml
 - name: Create router

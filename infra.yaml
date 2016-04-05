@@ -296,36 +296,51 @@ resources:
       inputs:
         - name: node_hostname
         - name: all_master_nodes
+        - name: domainname
+          default: {get_param: domain_name}
+        - name: ssh_user
+          default: {get_param: ssh_user}
+        - name: deployment_type
+          default: {get_param: deployment_type}
+        - name: lb_hostname
+          default: {get_param: lb_hostname}
+        - name: ldap_url
+          default: {get_param: ldap_url}
+        - name: ldap_preferred_username
+          default: {get_param: ldap_preferred_username}
+        - name: ldap_bind_dn
+          default: {get_param: ldap_bind_dn}
+        - name: ldap_bind_password
+          default: {get_param: ldap_bind_password}
+        - name: ldap_ca
+          default: {get_param: ldap_ca}
+        - name: ldap_insecure
+          default: {get_param: ldap_insecure}
+        - name: openshift_sdn
+          default: {get_param: openshift_sdn}
+        - name: deploy_registry
+          default: {get_param: deploy_registry}
+        - name: deploy_router
+          default: {get_param: deploy_router}
+        - name: skip_ansible
+          default: {get_param: skip_ansible}
+        - name: os_auth_url
+          default: {get_param: os_auth_url}
+        - name: os_username
+          default: {get_param: os_username}
+        - name: os_password
+          default: {get_param: os_password}
+        - name: os_tenant_name
+          default: {get_param: os_tenant_name}
+        - name: os_region_name
+          default: {get_param: os_region_name}
+        - name: lb_type
+          default: {get_param: loadbalancer_type}
       outputs:
         - name: ca_cert
         - name: ca_key
       config:
-        str_replace:
-          params:
-            $ALL_MASTER_NODES: $all_master_nodes
-            $DOMAINNAME: {get_param: domain_name}
-            $NODE_HOSTNAME: $node_hostname
-            $SSH_USER: {get_param: ssh_user}
-            $DEPLOYMENT_TYPE: {get_param: deployment_type}
-            $LB_HOSTNAME: {get_param: lb_hostname}
-            $LB_IP: {get_param: lb_ip}
-            $LDAP_URL: {get_param: ldap_url}
-            $LDAP_PREFERRED_USERNAME: {get_param: ldap_preferred_username}
-            $LDAP_BIND_DN: {get_param: ldap_bind_dn}
-            $LDAP_BIND_PASSWORD: {get_param: ldap_bind_password}
-            $LDAP_CA: {get_param: ldap_ca}
-            $LDAP_INSECURE: {get_param: ldap_insecure}
-            $OPENSHIFT_SDN: {get_param: openshift_sdn}
-            $DEPLOY_REGISTRY: {get_param: deploy_registry}
-            $DEPLOY_ROUTER: {get_param: deploy_router}
-            $SKIP_ANSIBLE: {get_param: skip_ansible}
-            $OS_AUTH_URL: {get_param: os_auth_url}
-            $OS_USERNAME: {get_param: os_username}
-            $OS_PASSWORD: {get_param: os_password}
-            $OS_TENANT_NAME: {get_param: os_tenant_name}
-            $OS_REGION_NAME: {get_param: os_region_name}
-            $LB_TYPE: {get_param: loadbalancer_type}
-          template: {get_file: fragments/master-ansible.sh}
+        get_file: fragments/master-ansible.sh
 
   # Collect the results from a set of resources
   init:
