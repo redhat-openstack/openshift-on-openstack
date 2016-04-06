@@ -415,6 +415,24 @@ resources:
         - path: /root/.ssh/id_rsa.pub
           permissions: 0600
           content: {get_param: ansible_public_key}
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/group_vars/nodes.yml
+          permissions: 0644
+          content: {get_file: templates/var/lib/ansible/group_vars/nodes.yml}
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/group_vars/masters.yml
+          permissions: 0644
+          content: {get_file: templates/var/lib/ansible/group_vars/masters.yml}
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/group_vars/OSv3.yml
+          permissions: 0644
+          content: {get_file: templates/var/lib/ansible/group_vars/OSv3.yml}
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/services.yml
+          permissions: 0644
+          content: {get_file: templates/var/lib/ansible/playbooks/services.yml}
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/main.yml
+          permissions: 0644
+          content: {get_file: templates/var/lib/ansible/playbooks/main.yml}
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/inventory
+          permissions: 0644
+          content: {get_file: templates/var/lib/ansible/inventory}
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
 

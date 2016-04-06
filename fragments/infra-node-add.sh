@@ -18,7 +18,7 @@ set -eux
 # MAIN
 # ============================================================================
 
-[ "$SKIP_DNS" = "true" ] && exit 0
+[ "$SKIP_DNS" = "True" ] && exit 0
 
 # Check for Atomic Host
 if [ -e /run/ostree-booted ]; then

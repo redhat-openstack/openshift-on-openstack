@@ -149,6 +149,7 @@ function start_heat_agent_container() {
            --volume /:/host \
            --volume /etc/ansible:/etc/ansible \
            --volume /var/lib/heat-cfntools:/var/lib/heat-cfntools \
+           --volume /var/lib/os-apply-config:/var/lib/os-apply-config \
            $1 ||
         notify_failure "failed to run heat-agent docker image: $1"
 }
