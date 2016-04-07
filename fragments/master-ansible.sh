@@ -123,13 +123,6 @@ export OS_AUTH_URL=$os_auth_url
 export OS_TENANT_NAME=$os_tenant_name
 export OS_REGION_NAME=$os_region_name
 
-if [ "$deploy_registry" == "True" ]; then
-    # To make the stats port acessible publicly, we will need to open
-    # it on your master
-    iptables -I OS_FIREWALL_ALLOW -p tcp -m tcp --dport 1936 -j ACCEPT
-    service iptables save || true; service iptables restart || true
-fi
-
 ansible-playbook --inventory /var/lib/ansible/inventory \
     /var/lib/ansible/playbooks/main.yml > /var/log/ansible.$$ 2>&1
 
