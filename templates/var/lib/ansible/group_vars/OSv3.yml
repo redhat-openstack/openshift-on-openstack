@@ -1,0 +1,41 @@
+ansible_ssh_user: {{ssh_user}}
+ansible_sudo: true
+deployment_type: {{deployment_type}} # deployment type valid values are origin, online and openshif-enterprise
+osm_default_subdomain: cloudapps.{{domainname}} # default subdomain to use for exposed routes
+openshift_override_hostname_check: true
+openshift_use_openshift_sdn: {{openshift_use_openshift_sdn}}
+openshift_use_flannel: {{openshift_use_flannel}}
+{{#master_ha}}
+openshift_master_cluster_password: openshift_cluster
+openshift_master_cluster_method: native
+openshift_master_cluster_hostname: {{lb_hostname}}.{{domainname}}
+openshift_master_cluster_public_hostname: {{lb_hostname}}.{{domainname}}
+{{/master_ha}}
+{{#ldap_url}}
+openshift_master_identity_providers:
+  - name: ldap_auth
+    kind: LDAPPasswordIdentityProvider
+    challenge: true
+    login: true
+    bindDN: {{ldap_bind_dn}}
+    bindPassword: {{ldap_bind_password}}
+    ca: '{{ldap_ca}}'
+    insecure: {{ldap_insecure}}
+    url: {{ldap_url}}
+    attributes:
+      id: ['dn']
+      email: ['mail']
+      name: ['cn']
+      preferredUsername: ['{{ldap_preferred_username}}']
+{{/ldap_url}}
+{{^ldap_url}}
+openshift_master_identity_providers:
+  - name: htpasswd_auth
+    login: true
+    challenge: true
+    kind: HTPasswdPasswordIdentityProvider
+    filename: /etc/origin/openshift-passwd
+{{/ldap_url}}
+{{#openstack_cloud_provider}}
+openshift_cloud_provider: openstack
+{{/openstack_cloud_provider}}

@@ -42,8 +42,8 @@ ansible masters[0] -m shell \
         -a "oc --config ~/.kube/config delete node $node_name" || true
 
 # remove from the local list
-cp /var/lib/openshift_nodes /var/lib/openshift_nodes.bkp
-grep -v "$node_name" /var/lib/openshift_nodes.bkp \
-     > /var/lib/openshift_nodes || true
+NODESFILE=/var/lib/ansible/openshift_nodes
+cp $NODESFILE{,.bkp}
+grep -v "$node_name" ${NODESFILE}.bkp > $NODESFILE || true
 
 echo "Deleted node $node_name"

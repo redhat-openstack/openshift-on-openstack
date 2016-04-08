@@ -1,0 +1,25 @@
+- include: /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
+{{#deploy_router_or_registry}}
+- include: /var/lib/ansible/playbooks/services.yml
+{{/deploy_router_or_registry}}
+
+- hosts: masters
+  sudo: yes
+  tasks:
+  - name: Disable scheduling on master nodes
+    shell: oadm manage-node $HOSTNAME --schedulable=false || true
+
+- hosts: masters[0]
+  sudo: yes
+  tasks:
+  - name: Fetch cert file
+    fetch:
+      src=/etc/origin/master/ca.crt
+      dest={{heat_outputs_path}}.ca_cert
+      flat=yes
+
+  - name: Fetch ca key
+    fetch:
+      src=/etc/origin/master/ca.key
+      dest={{heat_outputs_path}}.ca_key
+      flat=yes
