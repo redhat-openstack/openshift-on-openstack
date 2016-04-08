@@ -8,20 +8,18 @@
 #
 #  REPOLIST - a whitespace delimited list of URLs for YUM repo files.
 #
-# The target location for downloaded repo files.  Default to system location
-REPODIR=${REPODIR:-"/etc/yum.repos.d"}
 
 set -eux
 set -o pipefail
 
+# The target location for downloaded repo files.  Default to system location
+REPODIR=${REPODIR:-"/etc/yum.repos.d"}
+
 # Bypass this function when no additional repos are provided.
 [ -z "$REPOLIST" ] && exit 0
 
-#
 # Pull down each repo file from the URL, renaming it to avoid filename overload
-#
-for repofile_url in ${REPOLIST}
-do
+for repofile_url in $REPOLIST; do
     # Create a path from the URL file and a hash to avoid conflict
     url_filename=$(basename $repofile_url)
     url_checksum=$(echo "$repofile_url" | md5sum | cut -f1 -d' ')
