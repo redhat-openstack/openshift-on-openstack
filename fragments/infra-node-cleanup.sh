@@ -28,9 +28,8 @@ grep -v "$node_name" ${etc_file}.bkp > $etc_file
 
 # Restart the DNS server to re-read the hosts file
 if [ -e /run/ostree-booted ]; then
-    # Find the DNS docker container and restart it
-    ctid=$(docker ps | grep ooshift-dns|awk '{ print $1 }')
-    docker restart $ctid
+    # Restart the DNS service container (started from infra-boot.sh)
+    docker restart dnsmasq
 else
     # Restart the host based DNS service process
     systemctl restart dnsmasq
