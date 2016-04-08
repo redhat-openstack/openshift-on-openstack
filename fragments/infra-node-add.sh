@@ -23,10 +23,8 @@ set -eux
 # Check for Atomic Host
 if [ -e /run/ostree-booted ]; then
     echo "$node_etc_host" >> /host/etc/hosts
-
-    # Find and restart the DNS service container
-    ctid=$(docker ps | grep ooshift-dns|awk '{ print $1 }')
-    docker restart $ctid
+    # Restart the DNS service container (started from infra-boot.sh)
+    docker restart dnsmasq
 else
     echo "$node_etc_host" >> /etc/hosts
     systemctl restart dnsmasq
