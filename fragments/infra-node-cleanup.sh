@@ -36,13 +36,16 @@ else
 fi
 
 # remove the node from the openshift service using the first master
-ansible masters[0] -m shell \
-        -u cloud-user --sudo -i /var/lib/ansible/inventory \
+INVENTORY=/var/lib/ansible/inventory
+[ -e $INVENTORY ] && ansible masters[0] -m shell \
+        -u cloud-user --sudo -i $INVENTORY \
         -a "oc --config ~/.kube/config delete node $node_name" || true
 
 # remove from the local list
 NODESFILE=/var/lib/ansible/openshift_nodes
-cp $NODESFILE{,.bkp}
-grep -v "$node_name" ${NODESFILE}.bkp > $NODESFILE || true
+if [ -e $NODESFILE ]; then
+    cp $NODESFILE{,.bkp}
+    grep -v "$node_name" ${NODESFILE}.bkp > $NODESFILE || true
+fi
 
 echo "Deleted node $node_name"
