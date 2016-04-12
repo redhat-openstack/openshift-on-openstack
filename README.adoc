@@ -45,8 +45,16 @@ title="OpenShift Architecture"]
 == Prerequisites
 
 1. OpenStack version Juno or later with the Heat, Neutron, Ceilometer services
-running
-2. http://www.centos.org/[CentOS] 7.2 cloud image (we leverage cloud-init) loaded in Glance for OpenShift Origin Deployments.  https://access.redhat.com/downloads[RHEL]_ 7.2 cloud image if doing Atomic Enterprise or OpenShift Enterprise
+running:
+  * heat-api-cfn service - used for passing heat metadata to nova instances
+  * neutron LBaaS service (optional) - used for loadbalancing requests in HA
+    mode, if this service is not available, you can deploy dedicated
+    loadbalancer node, see 'Select Loadbalancer Type' section
+  * ceilometer services (optional) - used when autoscaling is enabled
+2. http://www.centos.org/[CentOS] 7.2 cloud image (we leverage cloud-init)
+loaded in Glance for OpenShift Origin Deployments.
+https://access.redhat.com/downloads[RHEL]_ 7.2 cloud image if doing Atomic
+Enterprise or OpenShift Enterprise
 3. An SSH keypair loaded to Nova
 4. A (Neutron) network with a pool of floating IP addresses available
 
