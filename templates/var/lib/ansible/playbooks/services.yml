@@ -1,6 +1,8 @@
 ---
 {{=<% %>=}}
 - include: /usr/share/ansible/openshift-ansible/playbooks/common/openshift-cluster/evaluate_groups.yml
+  vars_files:
+  - /usr/share/ansible/openshift-ansible/playbooks/byo/openshift-cluster/cluster_hosts.yml
   vars:
     g_etcd_hosts: "{{ groups.etcd | default([]) }}"
     g_lb_hosts: "{{ groups.lb | default([]) }}"
