@@ -1,8 +1,5 @@
 num_infra: {{master_count}}
 openshift_schedulable: true
-openshift_node_labels:
-  region: infra
-  zone: default
 {{#deploy_registry}}
 openshift_registry_selector: region=infra
 {{/deploy_registry}}

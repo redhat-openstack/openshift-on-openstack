@@ -22,8 +22,8 @@ lb
 
 [nodes]
 {{#masters}}
-{{.}}.{{domainname}}
+{{.}}.{{domainname}} openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
 {{/masters}}
 {{#nodes}}
-{{.}}
+{{.}} openshift_node_labels="{'region': 'primary', 'zone': 'default'}"
 {{/nodes}}

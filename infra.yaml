@@ -415,9 +415,6 @@ resources:
         - path: /root/.ssh/id_rsa.pub
           permissions: 0600
           content: {get_param: ansible_public_key}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/group_vars/nodes.yml
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/group_vars/nodes.yml}
         - path: /var/lib/os-apply-config/templates/var/lib/ansible/group_vars/masters.yml
           permissions: 0644
           content: {get_file: templates/var/lib/ansible/group_vars/masters.yml}
