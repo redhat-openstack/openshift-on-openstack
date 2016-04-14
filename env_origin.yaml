@@ -19,4 +19,5 @@ parameters:
   openshift_ansible_git_rev: master
 
 resource_registry:
-    OOShift::LoadBalancer: loadbalancer_neutron.yaml
+  OOShift::LoadBalancer: loadbalancer_neutron.yaml
+  OOShift::ContainerPort: sdn_openshift_sdn.yaml

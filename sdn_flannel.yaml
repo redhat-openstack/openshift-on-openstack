@@ -1,0 +1,40 @@
+heat_template_version: 2014-10-16
+
+description: >
+  A template which provides a creates a dedicated network for container communication
+
+parameters:
+  network:
+    description: >
+      The name or ID of the internal network
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  subnet:
+    description: >
+      The name or ID of the internal IPv4 space
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  security_group:
+    description: >
+      ID of the network access policies
+    type: string
+
+resources:
+  port_security_disabled_port:
+    type: OS::Neutron::Port
+    properties:
+      network: {get_param: network}
+      fixed_ips:
+      - subnet: {get_param: subnet}
+      replacement_policy: AUTO
+      value_specs:
+        port_security_enabled: false
+
+outputs:
+  port:
+    description: A reference to the created port
+    value: {get_resource: port_security_disabled_port}

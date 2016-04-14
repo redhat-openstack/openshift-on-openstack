@@ -17,4 +17,5 @@ parameters:
   node_docker_volume_size_gb: 25
 
 resource_registry:
-    OOShift::LoadBalancer: loadbalancer_neutron.yaml
+  OOShift::LoadBalancer: loadbalancer_neutron.yaml
+  OOShift::ContainerPort: sdn_openshift_sdn.yaml

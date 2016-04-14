@@ -1,5 +1,13 @@
 {{=<% %>=}}
 - include: /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
+
+- hosts: nodes
+  sudo: yes
+  tasks:
+  - name: Allow docker traffic
+    shell: iptables -A DOCKER -p tcp -j ACCEPT
+    when: openshift_use_flannel
+
 <%#deploy_router_or_registry%>
 - include: /var/lib/ansible/playbooks/services.yml
 <%/deploy_router_or_registry%>
