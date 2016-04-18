@@ -31,7 +31,7 @@ DNS_CONTAINER_IMAGE=jprovaznik/ooshift-dns
 HEAT_AGENT_CONTAINER_IMAGE=jprovaznik/ooshift-heat-agent
 
 # Select the EPEL release to make it easier to update
-EPEL_RELEASE_VERSION=7-5
+EPEL_RELEASE_VERSION=7-6
 
 # Send success status to OpenStack WaitCondition
 function notify_success() {
