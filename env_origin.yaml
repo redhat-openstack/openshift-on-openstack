@@ -12,7 +12,7 @@ parameters:
   domain_name: "example.com"
   master_hostname: "origin-master"
   node_hostname: "origin-node"
-  ssh_user: cloud-user
+  ssh_user: centos
   master_docker_volume_size_gb: 25
   node_docker_volume_size_gb: 25
   openshift_ansible_git_url: https://github.com/openshift/openshift-ansible.git

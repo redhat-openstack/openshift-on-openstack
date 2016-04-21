@@ -12,7 +12,6 @@ parameters:
     type: string
     description: >
       The SSH user available on all nodes.
-    default: 'cloud-user'
 
   ssh_key_name:
     type: string
