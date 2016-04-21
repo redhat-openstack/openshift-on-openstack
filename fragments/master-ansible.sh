@@ -123,7 +123,14 @@ export OS_AUTH_URL=$os_auth_url
 export OS_TENANT_NAME=$os_tenant_name
 export OS_REGION_NAME=$os_region_name
 
-ansible-playbook --inventory /var/lib/ansible/inventory \
-    /var/lib/ansible/playbooks/main.yml > /var/log/ansible.$$ 2>&1
+logfile=/var/log/ansible.$$
+cmd="ansible-playbook -vvvv --inventory /var/lib/ansible/inventory \
+    /var/lib/ansible/playbooks/main.yml"
 
-mv /var/lib/ansible/inventory.started /var/lib/ansible/inventory.deployed
+if ! $cmd > $logfile 2>&1; then
+    tail -20 $logfile >&2
+    echo "Failed to run '$cmd', full log is in $(hostname):$logfile" >&2
+    exit 1
+else
+    mv /var/lib/ansible/inventory.started /var/lib/ansible/inventory.deployed
+fi
