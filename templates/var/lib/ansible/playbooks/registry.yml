@@ -1,0 +1,61 @@
+---
+{{=<% %>=}}
+- hosts: localhost
+  sudo: yes
+  tasks:
+  - name: Create temp directory for volume definitions
+    command: mktemp -d /tmp/registry-volume-XXXXXXX
+    register: mktemp
+    changed_when: False
+    when: ansible_first_run | default(false) | bool
+
+  - name: Check if Openstack clients are installed
+    command: rpm -q python-novaclient python-cinderclient python-keystoneclient
+    register: rpm_check
+    ignore_errors: true
+    when: ansible_first_run | default(false) | bool
+
+  - name: Setup RDO repositories
+    yum: name=https://rdoproject.org/repos/rdo-release.rpm state=present
+    when: deployment_type == 'origin' and rpm_check.rc != 0
+    when: ansible_first_run | default(false) | bool
+
+  - name: Install Nova and Cinder clients
+    yum: name=python-novaclient,python-cinderclient,python-keystoneclient state=latest
+    when: ansible_first_run | default(false) | bool
+
+  - name: Attach the volume to the VM
+    shell: nova --os-auth-url {{ openshift_cloudprovider_openstack_auth_url }} --os-username {{ openshift_cloudprovider_openstack_username }} --os-password {{ openshift_cloudprovider_openstack_password }} --os-tenant-name {{ openshift_cloudprovider_openstack_tenant_name }} volume-attach {{ infra_instance_id }} {{ openshift_hosted_registry_storage_openstack_volumeID }}
+    when: ansible_first_run | default(false) | bool
+
+  - name: Wait for the device to appear
+    wait_for: path=/dev/vdc
+    when: ansible_first_run | default(false) | bool
+
+  - name: Format the device
+    filesystem: fstype={{ openshift_hosted_registry_storage_openstack_filesystem }} dev=/dev/vdc
+    when: ansible_first_run | default(false) | bool
+
+  - name: Mount the device
+    mount: name={{ mktemp.stdout }} src=/dev/vdc state=mounted fstype={{ openshift_hosted_registry_storage_openstack_filesystem }}
+    when: ansible_first_run | default(false) | bool
+
+  - name: Change mode on the filesystem
+    file: path={{ mktemp.stdout }} state=directory recurse=true mode=0777
+    when: ansible_first_run | default(false) | bool
+
+  - name: Unmount the device
+    mount: name={{ mktemp.stdout }} src=/dev/vdc state=unmounted fstype={{ openshift_hosted_registry_storage_openstack_filesystem }}
+    when: ansible_first_run | default(false) | bool
+
+  - name: Delete temp directory
+    file:
+      name: "{{ mktemp.stdout }}"
+      state: absent
+    changed_when: False
+    when: ansible_first_run | default(false) | bool
+
+  - name: Detach the volume to the VM
+    shell: nova --os-auth-url {{ openshift_cloudprovider_openstack_auth_url }} --os-username {{ openshift_cloudprovider_openstack_username }} --os-password {{ openshift_cloudprovider_openstack_password }} --os-tenant-name {{ openshift_cloudprovider_openstack_tenant_name }} volume-detach {{ infra_instance_id }} {{ openshift_hosted_registry_storage_openstack_volumeID }}
+    when: ansible_first_run | default(false) | bool
+<%={{ }}=%>

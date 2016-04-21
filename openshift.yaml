@@ -180,6 +180,18 @@ parameters:
       Specify if a Docker registry should be deployed.
     default: false
 
+  registry_volume_size:
+    description: >
+      Filesystem to use for Openshift registry persistent volume
+    type: number
+    default: 10
+
+  registry_volume_fs:
+    description: >
+      Filesystem to use for Openshift registry persistent volume
+    type: string
+    default: ext4
+
   deploy_router:
     type: boolean
     description: >
@@ -322,6 +334,12 @@ resources:
       network: {get_resource: cluster_network}
       gateway_ip: ""
 
+  # Create space for Openshift registry
+  registry_volume:
+    type: OS::Cinder::Volume
+    properties:
+      size: {get_param: registry_volume_size}
+
   # VM Host definitions
   infra_host:
     depends_on: external_router_interface
@@ -353,6 +371,8 @@ resources:
       port: {get_resource: infra_port}
       docker_volume_size: {get_param: master_docker_volume_size_gb}
       deploy_registry: {get_param: deploy_registry}
+      registry_volume_id: {get_resource: registry_volume}
+      registry_volume_fs: {get_param: registry_volume_fs}
       deploy_router: {get_param: deploy_router}
       skip_ansible: {get_param: skip_ansible}
       openshift_ansible_git_url: {get_param: openshift_ansible_git_url}

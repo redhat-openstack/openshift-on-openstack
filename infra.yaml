@@ -196,6 +196,18 @@ parameters:
       True = Enable automatic provisioning of the Docker registry
     type: boolean
 
+  registry_volume_id:
+    description: >
+      Volume to use by the Openshift registry
+    type: string
+    default: ''
+
+  registry_volume_fs:
+    description: >
+      Filesystem to use for Openshift registry persistent volume
+    type: string
+    default: ext4
+
   deploy_router:
     description: >
       True = Enable deployment of the OpenShift router
@@ -333,6 +345,10 @@ resources:
           default: {get_param: openshift_sdn}
         - name: deploy_registry
           default: {get_param: deploy_registry}
+        - name: registry_volume_id
+          default: {get_param: registry_volume_id}
+        - name: registry_volume_fs
+          default: {get_param: registry_volume_fs}
         - name: deploy_router
           default: {get_param: deploy_router}
         - name: skip_ansible
@@ -356,6 +372,8 @@ resources:
             list_join:
               - ","
               - {get_param: dns_forwarders}
+        - name: infra_instance_id
+          default: {get_resource: host}
       outputs:
         - name: ca_cert
         - name: ca_key
@@ -431,9 +449,9 @@ resources:
         - path: /var/lib/os-apply-config/templates/var/lib/ansible/group_vars/OSv3.yml
           permissions: 0644
           content: {get_file: templates/var/lib/ansible/group_vars/OSv3.yml}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/services.yml
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/registry.yml
           permissions: 0644
-          content: {get_file: templates/var/lib/ansible/playbooks/services.yml}
+          content: {get_file: templates/var/lib/ansible/playbooks/registry.yml}
         - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/dns.yml
           permissions: 0644
           content: {get_file: templates/var/lib/ansible/playbooks/dns.yml}

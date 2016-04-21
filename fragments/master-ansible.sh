@@ -27,6 +27,11 @@ cat << EOF > $1
     "openshift_use_flannel": $([ "$openshift_sdn" == "flannel" ] && echo true || echo false),
     "master_ha": $([ "$lb_type" != "none" -a $master_count -gt 1 ] && echo true || echo false),
     "openstack_cloud_provider": $openstack_cloud_provider,
+    "os_username":"$os_username",
+    "os_password":"$os_password",
+    "os_auth_url":"$os_auth_url",
+    "os_tenant_name":"$os_tenant_name",
+    "os_region_name":"$os_region_name",
     "dedicated_lb": $([ "$lb_type" == "dedicated" ] && echo true || echo false),
     "no_lb": $([ "$lb_type" == "none" ] && echo true || echo false),
     "masters": ["$(echo "$all_master_nodes" | sed 's/ /","/g')"],
@@ -37,6 +42,8 @@ cat << EOF > $1
     "lb_hostname": "$lb_hostname",
     "deploy_router": $([ "$deploy_router" == "True" ] && echo true || echo false),
     "deploy_registry": $([ "$deploy_registry" == "True" ] && echo true || echo false),
+    "registry_volume_fs": "$registry_volume_fs",
+    "registry_volume_id": "$registry_volume_id",
     "heat_outputs_path": "$heat_outputs_path",
     "ssh_user": "$ssh_user",
     "deployment_type": "$deployment_type",
@@ -50,7 +57,9 @@ cat << EOF > $1
     "ldap_ca": "$ldap_ca",
     "ldap_insecure": "$ldap_insecure",
     "ldap_url": "$ldap_url",
-    "ldap_preferred_username": "$ldap_preferred_username"
+    "ldap_preferred_username": "$ldap_preferred_username",
+    "infra_instance_id": "$infra_instance_id",
+    "ansible_first_run": $([ -e ${INVENTORY}.deployed ] && echo false || echo true)
 }
 EOF
 }
@@ -114,18 +123,11 @@ if [ -e ${INVENTORY}.deployed ] &&
     exit 0
 fi
 
-cp /var/lib/ansible/inventory /var/lib/ansible/inventory.started
+cp ${INVENTORY} ${INVENTORY}.started
 
 export HOME=/root
 export ANSIBLE_ROLES_PATH=/usr/share/ansible/openshift-ansible/roles
 export ANSIBLE_HOST_KEY_CHECKING=False
-
-# Export Openstack environment variables
-export OS_USERNAME=$os_username
-export OS_PASSWORD=$os_password
-export OS_AUTH_URL=$os_auth_url
-export OS_TENANT_NAME=$os_tenant_name
-export OS_REGION_NAME=$os_region_name
 
 logfile=/var/log/ansible.$$
 cmd="ansible-playbook -vvvv --inventory /var/lib/ansible/inventory \
@@ -136,5 +138,5 @@ if ! $cmd > $logfile 2>&1; then
     echo "Failed to run '$cmd', full log is in $(hostname):$logfile" >&2
     exit 1
 else
-    mv /var/lib/ansible/inventory.started /var/lib/ansible/inventory.deployed
+    mv ${INVENTORY}.started ${INVENTORY}.deployed
 fi
