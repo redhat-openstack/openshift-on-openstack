@@ -2,7 +2,6 @@
 
 set -eux
 
-# openshift-ansible
 yum update -y && yum clean all
 yum -y install centos-release-openstack-liberty
 yum install -y net-tools bind-utils git python-pip \
@@ -11,6 +10,10 @@ yum install -y net-tools bind-utils git python-pip \
   os-refresh-config dib-utils python-pip \
   python-docker-py python-yaml python-zaqarclient
 
+# required for openshift registry setup (using cinder backend)
+yum -y install python-novaclient python-cinderclient
+
+# openshift-ansible
 #RUN yum -y install http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 yum -y install http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-6.noarch.rpm
 yum install -y --enablerepo epel ansible1.9
