@@ -5,6 +5,7 @@ osm_default_subdomain: cloudapps.{{domainname}} # default subdomain to use for e
 openshift_override_hostname_check: true
 openshift_use_openshift_sdn: {{openshift_use_openshift_sdn}}
 openshift_use_flannel: {{openshift_use_flannel}}
+openshift_use_dnsmasq: false
 {{#master_ha}}
 openshift_master_cluster_password: openshift_cluster
 openshift_master_cluster_method: native
