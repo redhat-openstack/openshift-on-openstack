@@ -86,27 +86,17 @@ exec os-apply-config
 EOF
 chmod 700 $orc_scripts/configure.d/20-os-apply-config
 
-# os-refresh-config script for running heat config hooks
-cat <<EOF >$orc_scripts/configure.d/55-heat-config
-$heat_config_script
-EOF
-chmod 700 $orc_scripts/configure.d/55-heat-config
+ln -s /usr/share/openstack-heat-templates/software-config/elements/heat-config/os-refresh-config/configure.d/55-heat-config $orc_scripts/configure.d/55-heat-config
 
 # config hook for shell scripts
 hooks_dir=/var/lib/heat-config/hooks
 mkdir -p $hooks_dir
 
 # install hook for configuring with shell scripts
-cat <<EOF >$hooks_dir/script
-$hook_script
-EOF
-chmod 755 $hooks_dir/script
+ln -s /usr/share/openstack-heat-templates/software-config/heat-container-agent/scripts/hooks/script $hooks_dir/script
 
 # install heat-config-notify command
-cat <<EOF >/usr/bin/heat-config-notify
-$heat_config_notify
-EOF
-chmod 755 /usr/bin/heat-config-notify
+ln -s /usr/share/openstack-heat-templates/software-config/elements/heat-config/bin/heat-config-notify /usr/bin/heat-config-notify
 
 # run once to write out /etc/os-collect-config.conf
 os-collect-config --one-time --debug

@@ -13,11 +13,8 @@ if ! yum info os-collect-config; then
         subscription-manager repos --enable="rhel-7-server-openstack-7.0-director-rpms"
         subscription-manager repos --enable="rhel-7-server-openstack-7.0-rpms"
     else
-        # for now if os-collect-config is not available from any of existing
-        # repositories, add tripleo's default repo which contains these packages:
-        yum -y install http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-6.noarch.rpm
-        yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-kilo/rdo-release-kilo-1.noarch.rpm
+        yum -y install centos-release-openstack-liberty
     fi
 fi
-yum -y install os-collect-config python-zaqarclient os-refresh-config os-apply-config
+yum -y install os-collect-config python-zaqarclient os-refresh-config os-apply-config openstack-heat-templates
 #yum-config-manager --disable 'epel*'
