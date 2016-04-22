@@ -523,6 +523,8 @@ resources:
       group: script
       inputs:
       - name: node_name
+      - name: ssh_user
+        default: {get_param: ssh_user}
       outputs:
       - name: result
       config:

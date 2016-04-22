@@ -38,7 +38,7 @@ fi
 # remove the node from the openshift service using the first master
 INVENTORY=/var/lib/ansible/inventory
 [ -e $INVENTORY ] && ansible masters[0] -m shell \
-        -u cloud-user --sudo -i $INVENTORY \
+        -u $ssh_user --sudo -i $INVENTORY \
         -a "oc --config ~/.kube/config delete node $node_name" || true
 
 # remove from the local list

@@ -118,7 +118,7 @@ parameters:
    deployment_type: origin
 
    # set SSH access to VMs
-   ssh_user: cloud-user
+   ssh_user: centos
    ssh_key_name: default
 
    # Set the image type and size for the VMs
