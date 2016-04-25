@@ -315,14 +315,6 @@ resources:
     properties:
       cloud_config:
         write_files:
-        - path: /etc/hosts
-          content:
-            str_replace:
-              params:
-                $NODE_IP: {get_attr: [floating_ip, floating_ip_address]}
-                $NODE_HOSTNAME: {get_param: hostname}
-                $NODE_DOMAIN: {get_param: domain_name}
-              template: {get_file: fragments/etc-node-hosts}
         - path: /root/.ssh/id_rsa
           permissions: 0600
           content: {get_param: ansible_private_key}

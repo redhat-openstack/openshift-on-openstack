@@ -1,0 +1,63 @@
+{{=<% %>=}}
+- include: /usr/share/ansible/openshift-ansible/playbooks/common/openshift-cluster/evaluate_groups.yml
+  vars_files:
+  - /usr/share/ansible/openshift-ansible/playbooks/byo/openshift-cluster/cluster_hosts.yml
+
+- name: Gather facts
+  hosts: nodes
+  vars_files:
+  - /usr/share/ansible/openshift-ansible/playbooks/byo/openshift-cluster/cluster_hosts.yml
+  vars:
+    openshift_deployment_type: "<% deployment_type %>"
+  roles:
+    - { role: 'openshift_common'}
+
+- name: Configure the DNS
+  hosts: dns
+  vars_files:
+  - /usr/share/ansible/openshift-ansible/playbooks/byo/openshift-cluster/cluster_hosts.yml
+  vars:
+    ansible_ssh_user: <%ssh_user%>
+    ansible_sudo: true
+    ansible_pkg_mgr: yum
+    deployment_type: <%deployment_type%>
+  roles:
+    - { role: '/usr/share/ansible/openshift-ansible/roles/dns',
+        base_docker_image: 'centos:centos7',
+        dns_forwarders: [<%dns_forwarders%>],
+        dns_zones: [ <%domainname%> ],
+        dns_all_hosts: "{{ groups.nodes | union(groups['extradnsitems'] | default([])) }}" }
+
+- name: Update resolv.conf on all nodes
+  hosts: nodes
+  tasks:
+    - copy:
+        src: "/var/lib/ansible/templates/etc/resolv.conf"
+        dest: "/etc/resolv.conf"
+
+<%#dedicated_lb%>
+- name: Update resolv.conf on loadbalancer
+  hosts: loadbalancer
+  tasks:
+    - copy:
+        src: "/var/lib/ansible/templates/etc/resolv.conf"
+        dest: "/etc/resolv.conf"
+<%/dedicated_lb%>
+
+- name: Copy resolv.conf on infra host
+  hosts: localhost
+  connection: local
+  vars:
+    ansible_sudo: false
+  tasks:
+    - copy:
+        src: "/var/lib/ansible/templates/etc/resolv.conf"
+        dest: "/host/etc/resolv.conf"
+      when: openshift.common.is_containerized | bool
+    - command: cp /host/etc/resolv.conf /etc/resolv.conf
+      when: openshift.common.is_containerized | bool
+    - copy:
+        src: "/var/lib/ansible/templates/etc/resolv.conf"
+        dest: "/etc/resolv.conf"
+      when: not openshift.common.is_containerized | bool
+<%={{ }}=%>

@@ -16,24 +16,12 @@ set -eux
 # If Local DNS is disabled, make no changes
 [ "$SKIP_DNS" = "true" ] && exit 0
 
-# Locate the hosts file
-# Use /host/etc/hosts for atomic container /etc/hosts for RHEL
-[ -e /run/ostree-booted ] && etc_file=/host/etc/hosts || etc_file=/etc/hosts
-
 # Save a copy of the current host file
-cp $etc_file ${etc_file}.bkp
+cp /etc/hosts{,.bkp}
 
 # Remove the node IP entry from the hosts file (saving the backup)
-grep -v "$node_name" ${etc_file}.bkp > $etc_file
-
-# Restart the DNS server to re-read the hosts file
-if [ -e /run/ostree-booted ]; then
-    # Restart the DNS service container (started from infra-boot.sh)
-    docker restart dnsmasq
-else
-    # Restart the host based DNS service process
-    systemctl restart dnsmasq
-fi
+grep -v "$node_name" /etc/hosts.bkp > /etc/hosts
+[ -e /run/ostree-booted ] && cp /etc/hosts /host/etc/hosts
 
 # used by ansible for setting ControlPath ssh param
 export HOME=/root

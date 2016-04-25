@@ -1,4 +1,8 @@
 {{=<% %>=}}
+<%^skip_dns%>
+- include: /var/lib/ansible/playbooks/dns.yml
+<%/skip_dns%>
+
 - include: /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
 
 - hosts: nodes

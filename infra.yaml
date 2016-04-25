@@ -154,11 +154,6 @@ parameters:
       Enable and select the container communications network: OVS or Flannel
     type: string
 
-  dns_ip:
-    description: >
-      A list of external DNS servers to resolve external hosts
-    type: string
-
   docker_volume_size:
     description: >
       The size of a cinder volume in GB to allocate to docker for
@@ -272,6 +267,10 @@ parameters:
     description: List of docker repository URLs which will be installed on each node, if a repo is insecure use '#insecure' suffix.
     default: ''
 
+  dns_forwarders:
+    type: comma_delimited_list
+    description: address of dns nameservers reachable in your environment
+
 resources:
 
   # A VM to provide host based orchestration and other sub-services
@@ -312,6 +311,10 @@ resources:
           default: {get_param: ssh_user}
         - name: deployment_type
           default: {get_param: deployment_type}
+        - name: skip_dns
+          default: {get_param: skip_dns}
+        - name: lb_ip
+          default: {get_param: lb_ip}
         - name: lb_hostname
           default: {get_param: lb_hostname}
         - name: ldap_url
@@ -346,6 +349,13 @@ resources:
           default: {get_param: os_region_name}
         - name: lb_type
           default: {get_param: loadbalancer_type}
+        - name: dns_ip
+          default: {get_attr: [host, first_address]}
+        - name: dns_forwarders
+          default:
+            list_join:
+              - ","
+              - {get_param: dns_forwarders}
       outputs:
         - name: ca_cert
         - name: ca_key
@@ -363,7 +373,6 @@ resources:
       - config: {get_resource: set_extra_repos}
       - config: {get_resource: set_extra_docker_repos}
       - config: {get_resource: host_update}
-      - config: {get_resource: set_dns}
       - config: {get_attr: [config_agent, config]}
         type: multipart
       - config: {get_resource: infra_boot}
@@ -376,7 +385,6 @@ resources:
       config:
         str_replace:
           params:
-            $DNS_IP: {get_param: dns_ip}
             $SKIP_DNS: {get_param: skip_dns}
             $OPENSHIFT_ANSIBLE_GIT_URL: {get_param: openshift_ansible_git_url}
             $OPENSHIFT_ANSIBLE_GIT_REV: {get_param: openshift_ansible_git_rev}
@@ -405,36 +413,30 @@ resources:
         - path: /usr/local/bin/retry
           permissions: 0755
           content: {get_file: fragments/retry.sh}
-        - path: /etc/hosts
-          content:
-            str_replace:
-              params:
-                $NODE_IP: {get_param: floating_ip}
-                $NODE_HOSTNAME: {get_param: hostname}
-                $NODE_DOMAIN: {get_param: domain_name}
-              template:
-                {get_file: fragments/etc-hosts}
-        #- path: /root/dnsmasq.conf
-        #  content:
-        #    str_replace:
-        #      params:
-        #        $DOMAINNAME: {get_param: domain_name}
-        #      template: {get_file: fragments/dnsmasq.conf}
         - path: /root/.ssh/id_rsa
           permissions: 0600
           content: {get_param: ansible_private_key}
         - path: /root/.ssh/id_rsa.pub
           permissions: 0600
           content: {get_param: ansible_public_key}
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/templates/etc/resolv.conf
+          permissions: 0644
+          content: {get_file: templates/var/lib/ansible/templates/etc/resolv.conf}
         - path: /var/lib/os-apply-config/templates/var/lib/ansible/group_vars/masters.yml
           permissions: 0644
           content: {get_file: templates/var/lib/ansible/group_vars/masters.yml}
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/host_vars/loadbalancer.yml
+          permissions: 0644
+          content: {get_file: templates/var/lib/ansible/host_vars/loadbalancer.yml}
         - path: /var/lib/os-apply-config/templates/var/lib/ansible/group_vars/OSv3.yml
           permissions: 0644
           content: {get_file: templates/var/lib/ansible/group_vars/OSv3.yml}
         - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/services.yml
           permissions: 0644
           content: {get_file: templates/var/lib/ansible/playbooks/services.yml}
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/dns.yml
+          permissions: 0644
+          content: {get_file: templates/var/lib/ansible/playbooks/dns.yml}
         - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/main.yml
           permissions: 0644
           content: {get_file: templates/var/lib/ansible/playbooks/main.yml}
@@ -492,23 +494,6 @@ resources:
     properties:
       config:
         get_file: fragments/host-update.sh
-
-  # Seed the Load balancer and LDAP server name/IP mappings
-  set_dns:
-    type: OS::Heat::SoftwareConfig
-    properties:
-      group: script
-      config:
-        str_replace:
-          params:
-            $LB_DOMAIN: {get_param: domain_name}
-            $LB_HOSTNAME: {get_param: lb_hostname}
-            $LB_IP: {get_param: lb_ip}
-            $LDAP_HOSTNAME: {get_param: ldap_hostname}
-            $LDAP_IP: {get_param: ldap_ip}
-            $DOMAINNAME: {get_param: domain_name}
-            $SKIP_DNS: {get_param: skip_dns}
-          template: {get_file: fragments/infra-dns.sh}
 
   # Apply ansible performance tuning values
   tune_ansible:
@@ -587,3 +572,8 @@ resources:
   # a message which ends the wait and returns the value
   wait_handle:
     type: OS::Heat::WaitConditionHandle
+
+outputs:
+  instance_ip:
+    description: Instance private IP (used by other nodes for DNS queries).
+    value: {get_attr: [host, first_address]}

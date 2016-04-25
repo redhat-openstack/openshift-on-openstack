@@ -7,7 +7,7 @@ etcd
 lb
 
 [lb]
-{{lb_hostname}}.{{domainname}}
+loadbalancer
 {{/dedicated_lb}}
 
 [masters]
@@ -27,3 +27,11 @@ lb
 {{#nodes}}
 {{.}} openshift_node_labels="{'region': 'primary', 'zone': 'default'}"
 {{/nodes}}
+
+[dns]
+localhost
+{{^no_lb}}
+
+[extradnsitems]
+loadbalancer
+{{/no_lb}}
