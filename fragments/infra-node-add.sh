@@ -18,6 +18,12 @@ set -eux
 # MAIN
 # ============================================================================
 
+
+NODESFILE=/var/lib/ansible/${node_type}_list
+mkdir -p /var/lib/ansible/
+touch $NODESFILE
+grep -q "$node_hostname" $NODESFILE || echo $node_hostname >> $NODESFILE
+
 [ "$SKIP_DNS" = "True" ] && exit 0
 
 # Check for Atomic Host

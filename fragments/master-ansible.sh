@@ -6,7 +6,7 @@ set -x
 set -o pipefail
 
 INVENTORY=/var/lib/ansible/inventory
-NODESFILE=/var/lib/ansible/openshift_nodes
+NODESFILE=/var/lib/ansible/node_list
 
 function create_metadata_json() {
     # $1 - metadata filename
@@ -83,7 +83,6 @@ mkdir -p /var/lib/ansible/group_vars
 mkdir -p /var/lib/ansible/host_vars
 
 touch $NODESFILE
-grep -q "$node_hostname" $NODESFILE || echo $node_hostname >> $NODESFILE
 
 create_metadata_json /var/lib/ansible/metadata.json
 
