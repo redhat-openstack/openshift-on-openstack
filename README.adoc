@@ -97,6 +97,7 @@ source keystonerc_admin
 glance image-create --name centos72 --is-public True \
   --disk-format qcow2 --container-format bare \
   --file CentOS-7-x86_64-GenericCloud.qcow2
+# For newer versions of glance clients, substitute "--is-public True" with "--visibility public"
 
 # Install the current user's SSH key for access to VMs
 nova keypair-add --pub-key ~/.ssh/id_rsa.pub default
