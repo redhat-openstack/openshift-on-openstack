@@ -242,7 +242,7 @@ else
         notify_failure "could not install pyOpenSSL"
 
     # Install from the EPEL repository
-    yum -y --enablerepo=epel install ansible1.9 ||
+    retry yum -y --enablerepo=epel install ansible1.9 ||
         notify_failure "could not install ansible"
         
     if [ -n "$OPENSHIFT_ANSIBLE_GIT_URL" -a -n "$OPENSHIFT_ANSIBLE_GIT_REV" ]
