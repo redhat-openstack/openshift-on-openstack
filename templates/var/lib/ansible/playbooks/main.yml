@@ -1,7 +1,8 @@
+{{=<% %>=}}
 - include: /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
-{{#deploy_router_or_registry}}
+<%#deploy_router_or_registry%>
 - include: /var/lib/ansible/playbooks/services.yml
-{{/deploy_router_or_registry}}
+<%/deploy_router_or_registry%>
 
 - hosts: masters
   sudo: yes
@@ -15,11 +16,19 @@
   - name: Fetch cert file
     fetch:
       src=/etc/origin/master/ca.crt
-      dest={{heat_outputs_path}}.ca_cert
+      dest=<%heat_outputs_path%>.ca_cert
       flat=yes
 
   - name: Fetch ca key
     fetch:
       src=/etc/origin/master/ca.key
-      dest={{heat_outputs_path}}.ca_key
+      dest=<%heat_outputs_path%>.ca_key
       flat=yes
+
+- hosts: nodes
+  sudo: yes
+  tasks:
+  - name: Restart node service
+    service: name={{openshift.common.service_type}}-node state=restarted
+
+<%={{ }}=%>
