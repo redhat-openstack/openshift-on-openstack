@@ -15,3 +15,6 @@ parameters:
   ssh_user: cloud-user
   master_docker_volume_size_gb: 25
   node_docker_volume_size_gb: 25
+
+resource_registry:
+    OOShift::LoadBalancer: loadbalancer_neutron.yaml
