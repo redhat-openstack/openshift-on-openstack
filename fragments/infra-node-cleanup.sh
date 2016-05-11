@@ -42,7 +42,7 @@ INVENTORY=/var/lib/ansible/inventory
         -a "oc --config ~/.kube/config delete node $node_name" || true
 
 # remove from the local list
-NODESFILE=/var/lib/ansible/openshift_nodes
+NODESFILE=/var/lib/ansible/node_list
 if [ -e $NODESFILE ]; then
     cp $NODESFILE{,.bkp}
     grep -v "$node_name" ${NODESFILE}.bkp > $NODESFILE || true

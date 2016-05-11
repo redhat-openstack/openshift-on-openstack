@@ -357,6 +357,14 @@ resources:
       server:
         get_param: infra_node
       input_values:
+        node_type: node
+        node_hostname:
+          str_replace:
+            template: "HOST-SUFFIX.DOMAIN"
+            params:
+              HOST: {get_param: hostname}
+              SUFFIX: {get_attr: [random_hostname_suffix, value]}
+              DOMAIN: {get_param: domain_name}
         node_etc_host:
           str_replace:
               template: "IP HOST-SUFFIX.DOMAIN HOST-SUFFIX #openshift"

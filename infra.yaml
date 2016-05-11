@@ -508,6 +508,8 @@ resources:
       group: script
       inputs:
       - name: node_etc_host
+      - name: node_hostname
+      - name: node_type
       outputs:
       - name: result
       config:
