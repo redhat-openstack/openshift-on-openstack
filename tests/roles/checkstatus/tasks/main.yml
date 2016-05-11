@@ -1,0 +1,15 @@
+- name: Get openshift cluster nodes
+  shell: 'oc get nodes | grep Ready | wc -l'
+  register: result
+
+- set_fact: count={{ node_count + master_count }}
+
+- fail:
+    msg: "Openshift cluster node count doesn't match"
+  when: result.stdout != "{{ count }}"
+
+- name: Check if router is running
+  shell: "oc get pods|grep 'router-1.*Running'"
+
+- name: Run diagnostics
+  command: "oadm diagnostics"
