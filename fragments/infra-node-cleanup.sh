@@ -35,6 +35,9 @@ else
     systemctl restart dnsmasq
 fi
 
+# used by ansible for setting ControlPath ssh param
+export HOME=/root
+
 # remove the node from the openshift service using the first master
 INVENTORY=/var/lib/ansible/inventory
 [ -e $INVENTORY ] && ansible masters[0] -m shell \
