@@ -4,12 +4,6 @@
 - include: /var/lib/ansible/playbooks/services.yml
 <%/deploy_router_or_registry%>
 
-- hosts: masters
-  sudo: yes
-  tasks:
-  - name: Disable scheduling on master nodes
-    shell: oadm manage-node $HOSTNAME --schedulable=false || true
-
 - hosts: masters[0]
   sudo: yes
   tasks:
@@ -30,5 +24,17 @@
   tasks:
   - name: Restart node service
     service: name={{openshift.common.service_type}}-node state=restarted
+
+- name: Waiting for registry/router setup
+  hosts: masters[0]
+  tasks:
+  - pause: minutes=3
+
+- hosts: masters[0]
+  sudo: yes
+  tasks:
+  - name: Disable scheduling on master nodes
+    shell: oadm manage-node {{ item }} --schedulable=false
+    with_items: "{{groups['masters']}}"
 
 <%={{ }}=%>
