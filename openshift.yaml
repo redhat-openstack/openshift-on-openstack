@@ -234,6 +234,12 @@ parameters:
       blank.
     hidden: true
 
+  extra_rhn_pools:
+    type: comma_delimited_list
+    description: >
+      The extra pools to attach. 
+    default: ''
+
   os_auth_url:
     type: string
     description: >
@@ -307,6 +313,7 @@ resources:
       rhn_username: {get_param: rhn_username}
       rhn_password: {get_param: rhn_password}
       rhn_pool: {get_param: rhn_pool}
+      extra_rhn_pools: {get_param: extra_rhn_pools}
       hostname:
         str_replace:
           template: "%stackname%-%hostname%"
@@ -362,6 +369,7 @@ resources:
           rhn_username: {get_param: rhn_username}
           rhn_password: {get_param: rhn_password}
           rhn_pool: {get_param: rhn_pool}
+          extra_rhn_pools: {get_param: extra_rhn_pools}
           deployment_type: {get_param: deployment_type}
           docker_volume_size: {get_param: master_docker_volume_size_gb}
           hostname:
@@ -408,6 +416,7 @@ resources:
           rhn_username: {get_param: rhn_username}
           rhn_password: {get_param: rhn_password}
           rhn_pool: {get_param: rhn_pool}
+          extra_rhn_pools: {get_param: extra_rhn_pools}
           hostname:
             str_replace:
               template: "%stackname%-%hostname%"
@@ -550,6 +559,7 @@ resources:
       rhn_username: {get_param: rhn_username}
       rhn_password: {get_param: rhn_password}
       rhn_pool: {get_param: rhn_pool}
+      extra_rhn_pools: {get_param: extra_rhn_pools}
       hostname: {get_param: lb_hostname}
       domain_name: {get_param: domain_name}
       ansible_public_key: {get_attr: [ansible_keys, public_key]}

@@ -226,13 +226,14 @@ then
     
 else
     # Prepare a RHEL host to act as the infrastructure server
-    verify_os_collect_config_is_installed
-
-    use_local_dns && install_enable_start_dnsmasq
 
     # Install the EPEL repository, but leave it disabled
     # Used only to install Ansible
+    verify_os_collect_config_is_installed
+
     install_epel_repos_disabled $EPEL_RELEASE_VERSION
+
+    use_local_dns && install_enable_start_dnsmasq
 
     yum -y install git httpd-tools ||
         notify_failure "could not install httpd-tools"
