@@ -142,8 +142,7 @@ parameters:
    # Specify the (initial) number of nodes to deploy
    node_count: 2
 
-   # Add auxiliary services: OpenStack router and internal Docker registry
-   deploy_router: False
+   # Add auxiliary services: Internal Docker registry
    deploy_registry: False
 
    # If using RHEL image, add RHN credentials for RPM installation on VMs
