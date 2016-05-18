@@ -166,6 +166,7 @@ then
 fi
 
 disable_peerdns eth0
+ifup eth1
 
 sudo_set_secure_path "/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin"
 sudo_enable_from_ssh

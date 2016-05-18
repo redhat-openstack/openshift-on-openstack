@@ -37,12 +37,26 @@ parameters:
 
   fixed_network:
     description: >
-      The name or ID of the internal network
+      The name or ID of the admin and public network
     type: string
     constraints:
     - custom_constraint: neutron.network
 
   fixed_subnet:
+    description: >
+      The name or ID of the admin and public IPv4 space
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  internal_network:
+    description: >
+      The name or ID of the internal network
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  internal_subnet:
     description: >
       The name or ID of the internal IPv4 space
     type: string
@@ -180,6 +194,7 @@ resources:
       key_name: {get_param: key_name}
       networks:
       - port: {get_resource: port}
+      - port: {get_attr: [internal_port, port]}
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
       metadata: {get_param: metadata}
@@ -250,6 +265,12 @@ resources:
         - path: /usr/local/bin/retry
           permissions: 0755
           content: {get_file: fragments/retry.sh}
+        - path: /etc/sysconfig/network-scripts/ifcfg-eth1
+          content:
+            str_replace:
+              params:
+                $IFNAME: eth1
+              template: {get_file: fragments/ifcfg-eth}
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
 
@@ -297,7 +318,7 @@ resources:
             $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
           template: {get_file: fragments/node-boot.sh}
 
-  # Create a network connection on the internal and apply security
+  # Create a network connection on the fixed network and apply security
   port:
     type: OS::Neutron::Port
     properties:
@@ -328,6 +349,14 @@ resources:
     properties:
       floating_network: {get_param: external_network}
       port_id: {get_resource: port}
+
+  # Create a network connection on the internal communications network
+  internal_port:
+    type: OOShift::ContainerPort
+    properties:
+      security_group: {get_resource: security_group}
+      network: {get_param: internal_network}
+      subnet: {get_param: internal_subnet}
 
   # activation hook for removing the node from DNS and from the Kubernetes
   # cluster

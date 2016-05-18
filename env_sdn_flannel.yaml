@@ -1,0 +1,5 @@
+parameters:
+  openshift_sdn: flannel
+
+resource_registry:
+  OOShift::ContainerPort: sdn_flannel.yaml

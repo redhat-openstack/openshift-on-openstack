@@ -55,6 +55,12 @@ parameters:
       The subnet used for openshift node-node and node-master communication
     default: 192.168.0.0/24
 
+  container_subnet:
+    type: string
+    description: >
+      The subnet used for openshift node-node communication
+    default: 10.0.0.0/24
+
   dns_nameserver:
     type: comma_delimited_list
     description: address of a dns nameserver reachable in your environment
@@ -295,6 +301,16 @@ resources:
       router_id: {get_resource: external_router}
       subnet: {get_resource: fixed_subnet}
 
+  cluster_network:
+    type: OS::Neutron::Net
+
+  cluster_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      cidr: {get_param: container_subnet}
+      network: {get_resource: cluster_network}
+      gateway_ip: ""
+
   # VM Host definitions
   infra_host:
     depends_on: external_router_interface
@@ -377,6 +393,8 @@ resources:
           infra_node_add: {get_attr: [infra_host, resource.node_add]}
           fixed_network: {get_resource: fixed_network}
           fixed_subnet: {get_resource: fixed_subnet}
+          internal_network: {get_resource: cluster_network}
+          internal_subnet: {get_resource: cluster_subnet}
           external_network: {get_param: external_network}
           openshift_sdn: {get_param: openshift_sdn}
           deploy_registry: {get_param: deploy_registry}
@@ -404,6 +422,8 @@ resources:
           dns_ip: {get_attr: [infra_floating_ip, floating_ip_address]}
           fixed_network: {get_resource: fixed_network}
           fixed_subnet: {get_resource: fixed_subnet}
+          internal_network: {get_resource: cluster_network}
+          internal_subnet: {get_resource: cluster_subnet}
           docker_volume_size: {get_param: node_docker_volume_size_gb}
           rhn_username: {get_param: rhn_username}
           rhn_password: {get_param: rhn_password}
