@@ -57,6 +57,11 @@ parameters:
     type: string
     hidden: true
 
+  extra_rhn_pools:
+    type: comma_delimited_list
+    description: List of rhn pools which will be installed on each node.
+    default: ''
+
   deployment_type:
     description: >
       Select the community or enterprise version of OpenShift
@@ -340,6 +345,10 @@ resources:
             $RHN_USERNAME: {get_param: rhn_username}
             $RHN_PASSWORD: {get_param: rhn_password}
             $POOL_ID: {get_param: rhn_pool}
+            $EXTRA_POOL_IDS:
+              list_join:
+                - " --pool="
+                - {get_param: extra_rhn_pools}
           template: {get_file: fragments/rhn-register.sh}
 
   # Enable any extra repositories

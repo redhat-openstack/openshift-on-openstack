@@ -6,6 +6,7 @@
 #   RHN_USERNAME - a valid RHN username with access to OpenShift entitlements
 #   RHN_PASSWORD - password for the RHN user
 #   POOL_ID - OPTIONAL - a specific pool with OpenShift entitlements
+#   EXTRA_POOL_IDS - OPTIONAL - additional pools
 
 # Exit on command fail
 set -eu
@@ -31,6 +32,10 @@ if [ -n "$POOL_ID" ]; then
     subscription-manager attach --pool $POOL_ID
 else
     subscription-manager attach --auto
+fi
+
+if [ -n "EXTRA_POOL_IDS" ]; then
+    subscription-manager attach --pool $EXTRA_POOL_IDS
 fi
 
 # Select the YUM repositories to use

@@ -51,6 +51,11 @@ parameters:
     type: string
     hidden: true
 
+  extra_rhn_pools:
+    type: comma_delimited_list
+    description: List of rhn pools which will be installed on each node.
+    default: ''
+
   dns_ip:
     description: IP address of the DNS server
     type: string
