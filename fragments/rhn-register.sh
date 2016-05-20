@@ -34,7 +34,7 @@ else
     subscription-manager attach --auto
 fi
 
-if [ -n "EXTRA_POOL_IDS" ]; then
+if [ -n "$EXTRA_POOL_IDS" ]; then
     subscription-manager attach --pool $EXTRA_POOL_IDS
 fi
 
