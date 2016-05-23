@@ -109,6 +109,11 @@ parameters:
     description: List of repository URLs which will be installed on each node.
     default: ''
 
+  extra_docker_repository_urls:
+    type: comma_delimited_list
+    description: List of docker repository URLs which will be installed on each node, if a repo is insecure use '#insecure' suffix.
+    default: ''
+
   # Delay openshift installation until the master is ready to accept
   timeout:
     description: Time to wait until the master setup is ready.
@@ -174,6 +179,7 @@ resources:
       - config: {get_resource: included_files}
       - config: {get_resource: rhn_register}
       - config: {get_resource: set_extra_repos}
+      - config: {get_resource: set_extra_docker_repos}
       - config: {get_resource: host_update}
       - config: {get_resource: lb_boot}
 
@@ -230,6 +236,18 @@ resources:
                 - " "
                 - {get_param: extra_repository_urls}
           template: {get_file: fragments/set-extra-repos.sh}
+
+  set_extra_docker_repos:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            $REPOLIST:
+              list_join:
+                - " "
+                - {get_param: extra_docker_repository_urls}
+          template: {get_file: fragments/set-extra-docker-repos.sh}
 
   # Insure that the host software is current
   host_update:
