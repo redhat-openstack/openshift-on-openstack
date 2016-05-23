@@ -1,0 +1,12 @@
+- name: Create stack
+  hosts: localhost
+  become: no
+  connection: local
+  gather_facts: no
+  roles:
+    - { role: deploy,
+        heat_cmd: stack-create,
+        node_count: 2,
+        master_count: 1}
+
+- include: scaling.yml

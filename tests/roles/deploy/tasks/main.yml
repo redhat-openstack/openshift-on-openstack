@@ -1,0 +1,55 @@
+- name: Create or Update OpenStack Stack
+  command: "heat {{heat_cmd}} oshift
+            -e ../env_origin.yaml
+            -f ../openshift.yaml
+            -P external_network=public
+            -P flavor=m1.shift
+            -P node_count={{node_count | default(2)}}
+            -P master_count={{master_count | default(1)}}
+            -P server_image=centos72
+            -P master_server_group_policies=affinity
+            -P master_docker_volume_size_gb=6
+            -P node_docker_volume_size_gb=5"
+  when: heat_cmd | default(False)
+
+- name: Wait for OpenStack Stack readiness
+  shell: 'heat stack-list |grep oshift|awk ''{ print $6 }'''
+  register: stack_show_status_result
+  until: stack_show_status_result.stdout not in ['CREATE_IN_PROGRESS', 'UPDATE_IN_PROGRESS']
+  retries: 60
+  delay: 60
+
+- fail:
+    msg: "Stack creation failed"
+  when: stack_show_status_result.stdout not in ['CREATE_COMPLETE', 'UPDATE_COMPLETE']
+
+- name: Read OpenStack Stack outputs
+  command: 'heat stack-show oshift'
+  register: stack_show_result
+
+- set_fact:
+    parsed_outputs: "{{ stack_show_result | oo_parse_heat_stack_outputs }}"
+
+- name: Add new master instances groups and variables
+  add_host:
+    hostname: '{{ item[0] }}'
+    ansible_ssh_host: '{{ item[0] }}'
+    ansible_ssh_user: centos
+    ansible_become: yes
+    groups: masters
+    openshift_node_labels:
+      type: "master"
+  with_together:
+    - parsed_outputs.master_ips
+
+- name: Add new node instances groups and variables
+  add_host:
+    hostname: '{{ item[0] }}'
+    ansible_ssh_host: '{{ item[0] }}'
+    ansible_ssh_user: centos
+    ansible_become: yes
+    groups: masters
+    openshift_node_labels:
+      type: "nodes"
+  with_together:
+    - parsed_outputs.host_ips
