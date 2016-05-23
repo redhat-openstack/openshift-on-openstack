@@ -221,6 +221,11 @@ parameters:
   skip_dns:
     type: boolean
 
+  docker_version:
+    description: >
+      version of the docker packages to install for master and node setup (ex: 1.8.2)
+    type: string
+
   loadbalancer_type:
     type: string
 
@@ -373,6 +378,7 @@ resources:
           params:
             $DNS_IP: {get_param: dns_ip}
             $SKIP_DNS: {get_param: skip_dns}
+            $DOCKER_VERSION: {get_param: docker_version}
             $OPENSHIFT_ANSIBLE_GIT_URL: {get_param: openshift_ansible_git_url}
             $OPENSHIFT_ANSIBLE_GIT_REV: {get_param: openshift_ansible_git_rev}
             $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }

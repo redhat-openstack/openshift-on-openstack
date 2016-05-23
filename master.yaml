@@ -210,6 +210,12 @@ parameters:
   skip_dns:
     type: boolean
 
+  docker_version:
+    description: >
+      version of the docker packages to install for master and node setup (ex: 1.8.2)
+    type: string
+
+
   extra_repository_urls:
     type: comma_delimited_list
     description: List of repository URLs which will be installed on each node.
@@ -381,6 +387,7 @@ resources:
           params:
             $DNS_IP: {get_param: dns_ip}
             $SKIP_DNS: {get_param: skip_dns}
+            $DOCKER_VERSION: {get_param: docker_version}
             $MASTER_IP: {get_attr: [floating_ip, floating_ip_address]}
             $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
           template: {get_file: fragments/master-boot.sh}
