@@ -176,6 +176,12 @@ installed.`` in the OpenShift master node data in the stack output:
 heat output-show my-openshift master_data
 ```
 
+== Debugging
+
+Sometimes it's necessary to find out why a stack was not deployed as expected.
+link:README_debugging.adoc[Debugging] helps you find the root cause of the
+issue.
+
 == Multiple Master Nodes
 
 You can deploy OpenShift with multiple master hosts using the 'native'
