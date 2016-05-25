@@ -265,6 +265,20 @@ heat stack-create my-openshift \
   -f openshift-on-openstack/openshift.yaml
 ```
 
+== Using Custom Docker Respositories
+
+You can set additional Docker repositories on deployed nodes by passing `extra_docker_repository_urls`
+parameter which contains list of docker repository URLs delimited by comma, if a repository is insecure
+you can use `#insecure` suffix for the repository:
+
+```bash
+heat stack-create my-openshift \
+  -e openshift_parameters.yaml \
+  -P extra_docker_repository_urls='user.docker.example.com,custom.user.example.com#insecure'
+  -f openshift-on-openstack/openshift.yaml
+```
+
+
 == Accessing the Web UI
 
 You can get the URL for the OpenShift Console (the web UI) from Heat by running
