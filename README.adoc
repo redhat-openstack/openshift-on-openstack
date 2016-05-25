@@ -182,6 +182,12 @@ installed.`` in the OpenShift master node data in the stack output:
 heat output-show my-openshift master_data
 ```
 
+== Debugging
+
+Sometimes it's necessary to find out why a stack was not deployed as expected.
+link:README_debugging.adoc[Debugging] helps you find the root cause of the
+issue.
+
 == Multiple Master Nodes
 
 You can deploy OpenShift with multiple master hosts using the 'native'
@@ -270,6 +276,20 @@ heat stack-create my-openshift \
   -P extra_repository_urls=http://server/my/own/repo1.repo,http://server/my/own/repo2.repo
   -f openshift-on-openstack/openshift.yaml
 ```
+
+== Using Custom Docker Respositories
+
+You can set additional Docker repositories on deployed nodes by passing `extra_docker_repository_urls`
+parameter which contains list of docker repository URLs delimited by comma, if a repository is insecure
+you can use `#insecure` suffix for the repository:
+
+```bash
+heat stack-create my-openshift \
+  -e openshift_parameters.yaml \
+  -P extra_docker_repository_urls='user.docker.example.com,custom.user.example.com#insecure'
+  -f openshift-on-openstack/openshift.yaml
+```
+
 
 == Accessing the Web UI
 

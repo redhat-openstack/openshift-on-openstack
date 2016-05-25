@@ -1,0 +1,173 @@
+= Debugging
+
+== Deployment flow
+
+Heat templates for OpenShift deployment are quite complex and many resources
+are created during the deployment.
+`heat resource-list -n 2 oshift|grep PROGRESS` command can be used to monitor
+progress of the deployment. Resources are created in this order (very
+high-level flow):
+
+* neutron networks/subnets/router
+* ceilometer alarms
+* infra node
+* master nodes
+* load balancer
+* openshift nodes
+* openshift-ansible
+
+It usually takes 30-60 minutes for creating heat stack (COMPLETE state)
+depending on number of nodes and OpenStack environment. Then the stack should
+either in COMPLETE or FAILED state. All nodes should be up and running in
+30 minutes - you should see all of them with `nova list` command. If you see
+only infra node or master nodes for a long time it usually means that
+cloud-init on some node failed.
+
+== Heat stack
+
+If you hit FAILED state then in most cases
+you can find the issue by inspecting stack events and resources:
+
+```bash
+$ heat event-list -n 2 oshift
+...
+| 2                                                       | bec1a588-f74c-4f92-adff-dd389b37258e | OverLimit: resources[2].resources.docker_volume: VolumeSizeExceedsAvailableQuota: Requested volume or snapshot exceeds allowed gigabytes quota. Requested 600G, quota is 1000G and 629G has been consumed. (HTTP 413) (Request-ID: req-602fa6f8-c796-433b-9288- | CREATE_FAILED      | 2016-05-18T11:58:12 | oshift-openshift_masters-ug2z3lp2cvni                    |
+```
+
+We can see that the deployment failed in this case because of exceeded volume
+quota.
+
+Another handy command which can tell us what went wrong is checking heat
+resources:
+
+```bash
+$ heat resource-list -n 2 atomic|grep FAIL
+| openshift_nodes               | 6f7fe203-b4ae-4fd5-8327-f5f56c232805                                                              | OS::Heat::AutoScalingGroup                                                                    | CREATE_FAILED   | 2016-05-18T10:53:07 | atomic                                                        |
+| rwgtfhmcflar                  | 5ebddb44-85e3-4373-a6a6-0730cf04ecbc                                                              | file:///root/openshift-on-openstack/node.yaml                                                 | CREATE_FAILED   | 2016-05-18T10:57:54 | atomic-openshift_nodes-7alhsm5n4gqz                           |
+| deployment_run_ansible        | f031008f-11d6-4d54-b88b-699cee85b1da                                                              | OS::Heat::SoftwareDeployment                                                                  | CREATE_FAILED   | 2016-05-18T10:57:57 | atomic-openshift_nodes-7alhsm5n4gqz-rwgtfhmcflar-lgghn54kifhm |
+```
+
+In this case we can see that there are three FAILED resources, the important
+is `deployment_run_ansible`. Both `rwgtfhmcflar` and `openshift_nodes`
+are parent resources of `deployment_run_ansible` and if a nested resource fails
+parent resources automatically fail too.
+
+Because `deployment_run_ansible` is `OS::Heat::SoftwareDeployment` we can use
+another heat command to inspect the resource (resource unique ID from the second column
+in the listing above is used in this case):
+```bash
+$ heat deployment-show f031008f-11d6-4d54-b88b-699cee85b1da
+...
+  "output_values": {
+    "deploy_stdout": "",
+    "deploy_stderr": "
+...
+Failed to run 'ansible-playbook -vvvv --inventory /var/lib/ansible/inventory     /var/lib/ansible/playbooks/main.yml', full log is in atomic-infra.example.com:/var/log/ansible.11656\n+ exit 1\n
+",
+    "deploy_status_code": 1
+  },
+  "creation_time": "2016-05-18T10:59:02",
+  "updated_time": "2016-05-18T11:12:54",
+  "input_values": {},
+  "action": "CREATE",
+  "status_reason": "deploy_status_code : Deployment exited with non-zero status code: 1",
+  "id": "f031008f-11d6-4d54-b88b-699cee85b1da"
+}
+```
+
+From the output we found out that an error occurred when running openshift-ansible
+and we can find more details in openshift-ansible logfile (on infra host).
+
+Note that we used `-n 2` parameter in all heat commands, the reason is that
+we use nested stacks.
+
+== Cloud-init
+
+Cloud-init scripts run when a node boots up, it contains quite a lot of logic:
+basic config files, subcribing node into RHN, updating/installing basic RPM
+packages... It might happen that something goes wrong during this process,
+in most cases Heat is notified about the error and heat stack is marked as
+FAILED immediately. Then you can usually find the issue by using heat commands
+above. In some cases the failure may not be reported back to Heat and then
+heat stack remains in IN_PROGRESS state until in times out (and then FAILED
+state is set), default timeout is set to 60 minutes.
+
+In that case you can find the error in `/var/log/cloud-init.log` on the failed
+node.
+
+== Os-collect-config
+
+During cloud-init setup os-collect-config tool is installed on infra node.
+Os-collect-config polls Heat server for new metadata and runs a script if
+metadata change.
+
+Os-collect-config supports various sources for fetching metadata, so you can
+see warnings like this in your logs on infra node:
+
+```bash
+May 18 13:09:59 flannel-infra os-collect-config[19193]: 2016-05-18 13:09:59.586 19193 WARNING os-collect-config [-] Source [request] Unavailable.
+May 18 13:09:59 flannel-infra os-collect-config[19193]: 2016-05-18 13:09:59.586 19193 WARNING os_collect_config.local [-] /var/lib/os-collect-config/local-data not found. Skipping
+May 18 13:09:59 flannel-infra os-collect-config[19193]: 2016-05-18 13:09:59.587 19193 WARNING os_collect_config.local [-] No local metadata found (['/var/lib/os-collect-config/local-data'])
+May 18 13:09:59 flannel-infra os-collect-config[19193]: 2016-05-18 13:09:59.587 19193 WARNING os_collect_config.zaqar [-] No auth_url configured.
+```
+
+These are not important as we use heat-api-cfn service, what is important are
+errors related to cfn:
+
+```bash
+May 18 13:09:17 localhost cloud-init: 2016-05-18 13:09:17.476 18977 INFO os_collect_config.cfn [-] No metadata_url configured.
+
+```
+
+At first you can check if correct metadata URL is set in
+`/etc/os-collect-config.conf`:
+
+```bash
+[root@flannel-infra ~]# cat /etc/os-collect-config.conf
+[DEFAULT]
+command = os-refresh-config
+
+[cfn]
+metadata_url = http://10.16.66.83:8000/v1/
+stack_name = flannel-infra_host-25ppv7is7f7q
+secret_access_key = bf9ada46ac8d43ada7a498e30d5b7bf8
+access_key_id = 5bf23697b1f4407286f3079778631316
+path = host.Metadata
+
+```
+
+And if you can GET the URL:
+```bash
+[root@flannel-infra ~]# curl http://10.16.66.83:8000/
+{"versions": [{"status": "CURRENT", "id": "v1.0", "links": [{"href": "http://10.16.66.83:8000/v1/", "rel": "self"}]}]}
+```
+
+If metadata fetching works you should see similar lines in journalctl:
+```bash
+[root@flannel-infra ~]# journalctl -u os-collect-config
+
+-- Logs begin at Wed 2016-05-18 13:04:51 UTC, end at Wed 2016-05-18 13:19:05 UTC. --
+May 18 13:09:55 flannel-infra systemd[1]: Started Collect metadata and run hook commands..
+May 18 13:09:55 flannel-infra systemd[1]: Starting Collect metadata and run hook commands....
+May 18 13:09:59 flannel-infra os-collect-config[19193]: 2016-05-18 13:09:59.586 19193 WARNING os-collect-config [-] Source [request] Unavailable.
+May 18 13:09:59 flannel-infra os-collect-config[19193]: 2016-05-18 13:09:59.586 19193 WARNING os_collect_config.local [-] /var/lib/os-collect-config/local-data not found. Skipping
+May 18 13:09:59 flannel-infra os-collect-config[19193]: 2016-05-18 13:09:59.587 19193 WARNING os_collect_config.local [-] No local metadata found (['/var/lib/os-collect-config/local-data'])
+May 18 13:09:59 flannel-infra os-collect-config[19193]: 2016-05-18 13:09:59.587 19193 WARNING os_collect_config.zaqar [-] No auth_url configured.
+May 18 13:09:59 flannel-infra os-collect-config[19193]: WARNING:root:Base directory /opt/stack/os-config-refresh is deprecated. The recommended base directory is /usr/libexec/os-refresh-con
+May 18 13:09:59 flannel-infra os-collect-config[19193]: [2016-05-18 13:09:59,640] (os-refresh-config) [INFO] Starting phase pre-configure
+May 18 13:09:59 flannel-infra os-collect-config[19193]: INFO:os-refresh-config:Starting phase pre-configure
+May 18 13:09:59 flannel-infra os-collect-config[19193]: ----------------------- PROFILING -----------------------
+May 18 13:09:59 flannel-infra os-collect-config[19193]: Target: pre-configure.d
+May 18 13:09:59 flannel-infra os-collect-config[19193]: Script                                     Seconds
+May 18 13:09:59 flannel-infra os-collect-config[19193]: ---------------------------------------  ----------
+May 18 13:09:59 flannel-infra os-collect-config[19193]: --------------------- END PROFILING ---------------------
+```
+
+If a SoftwareDeployment script failed, you can fine the error in journalctl too:
+
+```bash
+Failed to run 'ansible-playbook -vvvv --inventory /var/lib/ansible/inventory     /var/lib/ansible/playbooks/main.yml', full log is in atomic-infra.example.com:/var/log/ansible.11656
++ exit 1
+
+[2016-05-18 11:12:52,787] (heat-config) [ERROR] Error running /var/lib/heat-config/heat-config-script/ee5bdeea-5991-4f27-aaba-786efeaa2b2b. [1]
+```

@@ -287,6 +287,11 @@ parameters:
     description: List of repository URLs which will be installed on each node.
     default: ''
 
+  extra_docker_repository_urls:
+    type: comma_delimited_list
+    description: List of docker repository URLs which will be installed on each node, if a repo is insecure use '#insecure' suffix.
+    default: ''
+
 resources:
 
   # Network Components
@@ -367,6 +372,7 @@ resources:
       docker_version: {get_param: docker_version}
       loadbalancer_type: {get_param: loadbalancer_type}
       extra_repository_urls: {get_param: extra_repository_urls}
+      extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
       lb_ip: {get_attr: [lb_floating_ip, floating_ip_address]}
       lb_hostname:
         str_replace:
@@ -418,6 +424,7 @@ resources:
           skip_dns: {get_param: skip_dns}
           docker_version: {get_param: docker_version}
           extra_repository_urls: {get_param: extra_repository_urls}
+          extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
 
   openshift_nodes:
     depends_on: external_router_interface
@@ -461,6 +468,7 @@ resources:
           docker_version: {get_param: docker_version}
           metadata: {"metering.stack": {get_param: "OS::stack_id"}}
           extra_repository_urls: {get_param: extra_repository_urls}
+          extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
           all_master_nodes:
             list_join:
               - " "
@@ -599,6 +607,7 @@ resources:
       fixed_network: {get_resource: fixed_network}
       fixed_subnet: {get_resource: fixed_subnet}
       extra_repository_urls: {get_param: extra_repository_urls}
+      extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
 
 outputs:
   dns_ip:
