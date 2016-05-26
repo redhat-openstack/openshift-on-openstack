@@ -27,7 +27,6 @@ set -o pipefail
 DOCKER_VOLUME_DEVICE=/dev/vdb
 
 # The auxiliary service container images - for Atomic hosts
-DNS_CONTAINER_IMAGE=jprovaznik/ooshift-dns
 HEAT_AGENT_CONTAINER_IMAGE=jprovaznik/ooshift-heat-agent
 
 # Select the EPEL release to make it easier to update
@@ -50,10 +49,6 @@ function notify_failure() {
 # 
 # --- DNS functions ----------------------------------------------------------
 #
-function save_resolver_file() {
-    cp /etc/resolv.conf /etc/resolv.conf.local
-}
-
 # true if local DNS service is enabled
 function use_local_dns() {
     [ "$SKIP_DNS" != "true" ]
@@ -112,23 +107,6 @@ EOF
 # --- OpenShift Auxiliary Service Containers
 #
 
-# The DNS container runs Dnsmasq from root file space
-function start_dns_container() {
-    # DNS_CONTAINER_IMAGE=$1
-    docker pull $1 ||
-        notify_failure "failed to pull dns docker image: $1"
-    docker run \
-           --name dnsmasq \
-           --detach \
-           --publish 53:53/udp \
-           --volume /var/log:/var/log \
-           --volume /etc/hosts:/etc/hosts \
-           --volume /etc/dnsmasq.conf:/etc/dnsmasq.conf \
-           --volume /etc/resolv.conf.local:/etc/resolv.conf \
-           $1 ||
-        notify_failure "failed to run dns docker image: $1"
-}
-
 function start_heat_agent_container() {
     # HEAT_AGENT_CONTAINER_IMAGE=$1
     docker pull $1 ||
@@ -163,12 +141,6 @@ function verify_os_collect_config_is_installed() {
         notify_failure "os-collect-config service is not installed or enabled"
 }
 
-function install_enable_start_dnsmasq() {
-    yum install -y dnsmasq || notify_failure "can't install dnsmasq"
-    systemctl enable dnsmasq || notify_failure "can't enable dnsmasq"
-    systemctl restart dnsmasq || notify_failure "can't start dnsmasq"
-}
-
 function install_epel_repos_disabled() {
     # EPEL_RELEASE=$1 - hyphen delimiter
     # NOTE: install the right Ansible version on RHEL7.1 and Centos 7.1:
@@ -195,6 +167,11 @@ function clone_openshift_ansible() {
         notify_failure "could not check out openshift-ansible rev $2"
 }
 
+function sudo_enable_from_ssh() {
+    # Required for SSH pipelining
+    sed -i "/requiretty/s/^/#/" /etc/sudoers
+}
+
 # =============================================================================
 # MAIN
 # =============================================================================
@@ -202,12 +179,10 @@ function clone_openshift_ansible() {
 # Do not update resolv.conf from eth0 when the system boots
 disable_resolv_updates eth0
 
+sudo_enable_from_ssh
+
 if is_atomic_host
 then
-    # Prepare an Atomic host to act as the infrastructure server
-    save_resolver_file
-    use_local_dns && add_nameserver $DNS_IP
-
     systemd_docker_disable_storage_setup
 
     docker_check_for_storage_device $DOCKER_VOLUME_DEVICE
@@ -221,23 +196,18 @@ then
     systemctl start docker --ignore-dependencies ||
         notify_failure "docker service failed to start"
 
-    start_dns_container $DNS_CONTAINER_IMAGE
     start_heat_agent_container $HEAT_AGENT_CONTAINER_IMAGE
-    
+
 else
-    # Prepare a RHEL host to act as the infrastructure server
+    verify_os_collect_config_is_installed
 
     # Install the EPEL repository, but leave it disabled
     # Used only to install Ansible
-    verify_os_collect_config_is_installed
-
     install_epel_repos_disabled $EPEL_RELEASE_VERSION
-
-    use_local_dns && install_enable_start_dnsmasq
 
     yum -y install git httpd-tools ||
         notify_failure "could not install httpd-tools"
-    
+
     # ensure openssl is installed on CentOS
     yum -y install pyOpenSSL ||
         notify_failure "could not install pyOpenSSL"
@@ -245,7 +215,7 @@ else
     # Install from the EPEL repository
     retry yum -y --enablerepo=epel install ansible1.9 ||
         notify_failure "could not install ansible"
-        
+
     if [ -n "$OPENSHIFT_ANSIBLE_GIT_URL" -a -n "$OPENSHIFT_ANSIBLE_GIT_REV" ]
     then
         clone_openshift_ansible \

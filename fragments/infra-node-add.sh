@@ -5,12 +5,10 @@
 set -eux
 
 # ENVVARS
-#   SKIP_DNS = boolean: indicates that local DNS is disabled
 #   node_etc_host = "<IP Address> <hostname>"
 
 #
 # FILES
-#   /host/etc/hosts - the host database file on Atomic Host with DNS container
 #   /etc/hosts - the host database file on RPM based host
 #
 
@@ -18,20 +16,10 @@ set -eux
 # MAIN
 # ============================================================================
 
-
 NODESFILE=/var/lib/ansible/${node_type}_list
 mkdir -p /var/lib/ansible/
 touch $NODESFILE
 grep -q "$node_hostname" $NODESFILE || echo $node_hostname >> $NODESFILE
 
-[ "$SKIP_DNS" = "True" ] && exit 0
-
-# Check for Atomic Host
-if [ -e /run/ostree-booted ]; then
-    echo "$node_etc_host" >> /host/etc/hosts
-    # Restart the DNS service container (started from infra-boot.sh)
-    docker restart dnsmasq
-else
-    echo "$node_etc_host" >> /etc/hosts
-    systemctl restart dnsmasq
-fi
+echo "$node_etc_host" >> /etc/hosts
+[ -e /run/ostree-booted ] && cp /etc/hosts /host/etc/hosts || true
