@@ -175,6 +175,11 @@ function sudo_enable_from_ssh() {
 # =============================================================================
 # MAIN
 # =============================================================================
+function sudo_enable_from_ssh() {
+    sed -i "/requiretty/s/^/#/" /etc/sudoers
+}
+
+sudo_enable_from_ssh
 
 # Do not update resolv.conf from eth0 when the system boots
 disable_resolv_updates eth0

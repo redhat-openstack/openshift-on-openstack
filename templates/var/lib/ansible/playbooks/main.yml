@@ -2,8 +2,13 @@
 <%^skip_dns%>
 - include: /var/lib/ansible/playbooks/dns.yml
 <%/skip_dns%>
+<%#deploy_registry%>
+- include: /var/lib/ansible/playbooks/registry.yml
+<%/deploy_registry%>
 
 - include: /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
+  vars:
+    openshift_infra_nodes: "{{ groups.infra | default([]) }}"
 
 - hosts: nodes
   sudo: yes
@@ -11,10 +16,6 @@
   - name: Allow docker traffic
     shell: iptables -A DOCKER -p tcp -j ACCEPT
     when: openshift_use_flannel
-
-<%#deploy_router_or_registry%>
-- include: /var/lib/ansible/playbooks/services.yml
-<%/deploy_router_or_registry%>
 
 - hosts: masters[0]
   sudo: yes
@@ -48,5 +49,11 @@
   - name: Disable scheduling on master nodes
     shell: oadm manage-node {{ item }} --schedulable=false
     with_items: "{{groups['masters']}}"
+
+- hosts: masters[0]
+  sudo: yes
+  tasks:
+  - name: Clean pods in DeadlineExceeded status
+    shell: oc get pod | grep DeadlineExceeded | cut -f 1 -d " " | xargs -r oc delete pod
 
 <%={{ }}=%>
