@@ -1,5 +1,6 @@
 # Create an OSEv3 group that contains the masters and nodes groups
 [OSv3:children]
+infra
 masters
 nodes
 etcd
@@ -7,8 +8,10 @@ etcd
 lb
 
 [lb]
-{{lb_hostname}}.{{domainname}}
+loadbalancer
 {{/dedicated_lb}}
+[infra]
+localhost
 
 [masters]
 {{#masters}}
@@ -27,3 +30,11 @@ lb
 {{#nodes}}
 {{.}} openshift_node_labels="{'region': 'primary', 'zone': 'default'}"
 {{/nodes}}
+
+[dns]
+localhost
+{{^no_lb}}
+
+[extradnsitems]
+loadbalancer
+{{/no_lb}}

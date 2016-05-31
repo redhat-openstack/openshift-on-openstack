@@ -220,8 +220,8 @@ the stack:
 heat stack-create my_openshift \
    -e openshift_parameters.yaml \
    -P master_count=3 \
-   -f openshift-on-openstack/openshift.yaml\
-   -e env_loadbalancer_dedicated.yaml
+   -f openshift-on-openstack/openshift.yaml \
+   -e openshift-on-openstack/env_loadbalancer_dedicated.yaml
 ```
 
 Then an addtional instance will be created and openshift-ansible will install and
@@ -236,9 +236,34 @@ single master node you can disable loadbalancer node by including
 heat stack-create my_openshift \
    -e openshift_parameters.yaml \
    -P master_count=1 \
-   -f openshift-on-openstack/openshift.yaml\
-   -e env_loadbalancer_none.yaml
+   -f openshift-on-openstack/openshift.yaml \
+   -e openshift-on-openstack/env_loadbalancer_none.yaml
 ```
+
+== Select SDN Type ==
+
+By default, OpenShift is deployed with https://docs.openshift.com/enterprise/3.2/architecture/additional_concepts/sdn.html[OpenShift-SDN].
+When used with Openstack Neutron with GRE or VXLAN tunnels, packets are encapsulated twice
+which can have an impact on performances. Those Heat templates allow using https://github.com/coreos/flannel[Flannel]
+instead of openshift-sdn, with the `host-gw` backend to avoid the double encapsulation.
+To do so, you need to include the `env_flannel.yaml` environment file when you create the stack:
+
+```bash
+heat stack-create my_openshift \
+   -e openshift_parameters.yaml \
+   -f openshift-on-openstack/openshift.yaml \
+   -e openshift-on-openstack/env_flannel.yaml
+```
+
+To use this feature, the Neutron `port_security` extension driver needs to be enabled.
+To do so and when using the ML2 driver, edit the file `/etc/neutron/plugins/ml2/ml2_conf.ini`
+and make sure it contains the line:
+
+```bash
+extension_drivers = port_security
+```
+
+Note that this feature is still in experimental mode.
 
 == LDAP authentication
 

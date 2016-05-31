@@ -1,8 +1,8 @@
 num_infra: {{master_count}}
 openshift_schedulable: true
-{{#deploy_registry}}
-openshift_registry_selector: region=infra
-{{/deploy_registry}}
 {{#deploy_router}}
 openshift_router_selector: region=infra
+{{/deploy_router}}
+{{^deploy_router}}
+openshift_hosted_router_replicas: 0
 {{/deploy_router}}

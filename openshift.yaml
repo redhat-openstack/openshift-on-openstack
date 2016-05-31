@@ -185,6 +185,18 @@ parameters:
       Specify if a Docker registry should be deployed.
     default: false
 
+  registry_volume_size:
+    description: >
+      Filesystem to use for Openshift registry persistent volume
+    type: number
+    default: 10
+
+  registry_volume_fs:
+    description: >
+      Filesystem to use for Openshift registry persistent volume
+    type: string
+    default: ext4
+
   deploy_router:
     type: boolean
     description: >
@@ -327,6 +339,12 @@ resources:
       network: {get_resource: cluster_network}
       gateway_ip: ""
 
+  # Create space for Openshift registry
+  registry_volume:
+    type: OS::Cinder::Volume
+    properties:
+      size: {get_param: registry_volume_size}
+
   # VM Host definitions
   infra_host:
     depends_on: external_router_interface
@@ -355,10 +373,11 @@ resources:
       deployment_type: {get_param: deployment_type}
       openshift_sdn: {get_param: openshift_sdn}
       floating_ip: {get_attr: [infra_floating_ip, floating_ip_address]}
-      dns_ip: {get_attr: [infra_floating_ip, floating_ip_address]}
       port: {get_resource: infra_port}
       docker_volume_size: {get_param: master_docker_volume_size_gb}
       deploy_registry: {get_param: deploy_registry}
+      registry_volume_id: {get_resource: registry_volume}
+      registry_volume_fs: {get_param: registry_volume_fs}
       deploy_router: {get_param: deploy_router}
       skip_ansible: {get_param: skip_ansible}
       openshift_ansible_git_url: {get_param: openshift_ansible_git_url}
@@ -373,6 +392,7 @@ resources:
       loadbalancer_type: {get_param: loadbalancer_type}
       extra_repository_urls: {get_param: extra_repository_urls}
       extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
+      dns_forwarders: {get_param: dns_nameserver}
       lb_ip: {get_attr: [lb_floating_ip, floating_ip_address]}
       lb_hostname:
         str_replace:
@@ -393,7 +413,7 @@ resources:
           flavor: {get_param: flavor}
           key_name: {get_param: ssh_key_name}
           ssh_user: {get_param: ssh_user}
-          dns_ip: {get_attr: [infra_floating_ip, floating_ip_address]}
+          dns_ip: {get_attr: [infra_host, instance_ip]}
           rhn_username: {get_param: rhn_username}
           rhn_password: {get_param: rhn_password}
           rhn_pool: {get_param: rhn_pool}
@@ -441,7 +461,7 @@ resources:
           key_name: {get_param: ssh_key_name}
           ssh_user: {get_param: ssh_user}
           external_network: {get_param: external_network}
-          dns_ip: {get_attr: [infra_floating_ip, floating_ip_address]}
+          dns_ip: {get_attr: [infra_host, instance_ip]}
           fixed_network: {get_resource: fixed_network}
           fixed_subnet: {get_resource: fixed_subnet}
           internal_network: {get_resource: cluster_network}
