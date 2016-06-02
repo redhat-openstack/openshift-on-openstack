@@ -44,7 +44,7 @@ subscription-manager repos \
                      --enable="rhel-7-server-rpms" \
                      --enable="rhel-7-server-extras-rpms" \
                      --enable="rhel-7-server-optional-rpms" \
-                     --enable="rhel-7-server-ose-3.1-rpms"
+                     --enable="rhel-7-server-ose-3.2-rpms"
 
 # Allow RPM integrity checking
 rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
