@@ -150,6 +150,12 @@ parameters:
    rhn_username: ""
    rhn_password: ""
    rhn_pool: '' # OPTIONAL
+
+   # openshift-on-openstack installs docker to prep the environment.
+   # Choose a version that matches the supported version in OpenShift
+   # to avoid upgrade/downgrade churn and errors.
+   docker_version: 1.8.2
+
 EOF
 ```
 

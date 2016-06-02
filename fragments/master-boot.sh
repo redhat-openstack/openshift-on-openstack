@@ -7,6 +7,8 @@
 #               send status to OpenStack
 #   SKIP_DNS - local DNS is disabled: do not try to make updates
 #
+#   DOCKER_VERSION - specific version of docker to install for system setup
+#
 # CONSTANTS
 #
 # The device to mount to store Docker images and containers
@@ -81,9 +83,14 @@ function sudo_set_secure_path() {
 #
 
 function docker_install_and_enable() {
+    local version_info=""
+    if [ -n "$DOCKER_VERSION" ]; then
+        version_info="-$DOCKER_VERSION"
+    fi
+
     if ! rpm -q docker
     then
-        yum -y install docker || notify_failure "could not install docker"
+        yum -y install docker$version_info || notify_failure "could not install docker$version_info"
     fi
     systemctl enable docker
 }
