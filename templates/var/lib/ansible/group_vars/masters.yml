@@ -1,5 +1,6 @@
 num_infra: {{master_count}}
 openshift_schedulable: true
+openshift_master_api_port: 8443
 {{#deploy_router}}
 openshift_router_selector: region=infra
 {{/deploy_router}}
