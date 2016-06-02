@@ -49,6 +49,8 @@
   connection: local
   vars:
     ansible_sudo: false
+  roles:
+    - openshift_facts
   tasks:
     - copy:
         src: "/var/lib/ansible/templates/etc/resolv.conf"
