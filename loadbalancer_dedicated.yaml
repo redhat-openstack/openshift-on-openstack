@@ -114,6 +114,10 @@ parameters:
     description: List of docker repository URLs which will be installed on each node, if a repo is insecure use '#insecure' suffix.
     default: ''
 
+  stack_name:
+    type: string
+    default: ''
+
   # Delay openshift installation until the master is ready to accept
   timeout:
     description: Time to wait until the master setup is ready.
@@ -159,7 +163,7 @@ resources:
         str_replace:
           template: "%stackname%-%hostname%"
           params:
-            '%stackname%': {get_param: 'OS::stack_name'}
+            '%stackname%': {get_param: stack_name}
             '%hostname%': {get_param: hostname}
       admin_user: {get_param: ssh_user}
       image: {get_param: image}
@@ -285,7 +289,7 @@ outputs:
       str_replace:
         template: "https://%stackname%-%hostname%.%domainname%:8443/console/"
         params:
-          '%stackname%': {get_param: 'OS::stack_name'}
+          '%stackname%': {get_param: stack_name}
           '%hostname%': {get_param: hostname}
           '%domainname%': {get_param: domain_name}
 
@@ -295,6 +299,6 @@ outputs:
       str_replace:
         template: "https://%stackname%-%hostname%.%domainname%:8443/"
         params:
-          '%stackname%': {get_param: 'OS::stack_name'}
+          '%stackname%': {get_param: stack_name}
           '%hostname%': {get_param: hostname}
           '%domainname%': {get_param: domain_name}
