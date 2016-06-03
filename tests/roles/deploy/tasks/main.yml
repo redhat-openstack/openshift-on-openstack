@@ -1,3 +1,9 @@
+- name: Check OpenStack stack presence
+  command: 'heat stack-show oshift'
+  register: stack_show_result
+  changed_when: false
+  failed_when: stack_show_result.rc != 0 and 'Stack not found' not in stack_show_result.stderr
+
 - name: Create or Update OpenStack Stack
   command: "heat {{heat_cmd}} oshift
             -e ../env_origin.yaml
@@ -9,19 +15,26 @@
             -P server_image=centos72
             -P master_server_group_policies=affinity
             -P master_docker_volume_size_gb=6
-            -P node_docker_volume_size_gb=5"
-  when: heat_cmd | default(False)
+            -P node_docker_volume_size_gb=5
+            -P deploy_router=true
+            -P deploy_registry=true
+            {{stack_params}}"
+  when: stack_show_result.rc == 1
+
+- set_fact:
+    progress_states: ['CREATE_IN_PROGRESS', 'UPDATE_IN_PROGRESS']
+    success_states: ['CREATE_COMPLETE', 'UPDATE_COMPLETE']
 
 - name: Wait for OpenStack Stack readiness
-  shell: 'heat stack-list |grep oshift|awk ''{ print $6 }'''
+  shell: 'heat stack-show oshift | awk ''$2 == "stack_status" {print $4}'''
   register: stack_show_status_result
-  until: stack_show_status_result.stdout not in ['CREATE_IN_PROGRESS', 'UPDATE_IN_PROGRESS']
+  until: stack_show_status_result.stdout not in progress_states
   retries: 60
   delay: 60
 
 - fail:
     msg: "Stack creation failed"
-  when: stack_show_status_result.stdout not in ['CREATE_COMPLETE', 'UPDATE_COMPLETE']
+  when: stack_show_status_result.stdout not in success_states
 
 - name: Read OpenStack Stack outputs
   command: 'heat stack-show oshift'

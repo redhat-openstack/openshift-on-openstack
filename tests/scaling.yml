@@ -1,9 +1,3 @@
-- name: Check status of created stack
-  hosts: masters[0]
-  become: yes
-  roles:
-    - { role: checkstatus, node_count: 2, master_count: 1}
-
 - name: Scale up stack
   hosts: localhost
   become: no
