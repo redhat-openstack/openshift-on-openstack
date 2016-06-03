@@ -24,7 +24,9 @@ set -o pipefail
 # CONSTANTS
 #
 # The device to mount to store Docker images and containers
-DOCKER_VOLUME_DEVICE=/dev/vdb
+VOLUME_ID=$DOCKER_VOLUME_ID
+# docker-storage-setup can not deal with /dev/disk/by-id/ symlinks
+DOCKER_VOLUME_DEVICE=$(readlink -f /dev/disk/by-id/virtio-${VOLUME_ID:0:20})
 
 # The auxiliary service container images - for Atomic hosts
 HEAT_AGENT_CONTAINER_IMAGE=jprovaznik/ooshift-heat-agent

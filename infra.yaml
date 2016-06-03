@@ -407,6 +407,7 @@ resources:
             $OPENSHIFT_ANSIBLE_GIT_URL: {get_param: openshift_ansible_git_url}
             $OPENSHIFT_ANSIBLE_GIT_REV: {get_param: openshift_ansible_git_rev}
             $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
+            $DOCKER_VOLUME_ID: {get_resource: docker_volume}
           template: {get_file: fragments/infra-boot.sh}
 
   # Compose the FQDN for cloud-init

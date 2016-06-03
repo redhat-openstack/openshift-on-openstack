@@ -331,6 +331,7 @@ resources:
             $DNS_IP: {get_param: dns_ip}
             $SKIP_DNS: {get_param: skip_dns}
             $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
+            $DOCKER_VOLUME_ID: {get_resource: docker_volume}
           template: {get_file: fragments/node-boot.sh}
 
   # Create a network connection on the fixed network and apply security
