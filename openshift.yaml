@@ -360,7 +360,6 @@ resources:
             '%stackname%': {get_param: 'OS::stack_name'}
             '%hostname%': {get_param: infra_hostname}
       domain_name: {get_param: domain_name}
-      external_network: {get_param: external_network}
       fixed_network: {get_resource: fixed_network}
       fixed_subnet: {get_resource: fixed_subnet}
       ansible_public_key: {get_attr: [ansible_keys, public_key]}
@@ -453,7 +452,6 @@ resources:
           flavor: {get_param: flavor}
           key_name: {get_param: ssh_key_name}
           ssh_user: {get_param: ssh_user}
-          external_network: {get_param: external_network}
           dns_ip: {get_attr: [infra_host, instance_ip]}
           fixed_network: {get_resource: fixed_network}
           fixed_subnet: {get_resource: fixed_subnet}
