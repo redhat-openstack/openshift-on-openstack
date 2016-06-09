@@ -56,4 +56,10 @@
   - name: Clean pods in DeadlineExceeded status
     shell: oc get pod | grep DeadlineExceeded | cut -f 1 -d " " | xargs -r oc delete pod
 
+<%#deploy_router%>
+<%#dedicated_lb%>
+- include: /var/lib/ansible/playbooks/haproxy.yml
+<%/dedicated_lb%>
+<%/deploy_router%>
+
 <%={{ }}=%>
