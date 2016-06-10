@@ -33,7 +33,7 @@ cat << EOF > $1
     "os_tenant_name":"$os_tenant_name",
     "os_region_name":"$os_region_name",
     "dedicated_lb": $([ "$lb_type" == "dedicated" ] && echo true || echo false),
-    "no_lb": $([ "$lb_type" == "none" ] && echo true || echo false),
+    "no_lb": $([ "$lb_type" == "none" -o "$lb_type" == "external" ] && echo true || echo false),
     "masters": ["$(echo "$all_master_nodes" | sed 's/ /","/g')"],
     "master_count": $master_count,
     "nodes": ["$(sed ':a;N;$!ba;s/\n/","/g' $NODESFILE)"],

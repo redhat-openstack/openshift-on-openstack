@@ -1,0 +1,138 @@
+heat_template_version: 2014-10-16
+
+description: >
+  A template which doesn't create any resources supposing that an external
+  loadbalancer is used.
+
+parameters:
+
+  key_name:
+    description: >
+      A pre-submitted SSH key to access the VM hosts
+    type: string
+    constraints:
+    - custom_constraint: nova.keypair
+
+  image:
+    type: string
+    default: ''
+
+  flavor:
+    description: >
+      Define the hardware characteristics for the VMs: CPU, Memory, base disk
+    type: string
+    constraints:
+    - custom_constraint: nova.flavor
+
+  hostname:
+    description: >
+      The load balancer hostname portion of the FQDN
+    type: string
+
+  domain_name:
+    description: >
+      All VMs will be placed in this domain
+    type: string
+
+  rhn_username:
+    description: >
+      A valid user with entitlements to RHEL and OpenShift software repos
+    type: string
+
+  rhn_password:
+    description: >
+      The password for the RHN user
+    type: string
+    hidden: true
+
+  rhn_pool:
+    description: >
+      A subscription pool containing the RHEL and OpenShift software repos
+      OPTIONAL
+    type: string
+    hidden: true
+
+  extra_rhn_pools:
+    type: comma_delimited_list
+    description: List of rhn pools which will be installed on each node.
+    default: ''
+
+  dns_ip:
+    description: IP address of the DNS server
+    type: string
+
+  ssh_user:
+    description: >
+      The user for SSH access to the VM hosts
+    type: string
+
+  ansible_public_key:
+    description: >
+      The SSH public key that Ansible will use to access master and node hosts
+      This will be placed on each VM host in /root/.ssh/authorized_keys
+    type: string
+
+  fixed_subnet:
+    description: >
+      The name or ID of the internal IPv4 space
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  members:
+    type: comma_delimited_list
+
+  master_hostname:
+    type: string
+
+  floatingip_id:
+    type: string
+
+  fixed_network:
+    description: >
+      The name or ID of the internal network
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  fixed_subnet:
+    description: >
+      The name or ID of the internal IPv4 space
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  extra_repository_urls:
+    type: comma_delimited_list
+    description: List of repository URLs which will be installed on each node.
+    default: ''
+
+  extra_docker_repository_urls:
+    type: comma_delimited_list
+    description: List of docker repository URLs which will be installed on each node, if a repo is insecure use '#insecure' suffix.
+    default: ''
+
+  # Delay openshift installation until the master is ready to accept
+  timeout:
+    description: Time to wait until the master setup is ready.
+    type: number
+    default: 4000
+
+outputs:
+  console_url:
+    description: URL of the OpenShift web console
+    value:
+      str_replace:
+        template: "https://%hostname%.%domainname%:8443/console/"
+        params:
+          '%hostname%': {get_param: master_hostname}
+          '%domainname%': {get_param: domain_name}
+
+  api_url:
+    description: URL entrypoint to the OpenShift API
+    value:
+      str_replace:
+        template: "https://%hostname%.%domainname%:8443/"
+        params:
+          '%hostname%': {get_param: master_hostname}
+          '%domainname%': {get_param: domain_name}
