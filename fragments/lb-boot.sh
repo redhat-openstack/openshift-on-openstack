@@ -13,20 +13,7 @@ set -x
 # Exit with return code of the last non-zero part of a pipe (or 0 for success)
 set -o pipefail
 
-# Indicate success to OpenStack via a WaitCondition curl query
-function notify_success() {
-    # MESSAGE=$1
-    $WC_NOTIFY --data-binary  \
-               "{\"status\": \"SUCCESS\", \"reason\": \"$1\", \"data\": \"$1\"}"
-    exit 0
-}
-
-# Indicate failure to OpenStack via a WaitCondition curl query
-function notify_failure() {
-    $WC_NOTIFY --data-binary \
-               "{\"status\": \"FAILURE\", \"reason\": \"$1\", \"data\": \"$1\"}"
-    exit 1
-}
+source /usr/local/share/openshift-on-openstack/common_functions.sh
 
 # ==============================================================================
 # MAIN

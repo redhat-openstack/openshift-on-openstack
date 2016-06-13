@@ -21,6 +21,8 @@ set -x
 # Return the non-zero exit code of the last cmd of a pipe (or 0 for success)
 set -o pipefail
 
+source /usr/local/share/openshift-on-openstack/common_functions.sh
+
 # CONSTANTS
 #
 # The device to mount to store Docker images and containers
@@ -32,35 +34,8 @@ HEAT_AGENT_CONTAINER_IMAGE=jprovaznik/ooshift-heat-agent
 # Select the EPEL release to make it easier to update
 EPEL_RELEASE_VERSION=7-7
 
-# Send success status to OpenStack WaitCondition
-function notify_success() {
-    $WC_NOTIFY --data-binary \
-               "{\"status\": \"SUCCESS\", \"reason\": \"$1\", \"data\": \"$1\"}"
-    exit 0
-}
-
-# Send success status to OpenStack WaitCondition
-function notify_failure() {
-    $WC_NOTIFY --data-binary \
-               "{\"status\": \"FAILURE\", \"reason\": \"$1\", \"data\": \"$1\"}"
-    exit 1
-}
-
-
-# 
 # --- DNS functions ----------------------------------------------------------
 #
-# true if local DNS service is enabled
-function use_local_dns() {
-    [ "$SKIP_DNS" != "true" ]
-}
-
-# add the local nameserver to the beginning of the local resolver list
-function add_nameserver() {
-    # NAMESERVER_IP=$1
-    sed -i "/search openstacklocal.*/anameserver $1" /etc/resolv.conf
-}
-
 # Disable automatic updates of resolv.conf when an interface comes up
 function disable_resolv_updates() {
     # INTERFACE=$1
@@ -83,37 +58,6 @@ function systemd_docker_disable_storage_setup() {
     mv /etc/systemd/system/multi-user.target.wants/docker-storage-setup.service /root
     systemctl daemon-reload
 }
-
-# All hosts must have an external disk device (cinder?) for docker storage
-function docker_set_storage_device() {
-    # By default the cinder volume is mapped to virtio-first_20_chars of cinder
-    # volume ID under /dev/disk/by-id/
-    devlink=/dev/disk/by-id/virtio-${1:0:20}
-    if ! [ -e "$devlink" ];then
-        # It might be that disk is not present under /dev/disk/by-id/
-        # https://ask.openstack.org/en/question/50882/are-devdiskby-id-symlinks-unreliable/
-        # then just find first disk which has no partition
-        for dev in /dev/vdb /dev/vda; do
-            if [ -b $dev -a ! -b ${dev}1 ]; then
-                docker_dev=$dev
-                break
-            fi
-        done
-    else
-        # docker-storage-setup can not deal with /dev/disk/by-id/ symlinks
-        docker_dev=$(readlink -f $devlink)
-    fi
-
-    if ! [ -b "$docker_dev" ]; then
-        notify_failure "docker volume device $docker_dev does not exist"
-    fi
-
-    cat << EOF > /etc/sysconfig/docker-storage-setup
-DEVS=$docker_dev
-VG=docker-vg
-EOF
-}
-
 
 #
 # --- OpenShift Auxiliary Service Containers
@@ -186,20 +130,6 @@ function clone_openshift_ansible() {
     git checkout "$2" ||
         notify_failure "could not check out openshift-ansible rev $2"
 }
-
-function sudo_enable_from_ssh() {
-    # Required for SSH pipelining
-    sed -i "/requiretty/s/^/#/" /etc/sudoers
-}
-
-# =============================================================================
-# MAIN
-# =============================================================================
-function sudo_enable_from_ssh() {
-    sed -i "/requiretty/s/^/#/" /etc/sudoers
-}
-
-sudo_enable_from_ssh
 
 # Do not update resolv.conf from eth0 when the system boots
 disable_resolv_updates eth0
