@@ -111,6 +111,10 @@ parameters:
     description: List of docker repository URLs which will be installed on each node, if a repo is insecure use '#insecure' suffix.
     default: ''
 
+  stack_name:
+    type: string
+    default: ''
+
 resources:
   lb:
     type: OS::Neutron::LoadBalancer
@@ -154,7 +158,7 @@ outputs:
       str_replace:
         template: "https://%stackname%-%hostname%.%domainname%:8443/console/"
         params:
-          '%stackname%': {get_param: 'OS::stack_name'}
+          '%stackname%': {get_param: stack_name}
           '%hostname%': {get_param: hostname}
           '%domainname%': {get_param: domain_name}
 
@@ -164,6 +168,6 @@ outputs:
       str_replace:
         template: "https://%stackname%-%hostname%.%domainname%:8443/"
         params:
-          '%stackname%': {get_param: 'OS::stack_name'}
+          '%stackname%': {get_param: stack_name}
           '%hostname%': {get_param: hostname}
           '%domainname%': {get_param: domain_name}
