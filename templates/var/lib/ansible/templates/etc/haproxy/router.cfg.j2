@@ -1,0 +1,27 @@
+{{=<% %>=}}
+frontend  atomic-openshift-router-http
+    bind *:80
+    default_backend atomic-openshift-router-http
+    mode tcp
+    option tcplog
+
+frontend  atomic-openshift-router-https
+    bind *:443
+    default_backend atomic-openshift-router-https
+    mode tcp
+    option tcplog
+
+backend atomic-openshift-router-http
+    balance source
+    mode tcp
+{% for server in servers %}
+    server {{ server.openshift.common.hostname }} {{ server.openshift.common.ip }}:80 check
+{% endfor %}
+
+backend atomic-openshift-router-https
+    balance source
+    mode tcp
+{% for server in servers %}
+    server {{ server.openshift.common.hostname }} {{ server.openshift.common.ip }}:443 check
+{% endfor %}
+<%={{ }}=%>

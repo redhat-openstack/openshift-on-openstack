@@ -1,0 +1,42 @@
+{{=<% %>=}}
+- include: /usr/share/ansible/openshift-ansible/playbooks/common/openshift-cluster/evaluate_groups.yml
+  vars_files:
+  - /usr/share/ansible/openshift-ansible/playbooks/byo/openshift-cluster/cluster_hosts.yml
+
+- name: Gather facts
+  hosts: masters
+  roles:
+    - { role: 'openshift_facts'}
+
+
+- name: Configure load balancers
+  hosts: oo_lb_to_config
+  vars:
+    os_firewall_use_firewalld: false
+    os_firewall_allow:
+    - service: router http
+      port: "80/tcp"
+    - service: router https
+      port: "443/tcp"
+  roles:
+  - role: os_firewall
+  - role: openshift_facts
+  tasks:
+    - set_fact:
+        servers: "{{ hostvars | oo_select_keys(groups['oo_masters']) }}"
+    - name: Configure haproxy
+      template:
+        src: /var/lib/ansible/templates/etc/haproxy/router.cfg.j2
+        dest: /etc/haproxy/router.cfg
+        owner: root
+        group: root
+        mode: 0644
+    - name: Include config file
+      replace: dest=/etc/sysconfig/haproxy regexp='OPTIONS=.*' replace='OPTIONS="-f /etc/haproxy/router.cfg"'
+    - name: Enable and start haproxy
+      service:
+        name: haproxy
+        state: restarted
+        enabled: yes
+      register: start_result
+<%={{ }}=%>

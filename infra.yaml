@@ -462,6 +462,12 @@ resources:
         - path: /var/lib/os-apply-config/templates/var/lib/ansible/inventory
           permissions: 0644
           content: {get_file: templates/var/lib/ansible/inventory}
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/haproxy.yml
+          permissions: 0644
+          content: {get_file: templates/var/lib/ansible/playbooks/haproxy.yml}
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/templates/etc/haproxy/router.cfg.j2
+          permissions: 0644
+          content: {get_file: templates/var/lib/ansible/templates/etc/haproxy/router.cfg.j2}
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
 
