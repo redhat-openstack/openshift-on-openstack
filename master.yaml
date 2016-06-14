@@ -393,6 +393,7 @@ resources:
             $SKIP_DNS: {get_param: skip_dns}
             $MASTER_IP: {get_attr: [floating_ip, floating_ip_address]}
             $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
+            $DOCKER_VOLUME_ID: {get_resource: docker_volume}
           template: {get_file: fragments/master-boot.sh}
 
   # Add the hostname and address of the infrastructure host to the master host
