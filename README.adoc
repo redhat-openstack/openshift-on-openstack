@@ -205,34 +205,31 @@ three nodes. You can get the URLs from Heat by running
 
 == Select Loadbalancer Type
 
-By default Neutron LBaaS is used for setting up loadbalancer. If LBaaS is not
-available in your OpenStack environment you can deploy a dedicated loadbalancer node
-by including `env_loadbalancer_dedicated.yaml` environment file when you create
-the stack:
+When deploying multiple master nodes, both access to the nodes and OpenShift
+router pods (which run on master nodes) have to be loadbalanced.
+Openshift-on-openstack provides multiple options for setting up loadbalancing:
 
-```bash
-heat stack-create my_openshift \
-   -e openshift_parameters.yaml \
-   -P master_count=3 \
-   -f openshift-on-openstack/openshift.yaml \
-   -e openshift-on-openstack/env_loadbalancer_dedicated.yaml
-```
-
-Then an addtional instance will be created and openshift-ansible will install and
-configure loadbalancer service.
-
-Do not use dedicated loadbalancer when deploying only single master node,
-openshift-ansible skips loadbalancer setup if only single master node is used. For
-single master node you can disable loadbalancer node by including
-`env_loadbalancer_none.yaml` environment file when you create the stack:
-
-```bash
-heat stack-create my_openshift \
-   -e openshift_parameters.yaml \
-   -P master_count=1 \
-   -f openshift-on-openstack/openshift.yaml \
-   -e openshift-on-openstack/env_loadbalancer_none.yaml
-```
+* Neutron LBaaS - this loadbalancer is used by default. Neutron loadbalancer
+  serviceis used for loadbalancing console/api requests to master nodes. At the
+  moment Openshift router requests are not loadbalanced and an external
+  loadbalancer has to be used for it. This is default option, but can be set
+  explicitly by including `-e openshift-on-openstack/env_loadbalancer_neutron.yaml`
+  when creating the stack.
+* External loadbalancer - a user is expected to set its own loadbalancer both
+  for master nodes and Openshift routers. This is suggested type for production.
+  To select this type include `-e openshift-on-openstack/env_loadbalancer_external.yaml`
+  when creating the stack.
+* Dedicated loadbalancer node - a dedicated node is created during stack
+  creation and HAProxy loadbalancer is configured on it. This type is useful for
+  demo/testing purposes only because HA is not assured for the single loadbalancer
+  To select this type include `-e openshift-on-openstack/env_loadbalancer_dedicated.yaml`
+  when creating the stack.
+  node.
+* None - if only single master node is deployed, it's possible to skip
+  loadbalancer creation, then all master node requests and Openshift router requests
+  point to the single master node.
+  To select this type include `-e openshift-on-openstack/env_loadbalancer_none.yaml`
+  when creating the stack.
 
 == Select SDN Type ==
 

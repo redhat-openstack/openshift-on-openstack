@@ -1,0 +1,5 @@
+parameters:
+    loadbalancer_type: 'external'
+
+resource_registry:
+    OOShift::LoadBalancer: loadbalancer_external.yaml
