@@ -351,13 +351,18 @@ resources:
     properties:
       rules:
       - protocol: icmp
-      # Just open everything for now:
-      - protocol: tcp
-        port_range_min: 0
-        port_range_max: 65535
-      - protocol: udp
-        port_range_min: 0
-        port_range_max: 65535
+      - direction: ingress
+        protocol: tcp
+        port_range_min: 22
+        port_range_max: 22
+      - direction: ingress
+        protocol: tcp
+        port_range_min: 10250
+        port_range_max: 10250
+      - direction: ingress
+        protocol: udp
+        port_range_min: 4789
+        port_range_max: 4789
 
   # Create an IP on the public network for inbound access to applications
   floating_ip:

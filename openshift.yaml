@@ -584,13 +584,61 @@ resources:
     properties:
       rules:
       - protocol: icmp
-      # Just open everything for now:
-      - protocol: tcp
-        port_range_min: 0
-        port_range_max: 65535
-      - protocol: udp
-        port_range_min: 0
-        port_range_max: 65535
+      - direction: ingress
+        protocol: tcp
+        port_range_min: 22
+        port_range_max: 22
+      - direction: ingress
+        protocol: tcp
+        port_range_min: 4001
+        port_range_max: 4001
+      - direction: ingress
+        protocol: tcp
+        port_range_min: 8443
+        port_range_max: 8443
+      - direction: ingress
+        protocol: tcp
+        port_range_min: 53
+        port_range_max: 53
+      - direction: ingress
+        protocol: udp
+        port_range_min: 53
+        port_range_max: 53
+      - direction: ingress
+        protocol: tcp
+        port_range_min: 8053
+        port_range_max: 8053
+      - direction: ingress
+        protocol: udp
+        port_range_min: 8053
+        port_range_max: 8053
+      - direction: ingress
+        protocol: tcp
+        port_range_min: 24224
+        port_range_max: 24224
+      - direction: ingress
+        protocol: udp
+        port_range_min: 24224
+        port_range_max: 24224
+      # etcd services
+      - direction: ingress
+        protocol: tcp
+        port_range_min: 2379
+        port_range_max: 2379
+      - direction: ingress
+        protocol: tcp
+        port_range_min: 2380
+        port_range_max: 2380
+        remote_mode: remote_group_id
+      # infra node services
+      - direction: ingress
+        protocol: tcp
+        port_range_min: 80
+        port_range_max: 80
+      - direction: ingress
+        protocol: tcp
+        port_range_min: 443
+        port_range_max: 443
 
   lb_floating_ip:
     type: OS::Neutron::FloatingIP
