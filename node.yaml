@@ -28,13 +28,6 @@ parameters:
     constraints:
     - custom_constraint: nova.flavor
 
-  external_network:
-    description: >
-      The name of the inbound access network
-    type: string
-    constraints:
-    - custom_constraint: neutron.network
-
   fixed_network:
     description: >
       The name or ID of the admin and public network
@@ -364,13 +357,6 @@ resources:
         port_range_min: 4789
         port_range_max: 4789
 
-  # Create an IP on the public network for inbound access to applications
-  floating_ip:
-    type: OS::Neutron::FloatingIP
-    properties:
-      floating_network: {get_param: external_network}
-      port_id: {get_resource: port}
-
   # Create a network connection on the internal communications network
   internal_port:
     type: OOShift::ContainerPort
@@ -419,7 +405,7 @@ resources:
           str_replace:
               template: "IP HOST-SUFFIX.DOMAIN HOST-SUFFIX #openshift"
               params:
-                IP: {get_attr: [floating_ip, floating_ip_address]}
+                IP: {get_attr: [host, first_address]}
                 HOST: {get_param: hostname}
                 SUFFIX: {get_attr: [random_hostname_suffix, value]}
                 DOMAIN: {get_param: domain_name}
@@ -474,19 +460,9 @@ outputs:
           HOST: {get_param: hostname}
           SUFFIX: {get_attr: [random_hostname_suffix, value]}
           DOMAIN: {get_param: domain_name}
-  etc_hosts:
-    description: A hostname/IP entry for /etc/hosts
-    value:
-      str_replace:
-        template: "IP HOST-SUFFIX.DOMAIN HOST-SUFFIX #openshift"
-        params:
-          IP: {get_attr: [floating_ip, floating_ip_address]}
-          HOST: {get_param: hostname}
-          SUFFIX: {get_attr: [random_hostname_suffix, value]}
-          DOMAIN: {get_param: domain_name}
   ip_address:
     description: IP address of the node
-    value: {get_attr: [floating_ip, floating_ip_address]}
+    value: {get_attr: [host, first_address]}
   wc_data:
     description: The completion status from the cloud-init sync condition
     value: {get_attr: ['wait_condition', 'data']}

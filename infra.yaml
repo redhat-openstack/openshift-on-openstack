@@ -67,14 +67,6 @@ parameters:
       The user for SSH access to the VM hosts
     type: string
 
-  # Network topology and location
-  external_network:
-    description: >
-      The name of the inbound access network
-    type: string
-    constraints:
-    - custom_constraint: neutron.network
-
   fixed_network:
     description: >
       The name or ID of the internal network
