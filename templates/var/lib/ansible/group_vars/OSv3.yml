@@ -1,57 +1,58 @@
-ansible_first_run: {{ansible_first_run}}
-infra_instance_id: {{infra_instance_id}}
-ansible_ssh_user: {{ssh_user}}
+{{=<% %>=}}
+ansible_first_run: <%ansible_first_run%>
+infra_instance_id: <%infra_instance_id%>
+ansible_ssh_user: <%ssh_user%>
 ansible_sudo: true
-deployment_type: {{deployment_type}} # deployment type valid values are origin, online and openshif-enterprise
-osm_default_subdomain: cloudapps.{{domainname}} # default subdomain to use for exposed routes
+deployment_type: <%deployment_type%> # deployment type valid values are origin, online and openshif-enterprise
+osm_default_subdomain: cloudapps.<%domainname%> # default subdomain to use for exposed routes
 openshift_override_hostname_check: true
-openshift_use_openshift_sdn: {{openshift_use_openshift_sdn}}
+openshift_use_openshift_sdn: <%openshift_use_openshift_sdn%>
 openshift_ip: "{{ ansible_eth1.ipv4.address }}"
 openshift_set_node_ip: True
-openshift_use_flannel: {{openshift_use_flannel}}
+openshift_use_flannel: <%openshift_use_flannel%>
 openshift_use_dnsmasq: false
 flannel_interface: eth1
-{{#master_ha}}
+<%#master_ha%>
 openshift_master_cluster_password: openshift_cluster
 openshift_master_cluster_method: native
-{{/master_ha}}
-{{^no_lb}}
-openshift_master_cluster_hostname: {{lb_hostname}}.{{domainname}}
-openshift_master_cluster_public_hostname: {{lb_hostname}}.{{domainname}}
-{{/no_lb}}
-{{#ldap_url}}
+<%/master_ha%>
+<%^no_lb%>
+openshift_master_cluster_hostname: <%lb_hostname%>.<%domainname%>
+openshift_master_cluster_public_hostname: <%lb_hostname%>.<%domainname%>
+<%/no_lb%>
+<%#ldap_url%>
 openshift_master_identity_providers:
   - name: ldap_auth
     kind: LDAPPasswordIdentityProvider
     challenge: true
     login: true
-    bindDN: {{ldap_bind_dn}}
-    bindPassword: {{ldap_bind_password}}
-    ca: '{{ldap_ca}}'
-    insecure: {{ldap_insecure}}
-    url: {{ldap_url}}
+    bindDN: <%ldap_bind_dn%>
+    bindPassword: <%ldap_bind_password%>
+    ca: '<%ldap_ca%>'
+    insecure: <%ldap_insecure%>
+    url: <%ldap_url%>
     attributes:
       id: ['dn']
       email: ['mail']
       name: ['cn']
-      preferredUsername: ['{{ldap_preferred_username}}']
-{{/ldap_url}}
-{{^ldap_url}}
+      preferredUsername: ['<%ldap_preferred_username%>']
+<%/ldap_url%>
+<%^ldap_url%>
 openshift_master_identity_providers:
   - name: htpasswd_auth
     login: true
     challenge: true
     kind: HTPasswdPasswordIdentityProvider
     filename: /etc/origin/openshift-passwd
-{{/ldap_url}}
-{{#openstack_cloud_provider}}
+<%/ldap_url%>
+<%#openstack_cloud_provider%>
 openshift_cloudprovider_kind: openstack
-openshift_cloudprovider_openstack_auth_url: {{os_auth_url}}
-openshift_cloudprovider_openstack_username: {{os_username}}
-openshift_cloudprovider_openstack_password: {{os_password}}
-openshift_cloudprovider_openstack_tenant_name: {{os_tenant_name}}
-openshift_cloudprovider_openstack_region: {{os_region_name}}
-{{#deploy_registry}}
+openshift_cloudprovider_openstack_auth_url: <%os_auth_url%>
+openshift_cloudprovider_openstack_username: <%os_username%>
+openshift_cloudprovider_openstack_password: <%os_password%>
+openshift_cloudprovider_openstack_tenant_name: <%os_tenant_name%>
+openshift_cloudprovider_openstack_region: <%os_region_name%>
+<%#deploy_registry%>
 openshift_registry_selector: region=infra
 openshift_hosted_registry_storage_create_pv: true
 openshift_hosted_registry_storage_kind: openstack
@@ -59,7 +60,8 @@ openshift_hosted_registry_storage_volume_name: registry
 openshift_hosted_registry_storage_volume_size: 5Gi
 openshift_hosted_registry_storage_access_modes:
   - ReadWriteOnce
-openshift_hosted_registry_storage_openstack_volumeID: {{registry_volume_id}}
-openshift_hosted_registry_storage_openstack_filesystem: {{registry_volume_fs}}
-{{/deploy_registry}}
-{{/openstack_cloud_provider}}
+openshift_hosted_registry_storage_openstack_volumeID: <%registry_volume_id%>
+openshift_hosted_registry_storage_openstack_filesystem: <%registry_volume_fs%>
+<%/deploy_registry%>
+<%/openstack_cloud_provider%>
+<%={{ }}=%>
