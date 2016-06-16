@@ -1,0 +1,2 @@
+resource_registry:
+  OOShift::IPFailover: ipfailover_none.yaml

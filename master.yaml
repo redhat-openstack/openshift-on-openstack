@@ -146,6 +146,17 @@ parameters:
     constraints:
     - custom_constraint: neutron.subnet
 
+  router_vip:
+    description: >
+      The Openshift Router Virtual IP
+    type: string
+
+  allowed_address_pairs:
+    description: >
+      Allowed address pairs to apply on the ports of the nodes
+      that host the Openshift router
+    type: json
+
   ldap_url:
     description: >
       The LDAP url for access to the LDAP service (redundant? ML)
@@ -229,6 +240,7 @@ resources:
       security_groups:
       - {get_param: master_security_group}
       network: {get_param: fixed_network}
+      allowed_address_pairs: {get_param: allowed_address_pairs}
       fixed_ips:
       - subnet: {get_param: fixed_subnet}
       replacement_policy: AUTO

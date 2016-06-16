@@ -341,6 +341,14 @@ resources:
     properties:
       size: {get_param: registry_volume_size}
 
+  ipfailover:
+    depends_on: external_router_interface
+    type: OOShift::IPFailover
+    properties:
+      fixed_network: {get_resource: fixed_network}
+      fixed_subnet: {get_resource: fixed_subnet}
+      external_network: {get_param: external_network}
+
   # VM Host definitions
   infra_host:
     depends_on: external_router_interface
@@ -394,6 +402,7 @@ resources:
           params:
             '%stackname%': {get_param: 'OS::stack_name'}
             '%hostname%': {get_param: lb_hostname}
+      router_vip: {get_attr: [ipfailover, router_vip]}
 
   openshift_masters:
     depends_on: external_router_interface
@@ -430,6 +439,8 @@ resources:
           internal_network: {get_resource: cluster_network}
           internal_subnet: {get_resource: cluster_subnet}
           external_network: {get_param: external_network}
+          router_vip: {get_attr: [ipfailover, router_vip]}
+          allowed_address_pairs: {get_attr: [ipfailover, allowed_address_pairs]}
           openshift_sdn: {get_param: openshift_sdn}
           deploy_registry: {get_param: deploy_registry}
           deploy_router: {get_param: deploy_router}
@@ -642,6 +653,8 @@ resources:
         protocol: tcp
         port_range_min: 443
         port_range_max: 443
+      # VRRP
+      - protocol: 112
 
   lb_floating_ip:
     type: OS::Neutron::FloatingIP
@@ -681,6 +694,10 @@ outputs:
   loadbalancer_ip:
     description: External IP address of the loadbalancer for master nodes.
     value: {get_attr: [lb_floating_ip, floating_ip_address]}
+
+  router_ip:
+    description: External IP address of the OpenShift router.
+    value: {get_attr: [ipfailover, router_ip]}
 
   console_url:
     description: URL of the OpenShift web console

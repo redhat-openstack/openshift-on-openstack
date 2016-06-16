@@ -3,3 +3,4 @@ parameters:
 
 resource_registry:
     OOShift::LoadBalancer: loadbalancer_none.yaml
+    OOShift::IPFailover: ipfailover_keepalived.yaml

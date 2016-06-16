@@ -38,6 +38,10 @@
   - name: Restart node service
     service: name={{openshift.common.service_type}}-node state=restarted
 
+<%#router_vip%>
+- include: /var/lib/ansible/playbooks/ipfailover.yml
+<%/router_vip%>
+
 - name: Waiting for registry/router setup
   hosts: masters[0]
   tasks:

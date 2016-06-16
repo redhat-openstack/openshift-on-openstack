@@ -1,0 +1,63 @@
+heat_template_version: 2014-10-16
+
+description: >
+  A template which deploys a IP failover service for the Openshift router
+
+parameters:
+  fixed_network:
+    description: >
+      The name or ID of the admin and public network
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  fixed_subnet:
+    description: >
+      The name or ID of the admin and public IPv4 space
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  external_network:
+    description: >
+      The name of the inbound access network
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+resources:
+  router_vip_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: {get_param: fixed_network}
+      fixed_ips:
+       - subnet: {get_param: fixed_subnet}
+
+  router_floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: {get_param: external_network}
+      port_id: {get_resource: router_vip_port}
+
+outputs:
+  router_ip:
+    description: >
+      Openshift Router external IP
+    value: {get_attr: [router_floating_ip, floating_ip_address]}
+
+  router_vip:
+    description: >
+      Openshift Router virtual private IP
+    value: {get_attr: [router_vip_port, fixed_ips, 0, ip_address]}
+
+  allowed_address_pairs:
+    description: >
+      Allowed address pairs to apply on the ports of the nodes
+      that host the Openshift router
+    value:
+      # Openshift IP failover uses Keepalived in multicast mode.
+      # Therefore, we need to allow the multicast address and the
+      # forged MAC address for this IP
+      - ip_address: "224.0.0.18"
+        mac_address: "01:00:5e:00:00:12"
+      - ip_address: {get_attr: [router_vip_port, fixed_ips, 0, ip_address]}

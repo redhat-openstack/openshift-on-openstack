@@ -203,6 +203,7 @@ three nodes. You can get the URLs from Heat by running
 `heat output-show my-openshift console_url` and
 `heat output-show my-openshift api_url`.
 
+[[LoadBalancing]]
 == Select Loadbalancer Type
 
 When deploying multiple master nodes, both access to the nodes and OpenShift
@@ -212,24 +213,29 @@ Openshift-on-openstack provides multiple options for setting up loadbalancing:
 * Neutron LBaaS - this loadbalancer is used by default. Neutron loadbalancer
   serviceis used for loadbalancing console/api requests to master nodes. At the
   moment Openshift router requests are not loadbalanced and an external
-  loadbalancer has to be used for it. This is default option, but can be set
+  loadbalancer has to be used for it.
+  This is default option, but can be set
   explicitly by including `-e openshift-on-openstack/env_loadbalancer_neutron.yaml`
-  when creating the stack.
+  when creating the stack. By default, this mode uses <<IPFailover,IP failover>>.
+
 * External loadbalancer - a user is expected to set its own loadbalancer both
-  for master nodes and Openshift routers. This is suggested type for production.
+  for master nodes and Openshift routers.
+  This is suggested type for production.
   To select this type include `-e openshift-on-openstack/env_loadbalancer_external.yaml`
   when creating the stack.
+
 * Dedicated loadbalancer node - a dedicated node is created during stack
-  creation and HAProxy loadbalancer is configured on it. This type is useful for
-  demo/testing purposes only because HA is not assured for the single loadbalancer
-  To select this type include `-e openshift-on-openstack/env_loadbalancer_dedicated.yaml`
-  when creating the stack.
+  creation and HAProxy loadbalancer is configured on it.
+  This type is useful for demo/testing purposes only because HA is not assured for
+  the single loadbalancer. To select this type include
+  `-e openshift-on-openstack/env_loadbalancer_dedicated.yaml` when creating the stack.
   node.
+
 * None - if only single master node is deployed, it's possible to skip
   loadbalancer creation, then all master node requests and Openshift router requests
   point to the single master node.
   To select this type include `-e openshift-on-openstack/env_loadbalancer_none.yaml`
-  when creating the stack.
+  when creating the stack. By default, this mode uses <<IPFailover,IP failover>>.
 
 == Select SDN Type ==
 
@@ -281,7 +287,7 @@ heat stack-create my-openshift \
   -f openshift-on-openstack/openshift.yaml
 ```
 
-== Using Custom Yum Respositories
+== Using Custom Yum Repositories
 
 You can set additional Yum repositories on deployed nodes by passing `extra_repository_urls`
 parameter which contains list of Yum repository URLs delimited by comma:
@@ -305,7 +311,6 @@ heat stack-create my-openshift \
   -P extra_docker_repository_urls='user.docker.example.com,custom.user.example.com#insecure'
   -f openshift-on-openstack/openshift.yaml
 ```
-
 
 == Accessing the Web UI
 
@@ -333,6 +338,24 @@ installation by running
 heat output-show --format=raw my-openshift ca_cert > ca.crt
 heat output-show --format=raw my-openshift ca_key > ca.key
 ```
+
+[[IPFailover]]
+== IP failover
+
+These templates allow using IP failover for the OpenShift router. In this mode,
+a virtual IP address is assigned for the Openshift router. Multiple instances of
+router may be active but only one instance at a time will have the virtual IP.
+This ensures that minimal downtime in the case of the failure of the current active
+router.
+
+By default, IP failover is used when the load balancing mode is `Neutron LBaas` or
+`None` (see section <<LoadBalancing>>).
+
+The virtual IP of the router can be retrieved with
+```bash
+heat output-show --format=raw my-openshift router_ip
+```
+
 == Current Status
 
 1. The CA certificate used with OpenShift is currently not configurable.
