@@ -31,8 +31,7 @@ resources:
       fixed_ips:
       - subnet: {get_param: subnet}
       replacement_policy: AUTO
-      value_specs:
-        port_security_enabled: false
+      port_security_enabled: false
 
 outputs:
   port:
