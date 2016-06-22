@@ -17,7 +17,7 @@
 
   - name: Setup RDO repositories
     yum: name=https://rdoproject.org/repos/rdo-release.rpm state=present
-    when: deployment_type == 'origin' and rpm_check.rc != 0
+    when: deployment_type == 'origin' and rpm_check.rc != 0 and ansible_distribution != 'Red Hat Enterprise Linux'
     when: ansible_first_run | default(false) | bool
 
   - name: Install Nova and Cinder clients
