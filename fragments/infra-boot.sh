@@ -48,6 +48,7 @@ function notify_failure() {
     exit 1
 }
 
+
 # 
 # --- DNS functions ----------------------------------------------------------
 #
@@ -151,7 +152,15 @@ function install_epel_repos_disabled() {
     then
         yum -y install \
             ${EPEL_REPO_URL}/e/epel-release-$1.noarch.rpm ||
-            notify_failure "could not install EPEL release $1"
+            echo "Failed to find epel-release-$1.  Installing epel-release-latest-7."
+    fi
+
+    # If it fails, get the latest
+    if ! rpm -q epel-release-$1
+    then
+        yum -y install \
+            https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm ||
+            notify_failure "could not install EPEL release $1 NOR the latest."
     fi
     sed -i -e "s/^enabled=1/enabled=0/" /etc/yum.repos.d/epel.repo
 }
