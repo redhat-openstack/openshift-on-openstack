@@ -93,7 +93,7 @@ if args.update:
     cmd += ["--update"]
 
 cmd += ["--install", "http://dl.fedoraproject.org/pub/epel/7/x86_64/e/"
-                     "epel-release-7-6.noarch.rpm"]
+                     "epel-release-latest-7.noarch.rpm"]
 
 cmd += ["--install", ",".join(args.packages)]
 
