@@ -15,7 +15,7 @@ yum -y install python-novaclient python-cinderclient
 
 # openshift-ansible
 #RUN yum -y install http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-yum -y install http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-6.noarch.rpm
+yum -y install http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-7.noarch.rpm
 yum install -y --enablerepo epel ansible1.9
 
 #git clone --single-branch --branch master https://github.com/openshift/openshift-ansible.git  /usr/share/ansible/openshift-ansible/
