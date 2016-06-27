@@ -405,7 +405,7 @@ resources:
           str_replace:
               template: "IP HOST-SUFFIX.DOMAIN HOST-SUFFIX #openshift"
               params:
-                IP: {get_attr: [host, first_address]}
+                IP: {get_attr: [host, networks, {get_param: fixed_network}, 0]}
                 HOST: {get_param: hostname}
                 SUFFIX: {get_attr: [random_hostname_suffix, value]}
                 DOMAIN: {get_param: domain_name}
@@ -462,7 +462,7 @@ outputs:
           DOMAIN: {get_param: domain_name}
   ip_address:
     description: IP address of the node
-    value: {get_attr: [host, first_address]}
+    value: {get_attr: [host, networks, {get_param: fixed_network}, 0]}
   wc_data:
     description: The completion status from the cloud-init sync condition
     value: {get_attr: ['wait_condition', 'data']}
