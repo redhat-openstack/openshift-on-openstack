@@ -4,7 +4,11 @@
   connection: local
   gather_facts: no
   roles:
-    - { role: deploy, heat_cmd: stack-update, node_count: 3, master_count: 1}
+    - { role: deploy,
+        heat_cmd: stack-update,
+        node_count: 3,
+        master_count: 1,
+        stack_params: "{{heat_params | default('')}}"}
 
 - name: Check status of scaled up stack
   hosts: masters[0]
