@@ -17,9 +17,9 @@
             -P master_docker_volume_size_gb=6
             -P node_docker_volume_size_gb=5
             -P deploy_router=true
-            -P deploy_registry=true
-            {{stack_params}}"
-  when: stack_show_result.rc == 1
+            -P deploy_registry=false
+            {{stack_params | default('')}}"
+  when: stack_show_result.rc == 1 or heat_cmd == 'stack-update'
 
 - set_fact:
     progress_states: ['CREATE_IN_PROGRESS', 'UPDATE_IN_PROGRESS']

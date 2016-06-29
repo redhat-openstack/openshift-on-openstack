@@ -464,4 +464,4 @@ outputs:
     value: {get_resource: host}
   ip_address:
     description: IP address of the node
-    value: {get_attr: [host, first_address]}
+    value: {get_attr: [floating_ip, floating_ip_address]}
