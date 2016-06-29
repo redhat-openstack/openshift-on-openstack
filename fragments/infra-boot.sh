@@ -32,7 +32,7 @@ DOCKER_VOLUME_DEVICE=$(readlink -f /dev/disk/by-id/virtio-${VOLUME_ID:0:20})
 HEAT_AGENT_CONTAINER_IMAGE=jprovaznik/ooshift-heat-agent
 
 # Select the EPEL release to make it easier to update
-EPEL_RELEASE_VERSION=7-6
+EPEL_RELEASE_VERSION=7-7
 
 # Send success status to OpenStack WaitCondition
 function notify_success() {
