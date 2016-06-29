@@ -1,0 +1,15 @@
+---
+{{=<% %>=}}
+- hosts: masters[0]
+  sudo: yes
+  tasks:
+  - name: Deploy Openshift IP failover for router
+    command: oadm ipfailover --create --service-account=router --interface=eth0 --selector='{{ openshift_router_selector }}' --replicas={{ num_infra }} --virtual-ips="{{ router_vip }}" --credentials=/etc/origin/master/openshift-router.kubeconfig
+    when: ansible_first_run | default(false) | bool
+
+- hosts: masters
+  sudo: yes
+  tasks:
+  - name: Allow multicast for keepalived
+    command: /sbin/iptables -I INPUT -i eth0 -d 224.0.0.18/32 -j ACCEPT
+<%={{ }}=%>

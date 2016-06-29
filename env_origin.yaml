@@ -21,3 +21,4 @@ parameters:
 resource_registry:
   OOShift::LoadBalancer: loadbalancer_neutron.yaml
   OOShift::ContainerPort: sdn_openshift_sdn.yaml
+  OOShift::IPFailover: ipfailover_keepalived.yaml

@@ -275,6 +275,11 @@ parameters:
     type: comma_delimited_list
     description: address of dns nameservers reachable in your environment
 
+  router_vip:
+    description: >
+      The Openshift Router Virtual IP
+    type: string
+
 resources:
 
   # A VM to provide host based orchestration and other sub-services
@@ -366,6 +371,8 @@ resources:
               - {get_param: dns_forwarders}
         - name: infra_instance_id
           default: {get_resource: host}
+        - name: router_vip
+          default: {get_param: router_vip}
       outputs:
         - name: ca_cert
         - name: ca_key
@@ -460,6 +467,9 @@ resources:
         - path: /var/lib/os-apply-config/templates/var/lib/ansible/templates/etc/haproxy/router.cfg.j2
           permissions: 0644
           content: {get_file: templates/var/lib/ansible/templates/etc/haproxy/router.cfg.j2}
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/ipfailover.yml
+          permissions: 0644
+          content: {get_file: templates/var/lib/ansible/playbooks/ipfailover.yml}
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
 

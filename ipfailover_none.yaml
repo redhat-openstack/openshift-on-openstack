@@ -1,0 +1,43 @@
+heat_template_version: 2014-10-16
+
+description: >
+  A template which deploys a IP failover service for the Openshift router
+
+parameters:
+  fixed_network:
+    description: >
+      The name or ID of the admin and public network
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  fixed_subnet:
+    description: >
+      The name or ID of the admin and public IPv4 space
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  external_network:
+    description: >
+      The name of the inbound access network
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+outputs:
+  router_ip:
+    description: >
+      The Openshift Router external IP
+    value: ""
+
+  router_vip:
+    description: >
+      The Openshift Router virtual private IP
+    value: ""
+
+  allowed_address_pairs:
+    description: >
+      Allowed address pairs to apply on the ports of the nodes
+      that host the Openshift router
+    value: []
