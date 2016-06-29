@@ -118,6 +118,10 @@ parameters:
     type: number
     default: 4000
 
+  stack_name:
+    type: string
+    default: ''
+
 outputs:
   console_url:
     description: URL of the OpenShift web console
