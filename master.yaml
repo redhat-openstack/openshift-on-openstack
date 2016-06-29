@@ -420,7 +420,7 @@ resources:
           str_replace:
               template: "IP HOST.DOMAIN HOST #openshift"
               params:
-                IP: {get_attr: [host, first_address]}
+                IP: {get_attr: [host, networks, {get_param: fixed_network}, 0]}
                 HOST: {get_param: hostname}
                 DOMAIN: {get_param: domain_name}
 
