@@ -199,7 +199,7 @@ parameters:
 
   registry_volume_size:
     description: >
-      Filesystem to use for Openshift registry persistent volume
+      Size of the Openshift registry persistent volume
     type: number
     default: 10
 
@@ -208,6 +208,12 @@ parameters:
       Filesystem to use for Openshift registry persistent volume
     type: string
     default: ext4
+
+  registry_volume_id:
+    description: >
+      An existing cinder volume to use for Openshift registry persistent volume
+    type: string
+    default: ''
 
   deploy_router:
     type: boolean
@@ -316,6 +322,11 @@ parameters:
     description: List of docker repository URLs which will be installed on each node, if a repo is insecure use '#insecure' suffix.
     default: ''
 
+  prepare_registry:
+    type: boolean
+    description: If the registry volume should be formatted during deployment.
+    default: false
+
 resources:
 
   # Network Components
@@ -353,9 +364,10 @@ resources:
 
   # Create space for Openshift registry
   registry_volume:
-    type: OS::Cinder::Volume
+    type: OOShift::RegistryVolume
     properties:
-      size: {get_param: registry_volume_size}
+      volume_size: {get_param: registry_volume_size}
+      volume_id: {get_param: registry_volume_id}
 
   ipfailover:
     depends_on: external_router_interface
@@ -395,8 +407,9 @@ resources:
       port: {get_resource: infra_port}
       docker_volume_size: {get_param: master_docker_volume_size_gb}
       deploy_registry: {get_param: deploy_registry}
-      registry_volume_id: {get_resource: registry_volume}
+      registry_volume_id: {get_attr: [registry_volume, volume_id]}
       registry_volume_fs: {get_param: registry_volume_fs}
+      prepare_registry: {get_param: prepare_registry}
       deploy_router: {get_param: deploy_router}
       skip_ansible: {get_param: skip_ansible}
       openshift_ansible_git_url: {get_param: openshift_ansible_git_url}

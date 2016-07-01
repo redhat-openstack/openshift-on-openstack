@@ -24,3 +24,4 @@ resource_registry:
   OOShift::IPFailover: ipfailover_keepalived.yaml
   OOShift::DockerVolume: volume_docker.yaml
   OOShift::DockerVolumeAttachment: volume_attachment_docker.yaml
+  OOShift::RegistryVolume: registry_ephemeral.yaml

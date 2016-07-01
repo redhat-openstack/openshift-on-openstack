@@ -200,6 +200,11 @@ parameters:
     type: string
     default: ext4
 
+  prepare_registry:
+    type: boolean
+    description: If the registry volume should be formatted during deployment.
+    default: false
+
   deploy_router:
     description: >
       True = Enable deployment of the OpenShift router
@@ -349,6 +354,8 @@ resources:
           default: {get_param: registry_volume_id}
         - name: registry_volume_fs
           default: {get_param: registry_volume_fs}
+        - name: prepare_registry
+          default: {get_param: prepare_registry}
         - name: deploy_router
           default: {get_param: deploy_router}
         - name: skip_ansible

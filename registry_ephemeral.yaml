@@ -1,0 +1,28 @@
+heat_template_version: 2014-10-16
+
+description: >
+  A template which creates a cinder volume used by openshift registry,
+  this volume is deleted with stack.
+
+parameters:
+  volume_id:
+    description: >
+      An existing cinder volume ID
+    type: string
+    default: ''
+
+  volume_size:
+    description: >
+      Size of the Openshift registry persistent volume
+    type: number
+
+resources:
+  volume:
+    type: OS::Cinder::Volume
+    properties:
+      size: {get_param: volume_size}
+
+outputs:
+  volume_id:
+    description: cinder volume id
+    value: {get_resource: volume}
