@@ -6,8 +6,6 @@ deployment_type: {{deployment_type}} # deployment type valid values are origin, 
 osm_default_subdomain: cloudapps.{{domainname}} # default subdomain to use for exposed routes
 openshift_override_hostname_check: true
 openshift_use_openshift_sdn: {{openshift_use_openshift_sdn}}
-openshift_ip: "{{ ansible_eth1.ipv4.address }}"
-openshift_set_node_ip: True
 openshift_use_flannel: {{openshift_use_flannel}}
 openshift_use_dnsmasq: false
 flannel_interface: eth1
