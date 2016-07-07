@@ -18,7 +18,6 @@ parser.add_argument('--memsize', dest='memsize', default='512',
                     help='memory size to be used by virt-customize')
 parser.add_argument('--package', dest="packages", action='append',
                     default=['deltarpm',
-                             'ansible',
                              'git',
                              'httpd-tools',
                              'iptables',
@@ -41,7 +40,7 @@ parser.add_argument('--sm-repo', dest="sm_repos", action='append',
                     default=['rhel-7-server-rpms',
                              'rhel-7-server-extras-rpms',
                              'rhel-7-server-optional-rpms',
-                             'rhel-7-server-ose-3.1-rpms'],
+                             'rhel-7-server-ose-3.2-rpms'],
                     help='subscription-manager repository to enable')
 parser.add_argument('--no-update', dest="update", action='store_false',
                     default=True, help='update packages')
@@ -59,10 +58,10 @@ cmd = ["virt-customize", "-a", args.disk]
 if args.verbose:
     cmd += ["-v"]
 
+# Create set of packages to install
 if args.deployment == "enterprise":
     args.packages += ["atomic-openshift-master", "atomic-openshift-node",
                       "tuned-profiles-atomic-openshift-node"]
-
 elif args.deployment == "origin":
     args.packages += ["origin-master", "origin-node",
                       "tuned-profiles-origin-node"]
@@ -73,6 +72,7 @@ elif args.deployment == "origin":
     cmd += ["--write", "/etc/yum.repos.d/maxamillion-origin-next.repo:" +
                        urllib2.urlopen(maxamillion_copr).read()]
 
+# Activate Red Hat subscriptions
 if args.sm_creds:
     username, password = args.sm_creds.split(':')
 
@@ -89,17 +89,30 @@ if args.sm_creds:
             "--run-command", "subscription-manager repos " +
             " ".join(map(lambda repo: '--enable=' + repo, args.sm_repos))]
 
+# Run a system update
 if args.update:
     cmd += ["--update"]
 
-cmd += ["--install", "http://dl.fedoraproject.org/pub/epel/7/x86_64/e/"
-                     "epel-release-7-7.noarch.rpm"]
+# Set up EPEL
+cmd += ["--install", "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm",
+        "--run-command", "sed -i -e 's/^enabled=1/enabled=0/' /etc/yum.repos.d/epel.repo"]
 
+# Install ansible1.9
+cmd += ["--run-command", "yum -y --enablerepo=epel install ansible1.9"]
+
+# Install required packages
 cmd += ["--install", ",".join(args.packages)]
 
 if args.sm_creds:
     cmd += ["--run-command", "subscription-manager remove --all",
             "--run-command", "subscription-manager unregister"]
+
+if args.verbose:
+    print "Running command " + " ".join(cmd)
+
+subprocess.call(cmd)
+
+cmd = ["virt-sysprep", "-a", args.disk, "--selinux-relabel"]
 
 if args.verbose:
     print "Running command " + " ".join(cmd)
