@@ -22,3 +22,5 @@ resource_registry:
   OOShift::LoadBalancer: loadbalancer_neutron.yaml
   OOShift::ContainerPort: sdn_openshift_sdn.yaml
   OOShift::IPFailover: ipfailover_keepalived.yaml
+  OOShift::DockerVolume: volume_docker.yaml
+  OOShift::DockerVolumeAttachment: volume_attachment_docker.yaml

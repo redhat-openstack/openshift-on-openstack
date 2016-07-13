@@ -205,16 +205,15 @@ resources:
 
   # Create an external volume to contain the Docker containers and images
   docker_volume:
-    type: OS::Cinder::Volume
+    type: OOShift::DockerVolume
     properties:
       size: {get_param: docker_volume_size}
 
-  # Bind the external storage to the VM
-  docker_volume_attach:
-    type: OS::Cinder::VolumeAttachment
+  docker_volume_attachment:
+    type: OOShift::DockerVolumeAttachment
     properties:
+      volume_uuid: {get_attr: [docker_volume, volume_id]}
       instance_uuid: {get_resource: host}
-      volume_id: {get_resource: docker_volume}
 
   # Collect the node configuration information in one structure
   init:
@@ -324,7 +323,7 @@ resources:
             $DNS_IP: {get_param: dns_ip}
             $SKIP_DNS: {get_param: skip_dns}
             $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
-            $DOCKER_VOLUME_ID: {get_resource: docker_volume}
+            $DOCKER_VOLUME_ID: {get_attr: [docker_volume, volume_id]}
           template: {get_file: fragments/node-boot.sh}
 
   # Create a network connection on the fixed network and apply security
