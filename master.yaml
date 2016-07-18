@@ -221,6 +221,9 @@ parameters:
   skip_dns:
     type: boolean
 
+  system_update:
+    type: boolean
+
   extra_repository_urls:
     type: comma_delimited_list
     description: List of repository URLs which will be installed on each node.
@@ -391,7 +394,10 @@ resources:
     type: OS::Heat::SoftwareConfig
     properties:
       config:
-        get_file: fragments/host-update.sh
+        str_replace:
+          params:
+            $SYSTEM_UPDATE: {get_param: system_update}
+          template: {get_file: fragments/host-update.sh}
 
   # Prepare the host to run Docker and Ansible for OpenShift install and config
   master_boot:

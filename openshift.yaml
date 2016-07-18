@@ -70,6 +70,10 @@ parameters:
     type: boolean
     default: false
 
+  system_update:
+    type: boolean
+    default: true
+
   loadbalancer_type:
     type: string
     default: neutron
@@ -391,6 +395,7 @@ resources:
       os_tenant_name: {get_param: os_tenant_name}
       os_region_name: {get_param: os_region_name}
       skip_dns: {get_param: skip_dns}
+      system_update: {get_param: system_update}
       loadbalancer_type: {get_param: loadbalancer_type}
       extra_repository_urls: {get_param: extra_repository_urls}
       extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
@@ -447,6 +452,7 @@ resources:
           master_server_group: {get_resource: master_server_group}
           master_security_group: {get_resource: master_security_group}
           skip_dns: {get_param: skip_dns}
+          system_update: {get_param: system_update}
           extra_repository_urls: {get_param: extra_repository_urls}
           extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
 
@@ -488,6 +494,7 @@ resources:
           infra_node_cleanup: {get_attr: [infra_host, resource.node_cleanup]}
           infra_node_add: {get_attr: [infra_host, resource.node_add]}
           skip_dns: {get_param: skip_dns}
+          system_update: {get_param: system_update}
           metadata: {"metering.stack": {get_param: "OS::stack_id"}}
           extra_repository_urls: {get_param: extra_repository_urls}
           extra_docker_repository_urls: {get_param: extra_docker_repository_urls}

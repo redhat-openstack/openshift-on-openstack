@@ -220,6 +220,9 @@ parameters:
   skip_dns:
     type: boolean
 
+  system_update:
+    type: boolean
+
   loadbalancer_type:
     type: string
 
@@ -520,7 +523,10 @@ resources:
     type: OS::Heat::SoftwareConfig
     properties:
       config:
-        get_file: fragments/host-update.sh
+        str_replace:
+          params:
+            $SYSTEM_UPDATE: {get_param: system_update}
+          template: {get_file: fragments/host-update.sh}
 
   # Apply ansible performance tuning values
   tune_ansible:
