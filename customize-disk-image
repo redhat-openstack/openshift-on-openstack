@@ -2,6 +2,7 @@
 
 import argparse
 import distutils.spawn
+import os
 import subprocess
 import sys
 import urllib2
@@ -44,6 +45,8 @@ parser.add_argument('--sm-repo', dest="sm_repos", action='append',
                     help='subscription-manager repository to enable')
 parser.add_argument('--no-update', dest="update", action='store_false',
                     default=True, help='update packages')
+parser.add_argument('--repos', dest="repos", action='append',
+                    default=[], help='custom additional YUM repositories')
 parser.add_argument('-v', '--verbose', dest='verbose', action='store_true',
                     help='verbose mode')
 
@@ -71,6 +74,12 @@ elif args.deployment == "origin":
                        "maxamillion-origin-next-epel-7.repo"
     cmd += ["--write", "/etc/yum.repos.d/maxamillion-origin-next.repo:" +
                        urllib2.urlopen(maxamillion_copr).read()]
+
+# add custom repositories
+for repo in args.repos:
+    name = os.path.basename(repo)
+    cmd += ["--write", "/etc/yum.repos.d/%s:" % (name) +
+                       urllib2.urlopen(repo).read()]
 
 # Activate Red Hat subscriptions
 if args.sm_creds:
