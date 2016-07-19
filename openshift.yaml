@@ -20,9 +20,21 @@ parameters:
     - custom_constraint: nova.keypair
 
   # VM characteristics
-  server_image:
+  infra_image:
+    type: string
+    description: Name or ID of the infra image registered with Glance
+    constraints:
+    - custom_constraint: glance.image
+
+  master_image:
     type: string
     description: Name or ID of the host image registered with Glance
+    constraints:
+    - custom_constraint: glance.image
+
+  node_image:
+    type: string
+    description: Name or ID of the openshift node image registered with Glance
     constraints:
     - custom_constraint: glance.image
 
@@ -358,7 +370,7 @@ resources:
     depends_on: external_router_interface
     type: infra.yaml
     properties:
-      image: {get_param: server_image}
+      image: {get_param: infra_image}
       flavor: {get_param: flavor}
       key_name: {get_param: ssh_key_name}
       ssh_user: {get_param: ssh_user}
@@ -417,7 +429,7 @@ resources:
       resource_def:
         type: master.yaml
         properties:
-          image: {get_param: server_image}
+          image: {get_param: master_image}
           flavor: {get_param: flavor}
           key_name: {get_param: ssh_key_name}
           ssh_user: {get_param: ssh_user}
@@ -466,7 +478,7 @@ resources:
       resource:
         type: node.yaml
         properties:
-          image: {get_param: server_image}
+          image: {get_param: node_image}
           flavor: {get_param: flavor}
           key_name: {get_param: ssh_key_name}
           ssh_user: {get_param: ssh_user}
