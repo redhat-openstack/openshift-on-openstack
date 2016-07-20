@@ -1,0 +1,22 @@
+{{=<% %>=}}
+<%^skip_dns%>
+- include: /var/lib/ansible/playbooks/dns.yml
+<%/skip_dns%>
+
+- include: /usr/share/ansible/openshift-ansible/playbooks/byo/openshift-node/scaleup.yml
+  vars:
+    openshift_infra_nodes: "{{ groups.infra | default([]) }}"
+
+- hosts: nodes
+  sudo: yes
+  tasks:
+  - name: Allow docker traffic
+    shell: iptables -A DOCKER -p tcp -j ACCEPT
+    when: openshift_use_flannel
+
+- hosts: nodes
+  sudo: yes
+  tasks:
+  - name: Restart node service
+    service: name={{openshift.common.service_type}}-node state=restarted
+<%={{ }}=%>
