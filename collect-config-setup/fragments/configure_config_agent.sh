@@ -32,7 +32,7 @@ polling_interval = {{polling_interval}}
 cachedir = {{cachedir}}
 {{/cachedir}}
 {{#collectors}}
-collectors = {{collectors}}
+collectors = {{.}}
 {{/collectors}}
 
 {{#cfn}}
