@@ -238,7 +238,7 @@ else
         install_epel_repos_disabled $EPEL_RELEASE_VERSION
 
         # Install from the EPEL repository
-        retry yum -y --enablerepo=epel install ansible1.9 ||
+        retry yum -y --enablerepo=epel install ansible ||
             notify_failure "could not install ansible"
     else
         retry yum -y install ansible

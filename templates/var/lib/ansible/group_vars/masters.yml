@@ -3,7 +3,7 @@ router_vip: {{router_vip}}
 openshift_schedulable: true
 openshift_master_api_port: 8443
 {{#deploy_router}}
-openshift_router_selector: region=infra
+openshift_hosted_router_selector: region=infra
 {{/deploy_router}}
 {{^deploy_router}}
 openshift_hosted_router_replicas: 0

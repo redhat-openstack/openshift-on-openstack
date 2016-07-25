@@ -1,26 +1,13 @@
 {{=<% %>=}}
-- include: /usr/share/ansible/openshift-ansible/playbooks/common/openshift-cluster/evaluate_groups.yml
-  vars_files:
-  - /usr/share/ansible/openshift-ansible/playbooks/byo/openshift-cluster/cluster_hosts.yml
-
 - name: Gather facts
   hosts: nodes
-  vars_files:
-  - /usr/share/ansible/openshift-ansible/playbooks/byo/openshift-cluster/cluster_hosts.yml
-  vars:
-    openshift_deployment_type: "<% deployment_type %>"
-  roles:
-    - { role: 'openshift_common'}
+  gather_facts: False
+  tasks:
+    - setup:
+        filter: ansible_*
 
 - name: Configure the DNS
   hosts: dns
-  vars_files:
-  - /usr/share/ansible/openshift-ansible/playbooks/byo/openshift-cluster/cluster_hosts.yml
-  vars:
-    ansible_ssh_user: <%ssh_user%>
-    ansible_sudo: true
-    ansible_pkg_mgr: yum
-    deployment_type: <%deployment_type%>
   roles:
     - { role: '/usr/share/ansible/openshift-ansible/roles/dns',
         base_docker_image: 'centos:centos7',
