@@ -1,0 +1,15 @@
+heat_template_version: 2014-10-16
+
+description: >
+  A template which provides a volume for Docker storage
+
+parameters:
+  volume_uuid:
+    description: >
+      ID of the volume to attach to the VM
+    type: string
+
+  instance_uuid:
+    description: >
+      ID of the VM to attach the volume to
+    type: string

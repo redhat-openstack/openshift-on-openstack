@@ -158,6 +158,9 @@ resource_registry:
   OOShift::ContainerPort: openshift-on-openstack/sdn_openshift_sdn.yaml
   # enable ipfailover for router setup
   OOShift::IPFailover: openshift-on-openstack/ipfailover_keepalived.yaml
+  # create dedicated volume for docker storage
+  OOShift::DockerVolume: volume_docker.yaml
+  OOShift::DockerVolumeAttachment: volume_attachment_docker.yaml
 EOF
 ```
 

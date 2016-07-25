@@ -1,0 +1,22 @@
+heat_template_version: 2014-10-16
+
+description: >
+  A template which provides a volume for Docker storage
+
+parameters:
+  size:
+    description: >
+      size of a cinder volume in GB to allocate to docker for container/image storage
+    type: number
+
+resources:
+  # Create an external volume to contain the Docker containers and images
+  docker_volume:
+    type: OS::Cinder::Volume
+    properties:
+      size: {get_param: size}
+
+outputs:
+  volume_id:
+    description: ID of the created volume
+    value: {get_resource: docker_volume}

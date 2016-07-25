@@ -1,0 +1,23 @@
+heat_template_version: 2014-10-16
+
+description: >
+  A template which provides a volume for Docker storage
+
+parameters:
+  volume_uuid:
+    description: >
+      ID of the volume to attach to the VM
+    type: string
+
+  instance_uuid:
+    description: >
+      ID of the VM to attach the volume to
+    type: string
+
+resources:
+  # Bind the external storage to the VM
+  docker_volume_attach:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      instance_uuid: {get_param: instance_uuid}
+      volume_id: {get_param: volume_uuid}
