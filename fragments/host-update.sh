@@ -49,5 +49,5 @@ then
 else
     # Update using traditional RPMs
     yum install -y deltarpm || notify_failure "could not install deltarpm"
-    [ "$SYSTEM_UPDATE" = "true" ] && (yum -y update || notify_failure "could not update RPMs")
+    [ "$SYSTEM_UPDATE" = "True" ] && (yum -y update || notify_failure "could not update RPMs")
 fi
