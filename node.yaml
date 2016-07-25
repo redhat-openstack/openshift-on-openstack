@@ -56,6 +56,11 @@ parameters:
     constraints:
     - custom_constraint: neutron.subnet
 
+  security_group:
+    description: >
+      ID of the network access policies for the OpenShift node hosts
+    type: string
+
   dns_ip:
     description: IP address of the DNS server which serves this domain
     type: string
@@ -337,36 +342,17 @@ resources:
     type: OS::Neutron::Port
     properties:
       security_groups:
-      - {get_resource: security_group}
+      - {get_param: security_group}
       network: {get_param: fixed_network}
       fixed_ips:
       - subnet: {get_param: fixed_subnet}
       replacement_policy: AUTO
 
-  # Define the network access policy for the node
-  security_group:
-    type: OS::Neutron::SecurityGroup
-    properties:
-      rules:
-      - protocol: icmp
-      - direction: ingress
-        protocol: tcp
-        port_range_min: 22
-        port_range_max: 22
-      - direction: ingress
-        protocol: tcp
-        port_range_min: 10250
-        port_range_max: 10250
-      - direction: ingress
-        protocol: udp
-        port_range_min: 4789
-        port_range_max: 4789
-
   # Create a network connection on the internal communications network
   internal_port:
     type: OOShift::ContainerPort
     properties:
-      security_group: {get_resource: security_group}
+      security_group: {get_param: security_group}
       network: {get_param: internal_network}
       subnet: {get_param: internal_subnet}
 

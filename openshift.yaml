@@ -475,6 +475,7 @@ resources:
           fixed_subnet: {get_resource: fixed_subnet}
           internal_network: {get_resource: cluster_network}
           internal_subnet: {get_resource: cluster_subnet}
+          security_group: {get_resource: node_security_group}
           docker_volume_size: {get_param: node_docker_volume_size_gb}
           rhn_username: {get_param: rhn_username}
           rhn_password: {get_param: rhn_password}
@@ -502,6 +503,25 @@ resources:
             list_join:
               - " "
               - {get_attr: [openshift_masters, hostname]}
+
+  # Define the network access policy for openshift nodes
+  node_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+      - protocol: icmp
+      - direction: ingress
+        protocol: tcp
+        port_range_min: 22
+        port_range_max: 22
+      - direction: ingress
+        protocol: tcp
+        port_range_min: 10250
+        port_range_max: 10250
+      - direction: ingress
+        protocol: udp
+        port_range_min: 4789
+        port_range_max: 4789
 
   # Scaling and Operational Controls
   scale_up_policy:
