@@ -123,7 +123,9 @@ parameters:
    ssh_key_name: default
 
    # Set the image type and size for the VMs
-   server_image: centos72
+   infra_image: centos72
+   master_image: centos72
+   node_image: centos72
    flavor: m1.medium
 
    # Set an existing network for inbound and outbound traffic

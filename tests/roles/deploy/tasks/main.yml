@@ -12,7 +12,9 @@
             -P flavor=m1.shift
             -P node_count={{node_count | default(2)}}
             -P master_count={{master_count | default(1)}}
-            -P server_image=centos72
+            -P infra_image=centos72
+            -P master_image=centos72
+            -P node_image=centos72
             -P master_server_group_policies=affinity
             -P master_docker_volume_size_gb=6
             -P node_docker_volume_size_gb=5
