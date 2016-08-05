@@ -121,7 +121,7 @@ for node in `cat $NODESFILE`; do
     create_openshift_node_vars $node
 done
 
-while pidof -x /bin/ansible-playbook; do
+while pidof -x /bin/ansible-playbook /usr/bin/ansible-playbook; do
   echo "waiting for another ansible-playbook to finish"
   sleep 10
 done
