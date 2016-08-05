@@ -89,6 +89,14 @@ openshift_public_hostname: $1
 EOF
 }
 
+function is_scaleup() {
+# check if there are only new openshift nodes added - then we can play the
+# scaleup playbook, otherwise we run the main playbook
+    [ -e ${INVENTORY}.deployed ] || return 1
+    (diff $INVENTORY ${INVENTORY}.deployed |
+        grep '^[<>]' | grep -v '^< .*-node') && return 1 || return 0
+}
+
 # crond was stopped in cloud-init before yum update, make sure it's running
 systemctl status crond && systemctl restart crond
 
@@ -131,8 +139,13 @@ export ANSIBLE_ROLES_PATH=/usr/share/ansible/openshift-ansible/roles
 export ANSIBLE_HOST_KEY_CHECKING=False
 
 logfile=/var/log/ansible.$$
-cmd="ansible-playbook -vvvv --inventory /var/lib/ansible/inventory \
-    /var/lib/ansible/playbooks/main.yml"
+if is_scaleup; then
+    cmd="ansible-playbook -vvvv --inventory /var/lib/ansible/inventory \
+        /var/lib/ansible/playbooks/scaleup.yml"
+else
+    cmd="ansible-playbook -vvvv --inventory /var/lib/ansible/inventory \
+        /var/lib/ansible/playbooks/main.yml"
+fi
 
 if ! $cmd > $logfile 2>&1; then
     tail -20 $logfile >&2

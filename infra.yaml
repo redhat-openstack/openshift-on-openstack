@@ -461,6 +461,9 @@ resources:
         - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/main.yml
           permissions: 0644
           content: {get_file: templates/var/lib/ansible/playbooks/main.yml}
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/scaleup.yml
+          permissions: 0644
+          content: {get_file: templates/var/lib/ansible/playbooks/scaleup.yml}
         - path: /var/lib/os-apply-config/templates/var/lib/ansible/inventory
           permissions: 0644
           content: {get_file: templates/var/lib/ansible/inventory}
