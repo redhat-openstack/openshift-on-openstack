@@ -97,9 +97,6 @@ function is_scaleup() {
         grep '^[<>]' | grep -v '^< .*-node') && return 1 || return 0
 }
 
-# crond was stopped in cloud-init before yum update, make sure it's running
-systemctl status crond && systemctl restart crond
-
 [ "$skip_ansible" == "True" ] && exit 0
 
 mkdir -p /var/lib/ansible/group_vars
@@ -133,6 +130,9 @@ if [ -e ${INVENTORY}.deployed ] &&
 fi
 
 cp ${INVENTORY} ${INVENTORY}.started
+
+# crond was stopped in cloud-init before yum update, make sure it's running
+systemctl status crond && systemctl restart crond
 
 export HOME=/root
 export ANSIBLE_ROLES_PATH=/usr/share/ansible/openshift-ansible/roles
