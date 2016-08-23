@@ -385,7 +385,7 @@ resources:
             '%stackname%': {get_param: 'OS::stack_name'}
             '%hostname%': {get_param: infra_hostname}
       domain_name: {get_param: domain_name}
-      fixed_network: {get_resource: fixed_network}
+      fixed_network: {get_attr: [fixed_network, name]}
       fixed_subnet: {get_resource: fixed_subnet}
       ansible_public_key: {get_attr: [ansible_keys, public_key]}
       ansible_private_key: {get_attr: [ansible_keys, private_key]}
@@ -451,7 +451,7 @@ resources:
           ansible_private_key: {get_attr: [ansible_keys, private_key]}
           infra_node: {get_attr: [infra_host, resource.host]}
           infra_node_add: {get_attr: [infra_host, resource.node_add]}
-          fixed_network: {get_resource: fixed_network}
+          fixed_network: {get_attr: [fixed_network, name]}
           fixed_subnet: {get_resource: fixed_subnet}
           internal_network: {get_resource: cluster_network}
           internal_subnet: {get_resource: cluster_subnet}
@@ -483,7 +483,7 @@ resources:
           key_name: {get_param: ssh_key_name}
           ssh_user: {get_param: ssh_user}
           dns_ip: {get_attr: [infra_host, instance_ip]}
-          fixed_network: {get_resource: fixed_network}
+          fixed_network: {get_attr: [fixed_network, name]}
           fixed_subnet: {get_resource: fixed_subnet}
           internal_network: {get_resource: cluster_network}
           internal_subnet: {get_resource: cluster_subnet}
@@ -727,7 +727,7 @@ resources:
       members: {get_attr: [openshift_masters, host]}
       master_hostname: {get_attr: [openshift_masters, resource.0.hostname]}
       floatingip_id: {get_resource: lb_floating_ip}
-      fixed_network: {get_resource: fixed_network}
+      fixed_network: {get_attr: [fixed_network, name]}
       fixed_subnet: {get_resource: fixed_subnet}
       extra_repository_urls: {get_param: extra_repository_urls}
       extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
