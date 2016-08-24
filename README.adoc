@@ -155,7 +155,7 @@ parameters:
    
    # Currently Ansible 2.1 is not supported so add these parameters as a workaround
    openshift_ansible_git_url: https://github.com/openshift/openshift-ansible.git
-   openshift_ansible_git_rev: 08791978fdf3ee385760761d4fc6bc47febf1732
+   openshift_ansible_git_rev: master
 
 resource_registry:
   # use neutron LBaaS

@@ -106,8 +106,8 @@ if args.update:
 cmd += ["--install", "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm",
         "--run-command", "sed -i -e 's/^enabled=1/enabled=0/' /etc/yum.repos.d/epel.repo"]
 
-# Install ansible1.9
-cmd += ["--run-command", "yum -y --enablerepo=epel install ansible1.9"]
+# Install ansible
+cmd += ["--run-command", "yum -y --enablerepo=epel install ansible"]
 
 # Install required packages
 cmd += ["--install", ",".join(args.packages)]

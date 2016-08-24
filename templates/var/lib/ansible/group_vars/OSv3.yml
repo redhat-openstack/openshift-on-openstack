@@ -2,6 +2,7 @@ ansible_first_run: {{ansible_first_run}}
 infra_instance_id: {{infra_instance_id}}
 ansible_ssh_user: {{ssh_user}}
 ansible_sudo: true
+ansible_become: true
 deployment_type: {{deployment_type}} # deployment type valid values are origin, online and openshif-enterprise
 osm_default_subdomain: cloudapps.{{domainname}} # default subdomain to use for exposed routes
 openshift_override_hostname_check: true

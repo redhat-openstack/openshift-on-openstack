@@ -18,7 +18,7 @@ parameters:
   master_docker_volume_size_gb: 25
   node_docker_volume_size_gb: 25
   openshift_ansible_git_url: https://github.com/openshift/openshift-ansible.git
-  openshift_ansible_git_rev: 08791978fdf3ee385760761d4fc6bc47febf1732
+  openshift_ansible_git_rev: master
 
 resource_registry:
   OOShift::LoadBalancer: loadbalancer_neutron.yaml
