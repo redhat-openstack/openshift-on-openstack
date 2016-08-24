@@ -396,6 +396,27 @@ The virtual IP of the router can be retrieved with
 heat output-show --format=raw my-openshift router_ip
 ```
 
+== Removing or Replacing Specific Nodes
+
+Sometimes it's necessary to remove or replace specific nodes from the stack.
+For example because of a hardware issue. Because openshift "compute" ndoes are
+members of heat AutoScalingGroup adding or removing nodes is by default handled
+by a scaling policy and when removing a node the oldest one is
+selected by Heat by default. A specific node can be removed with following
+steps though:
+
+```bash
+# delete the node
+$ nova delete instance_name
+
+# let heat detect the missing node
+$ heat action-check stack_name
+
+# update the stack with desired new number of nodes (same is before
+# for replacement, decreased by 1 for removal)
+$ heat stack-update <parameters> -P node_count=<desired_count>
+```
+
 == Current Status
 
 1. The CA certificate used with OpenShift is currently not configurable.
