@@ -225,10 +225,6 @@ then
 else
     verify_os_collect_config_is_installed
 
-    # Install the EPEL repository, but leave it disabled
-    # Used only to install Ansible
-    install_epel_repos_disabled $EPEL_RELEASE_VERSION
-
     yum -y install git httpd-tools ||
         notify_failure "could not install httpd-tools"
 
@@ -236,9 +232,17 @@ else
     yum -y install pyOpenSSL ||
         notify_failure "could not install pyOpenSSL"
 
-    # Install from the EPEL repository
-    retry yum -y --enablerepo=epel install ansible1.9 ||
-        notify_failure "could not install ansible"
+    if ! yum info ansible; then
+        # Install the EPEL repository, but leave it disabled
+        # Used only to install Ansible
+        install_epel_repos_disabled $EPEL_RELEASE_VERSION
+
+        # Install from the EPEL repository
+        retry yum -y --enablerepo=epel install ansible1.9 ||
+            notify_failure "could not install ansible"
+    else
+        retry yum -y install ansible
+    fi
 
     if [ -n "$OPENSHIFT_ANSIBLE_GIT_URL" -a -n "$OPENSHIFT_ANSIBLE_GIT_REV" ]
     then
