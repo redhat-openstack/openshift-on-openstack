@@ -1,0 +1,24 @@
+heat_template_version: 2014-10-16
+
+description: >
+  A template which allows usage of an existing cinder volume as a persistent
+  openshift registry.
+
+parameters:
+  volume_id:
+    description: >
+      An existing cinder volume ID
+    type: string
+    constraints:
+    - custom_constraint: cinder.volume
+
+  volume_size:
+    description: >
+      Size of the Openshift registry persistent volume
+    type: number
+    default: 10
+
+outputs:
+  volume_id:
+    description: cinder volume id
+    value: {get_param: volume_id}

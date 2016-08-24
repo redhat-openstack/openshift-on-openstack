@@ -167,6 +167,8 @@ resource_registry:
   # create dedicated volume for docker storage
   OOShift::DockerVolume: volume_docker.yaml
   OOShift::DockerVolumeAttachment: volume_attachment_docker.yaml
+  # use ephemeral cinder volume for openshift registry
+  OOShift::RegistryVolume: registry_ephemeral.yaml
 EOF
 ```
 
@@ -328,6 +330,27 @@ heat stack-create my-openshift \
   -P extra_docker_repository_urls='user.docker.example.com,custom.user.example.com#insecure'
   -f openshift-on-openstack/openshift.yaml
 ```
+
+== Using Persistent Cinder Volume for Docker Registry
+
+When deploying OpenShift registry (`-P deploy_registry=true`) you can use either
+an ephemeral or persistent Cinder volume. Ephemeral volume is used by default,
+the volume is automatically created when creating the stack and is also
+deleted when deleting the stack. Alternatively you can use an existing cinder
+volume by including the `env_registry_persistent.yaml` environment file and
+`registry_volume_id` when you create the stack:
+
+```bash
+heat stack-create my-openshift \
+  -e openshift_parameters.yaml \
+  -f openshift-on-openstack/openshift.yaml \
+  -e openshift-on-openstack/env_registry_persistent.yaml \
+  -P registry_volume_id=<cinder_volume_id>
+```
+
+Persistent volume is not formatted when creating the stack, if you have a new
+unformatted volume you can enforce formatting by passing
+`-P prepare_registry=true`.
 
 == Accessing the Web UI
 

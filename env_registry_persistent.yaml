@@ -1,0 +1,2 @@
+resource_registry:
+  OOShift::RegistryVolume: registry_persistent.yaml

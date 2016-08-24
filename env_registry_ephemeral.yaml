@@ -1,0 +1,5 @@
+parameters:
+  prepare_registry: true
+
+resource_registry:
+  OOShift::RegistryVolume: registry_ephemeral.yaml
