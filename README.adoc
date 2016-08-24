@@ -165,10 +165,10 @@ resource_registry:
   # enable ipfailover for router setup
   OOShift::IPFailover: openshift-on-openstack/ipfailover_keepalived.yaml
   # create dedicated volume for docker storage
-  OOShift::DockerVolume: volume_docker.yaml
-  OOShift::DockerVolumeAttachment: volume_attachment_docker.yaml
+  OOShift::DockerVolume: openshift-on-openstack/volume_docker.yaml
+  OOShift::DockerVolumeAttachment: openshift-on-openstack/volume_attachment_docker.yaml
   # use ephemeral cinder volume for openshift registry
-  OOShift::RegistryVolume: registry_ephemeral.yaml
+  OOShift::RegistryVolume: openshift-on-openstack/registry_ephemeral.yaml
 EOF
 ```
 
