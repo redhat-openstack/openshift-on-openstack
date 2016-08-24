@@ -215,6 +215,13 @@ resources:
         - path: /usr/bin/retry
           permissions: 0755
           content: {get_file: fragments/retry.sh}
+        - path: /usr/local/share/openshift-on-openstack/common_functions.sh
+          permissions: 0755
+          content:
+            str_replace:
+              params:
+                $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
+              template: {get_file: fragments/common_functions.sh}
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
 
@@ -274,7 +281,6 @@ resources:
         str_replace:
           params:
             $DNS_IP: {get_param: dns_ip}
-            $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
           template: {get_file: fragments/lb-boot.sh}
 
   # Wait for the load balancer host to complete cloud-init or time out

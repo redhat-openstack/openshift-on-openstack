@@ -330,6 +330,16 @@ resources:
     properties:
       cloud_config:
         write_files:
+        - path: /usr/local/share/openshift-on-openstack/common_functions.sh
+          permissions: 0755
+          content:
+            str_replace:
+              params:
+                $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
+              template: {get_file: fragments/common_functions.sh}
+        - path: /usr/local/share/openshift-on-openstack/common_openshift_functions.sh
+          permissions: 0755
+          content: {get_file: fragments/common_openshift_functions.sh}
         - path: /root/.ssh/id_rsa
           permissions: 0600
           content: {get_param: ansible_private_key}
@@ -409,7 +419,6 @@ resources:
           params:
             $DNS_IP: {get_param: dns_ip}
             $SKIP_DNS: {get_param: skip_dns}
-            $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
             $DOCKER_VOLUME_ID: {get_resource: docker_volume}
           template: {get_file: fragments/master-boot.sh}
 

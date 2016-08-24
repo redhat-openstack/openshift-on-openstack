@@ -415,7 +415,6 @@ resources:
             $SKIP_DNS: {get_param: skip_dns}
             $OPENSHIFT_ANSIBLE_GIT_URL: {get_param: openshift_ansible_git_url}
             $OPENSHIFT_ANSIBLE_GIT_REV: {get_param: openshift_ansible_git_rev}
-            $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
             $DOCKER_VOLUME_ID: {get_resource: docker_volume}
           template: {get_file: fragments/infra-boot.sh}
 
@@ -441,6 +440,13 @@ resources:
         - path: /usr/local/bin/retry
           permissions: 0755
           content: {get_file: fragments/retry.sh}
+        - path: /usr/local/share/openshift-on-openstack/common_functions.sh
+          permissions: 0755
+          content:
+            str_replace:
+              params:
+                $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
+              template: {get_file: fragments/common_functions.sh}
         - path: /root/.ssh/id_rsa
           permissions: 0600
           content: {get_param: ansible_private_key}
