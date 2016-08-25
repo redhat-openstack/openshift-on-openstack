@@ -40,14 +40,40 @@
   - name: Restart node service
     service: name={{openshift.common.service_type}}-node state=restarted
 
-<%#router_vip%>
-- include: /var/lib/ansible/playbooks/ipfailover.yml
-<%/router_vip%>
-
-- name: Waiting for registry/router setup
+<%#deploy_registry%>
+- name: Waiting for registry setup
   hosts: masters[0]
   tasks:
-  - pause: minutes=3
+  - action: shell oc get pod | grep -v deploy | grep registry | grep Running
+    register: result
+    until: result.rc == 0
+    retries: 15
+    delay: 60
+<%/deploy_registry%>
+
+<%#deploy_router%>
+- name: Waiting for router setup
+  hosts: masters[0]
+  tasks:
+  - action: shell oc get pod | grep -v deploy | grep router | grep Running
+    register: result
+    until: result.rc == 0
+    retries: 15
+    delay: 60
+
+<%#router_vip%>
+- include: /var/lib/ansible/playbooks/ipfailover.yml
+
+- name: Waiting for IP failover setup
+  hosts: masters[0]
+  tasks:
+  - action: shell oc get pod | grep -v deploy | grep ipfailover | grep Running
+    register: result
+    until: result.rc == 0
+    retries: 15
+    delay: 60
+<%/router_vip%>
+<%/deploy_router%>
 
 - hosts: masters[0]
   sudo: yes
