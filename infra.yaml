@@ -288,6 +288,10 @@ parameters:
       The Openshift Router Virtual IP
     type: string
 
+  volume_quota:
+    type: number
+    description: Quota for emptyDir volumes in GBi
+
 resources:
 
   # A VM to provide host based orchestration and other sub-services
@@ -383,6 +387,8 @@ resources:
           default: {get_resource: host}
         - name: router_vip
           default: {get_param: router_vip}
+        - name: volume_quota
+          default: {get_param: volume_quota}
       outputs:
         - name: ca_cert
         - name: ca_key
@@ -459,6 +465,9 @@ resources:
         - path: /var/lib/os-apply-config/templates/var/lib/ansible/group_vars/masters.yml
           permissions: 0644
           content: {get_file: templates/var/lib/ansible/group_vars/masters.yml}
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/group_vars/nodes.yml
+          permissions: 0644
+          content: {get_file: templates/var/lib/ansible/group_vars/nodes.yml}
         - path: /var/lib/os-apply-config/templates/var/lib/ansible/host_vars/loadbalancer.yml
           permissions: 0644
           content: {get_file: templates/var/lib/ansible/host_vars/loadbalancer.yml}
@@ -489,6 +498,18 @@ resources:
         - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/ipfailover.yml
           permissions: 0644
           content: {get_file: templates/var/lib/ansible/playbooks/ipfailover.yml}
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/quota.yml
+          permissions: 0644
+          content: {get_file: templates/var/lib/ansible/playbooks/quota.yml}
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/roles/reboot/tasks/main.yml
+          permissions: 0644
+          content: {get_file: templates/var/lib/ansible/roles/reboot/tasks/main.yml}
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/roles/fstab_mount_options/tasks/main.yml
+          permissions: 0644
+          content: {get_file: templates/var/lib/ansible/roles/fstab_mount_options/tasks/main.yml}
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/roles/xfs_grub_quota/tasks/main.yml
+          permissions: 0644
+          content: {get_file: templates/var/lib/ansible/roles/xfs_grub_quota/tasks/main.yml}
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
 

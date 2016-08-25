@@ -1,0 +1,9 @@
+---
+- name: Apply gquota options to XFS mount points
+  hosts: masters, nodes
+  roles:
+    - role: fstab_mount_options
+      fmo_mount_point: "/"
+      fmo_mount_options: "gquota"
+    - role: xfs_grub_quota
+    - role: reboot

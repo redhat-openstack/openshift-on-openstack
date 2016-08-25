@@ -108,7 +108,6 @@ parameters:
       List of policies applied on master nodes ServerGroup.
     default: ['anti-affinity']
 
-
   node_count:
     type: number
     description: >
@@ -159,7 +158,6 @@ parameters:
       size of a cinder volume in GB to allocate to docker for container/image
       storage
     default: 25
-
 
   # Node scaling parameters
   autoscaling:
@@ -327,6 +325,12 @@ parameters:
     description: If the registry volume should be formatted during deployment.
     default: false
 
+  volume_quota:
+    type: number
+    description: Quota for emptyDir volumes in GB
+    default: 0
+
+
 resources:
 
   # Network Components
@@ -433,6 +437,7 @@ resources:
             '%stackname%': {get_param: 'OS::stack_name'}
             '%hostname%': {get_param: lb_hostname}
       router_vip: {get_attr: [ipfailover, router_vip]}
+      volume_quota: {get_param: volume_quota}
 
   openshift_masters:
     depends_on: external_router_interface
