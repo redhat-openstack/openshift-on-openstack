@@ -152,7 +152,7 @@ parameters:
    rhn_username: ""
    rhn_password: ""
    rhn_pool: '' # OPTIONAL
-   
+
    # Currently Ansible 2.1 is not supported so add these parameters as a workaround
    openshift_ansible_git_url: https://github.com/openshift/openshift-ansible.git
    openshift_ansible_git_rev: master
@@ -377,6 +377,21 @@ installation by running
 ```bash
 heat output-show --format=raw my-openshift ca_cert > ca.crt
 heat output-show --format=raw my-openshift ca_key > ca.key
+```
+
+== Container and volumes quotas
+
+OpenShift has preliminary support for local emptyDir volume quotas. You can
+set the `volume_quota` parameter to a resource quantity representing the desired
+quota per FSGroup.
+
+You can set quota on the maximum size of the containers using the
+`container_quota` parameter in GB.
+
+Example:
+```yaml
+   volume_quota: 10
+   container_quota: 20
 ```
 
 [[IPFailover]]

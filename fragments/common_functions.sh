@@ -52,3 +52,10 @@ DEVS=$docker_dev
 VG=docker-vg
 EOF
 }
+
+function docker_set_storage_quota() {
+    echo "EXTRA_DOCKER_STORAGE_OPTIONS=\"--storage-opt dm.basesize=$1G\"" \
+        >> /etc/sysconfig/docker-storage-setup
+    echo "DOCKER_STORAGE_OPTIONS=\"--storage-opt dm.basesize=$1G\"" \
+        > /etc/sysconfig/docker-storage
+}

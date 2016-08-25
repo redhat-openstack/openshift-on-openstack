@@ -330,6 +330,10 @@ parameters:
     description: Quota for emptyDir volumes in GB
     default: 0
 
+  container_quota:
+    type: number
+    description: Quota for container in GB
+    default: 0
 
 resources:
 
@@ -533,6 +537,7 @@ resources:
             list_join:
               - " "
               - {get_attr: [openshift_masters, hostname]}
+          container_quota: {get_param: container_quota}
 
   # Define the network access policy for openshift nodes
   node_security_group:
