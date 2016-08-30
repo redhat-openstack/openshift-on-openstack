@@ -9,7 +9,7 @@ set -eux
 # Return the last non-zero exit code from a pipe (or zero for success)
 set -o pipefail
 
-ANSIBLE_CFG=/etc/ansible/ansible.cfg
+ANSIBLE_CFG=/etc/ansible_ansible.cfg
 
 # Make a single change to the local Ansible configuration file
 function set_ansible_configuration() {
