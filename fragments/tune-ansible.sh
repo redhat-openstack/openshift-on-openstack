@@ -9,7 +9,7 @@ set -eux
 # Return the last non-zero exit code from a pipe (or zero for success)
 set -o pipefail
 
-ANSIBLE_CFG=/etc/ansible_ansible.cfg
+ANSIBLE_CFG=/etc/ansible/ansible.cfg
 
 # Make a single change to the local Ansible configuration file
 function set_ansible_configuration() {
@@ -42,11 +42,10 @@ set_ansible_configuration ssh_connection "control_path" '%(directory)s/%%h-%%r'
 # http://docs.ansible.com/ansible/intro_configuration.html#gathering
 set_ansible_configuration defaults "gathering" "implicit"
 
-#
 # Cache facts in JSON format in a tmp dir and save them 10 minutes
 # http://docs.ansible.com/ansible/playbooks_variables.html#fact-caching
-set_ansible_configuration defaults "fact_caching" "jsonfile"
 set_ansible_configuration defaults \
                           "fact_caching_connection" \
                           "/tmp/ansible/facts"
 set_ansible_configuration defaults "fact_caching_timeout" "600"
+set_ansible_configuration defaults "fact_caching" "jsonfile"
