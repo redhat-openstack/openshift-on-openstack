@@ -130,12 +130,6 @@ parameters:
     type: string
     default: ''
 
-  infra_run_ansible:
-    description: >
-      Operation that runs the ansible playbooks to configure this node.
-    type: string
-    default: ''
-
   infra_node:
     description:
       A reference to the infrastructure VM resource
@@ -178,6 +172,142 @@ parameters:
     type: number
     description: Quota for container in GB
     default: 0
+
+  deployment_type:
+    description: >
+      Select the community or enterprise version of OpenShift
+    type: string
+
+  # Load Balancer
+  lb_ip:
+    description: >
+      The IP address of the load balancer feeding the OpenShift master traffic
+    type: string
+    default: ''
+
+  lb_hostname:
+    description: >
+      The hostname of the load balancer feeding the OpenShift master traffic
+    type: string
+    default: ''
+
+  loadbalancer_type:
+    type: string
+
+  ldap_url:
+    description: >
+      The LDAP url for access to the LDAP service (redundant? ML)
+    type: string
+    default: ''
+
+  ldap_preferred_username:
+    description: >
+      What field to use to look up and identify users in the database
+    type: string
+    default: 'uid'
+
+  ldap_bind_dn:
+    description: >
+      LDAP service access user identifier
+    type: string
+    default: ''
+
+  ldap_bind_password:
+    description: >
+      LDAP service access password
+    type: string
+    default: ''
+
+  ldap_ca:
+    description: >
+      The Certificate Authority file to confirm SSL encryption security
+    type: string
+    default: ''
+
+  ldap_insecure:
+    description: >
+      Toggle SSL encryption for LDAP communications
+    type: string
+    default: false
+
+  openshift_sdn:
+    description: >
+      Enable and select the container communications network: OVS or Flannel
+    type: string
+
+  deploy_registry:
+    description: >
+      True = Enable automatic provisioning of the Docker registry
+    type: boolean
+
+  registry_volume_id:
+    description: >
+      Volume to use by the Openshift registry
+    type: string
+    default: ''
+
+  registry_volume_fs:
+    description: >
+      Filesystem to use for Openshift registry persistent volume
+    type: string
+    default: ext4
+
+  prepare_registry:
+    type: boolean
+    description: If the registry volume should be formatted during deployment.
+    default: false
+
+  deploy_router:
+    description: >
+      True = Enable deployment of the OpenShift router
+    type: boolean
+
+  # OpenShift installer (ansible) parameters
+  skip_ansible:
+    description: >
+      Disable host based installation/configuration
+    type: boolean
+
+  # OpenStack access parameters
+  # These allow the OpenShift service to view and use OpenStack resources
+  os_auth_url:
+    description: >
+      The location of the OpenStack Keystone service
+    type: string
+
+  os_username:
+    description: >
+      The OpenStack user that OpenShift will use to access resources
+    type: string
+
+  os_password:
+    description: >
+      The secret part of the OpenStack user credentials
+    type: string
+    hidden: true
+
+  os_tenant_name:
+    description: >
+      The name of the OpenStack project or "tenant" for OpenShift to use
+    type: string
+
+  os_region_name:
+    description: >
+      The name of the OpenStack "region" to use to create or find resources
+    type: string
+
+  dns_forwarders:
+    type: comma_delimited_list
+    description: address of dns nameservers reachable in your environment
+
+  router_vip:
+    description: >
+      The Openshift Router Virtual IP
+    type: string
+
+  volume_quota:
+    type: number
+    description: Quota for emptyDir volumes in GBi
 
 resources:
 
@@ -430,13 +560,91 @@ resources:
                 SUFFIX: {get_attr: [random_hostname_suffix, value]}
                 DOMAIN: {get_param: domain_name}
 
+  # Execute the ansible playbook(s) on the infra server to configure the
+  # openshift hosts and services
+  run_ansible:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      inputs:
+        - name: node_hostname
+        - name: all_master_nodes
+        - name: domainname
+          default: {get_param: domain_name}
+        - name: ssh_user
+          default: {get_param: ssh_user}
+        - name: deployment_type
+          default: {get_param: deployment_type}
+        - name: skip_dns
+          default: {get_param: skip_dns}
+        - name: lb_ip
+          default: {get_param: lb_ip}
+        - name: lb_hostname
+          default: {get_param: lb_hostname}
+        - name: ldap_url
+          default: {get_param: ldap_url}
+        - name: ldap_preferred_username
+          default: {get_param: ldap_preferred_username}
+        - name: ldap_bind_dn
+          default: {get_param: ldap_bind_dn}
+        - name: ldap_bind_password
+          default: {get_param: ldap_bind_password}
+        - name: ldap_ca
+          default: {get_param: ldap_ca}
+        - name: ldap_insecure
+          default: {get_param: ldap_insecure}
+        - name: openshift_sdn
+          default: {get_param: openshift_sdn}
+        - name: deploy_registry
+          default: {get_param: deploy_registry}
+        - name: registry_volume_id
+          default: {get_param: registry_volume_id}
+        - name: registry_volume_fs
+          default: {get_param: registry_volume_fs}
+        - name: prepare_registry
+          default: {get_param: prepare_registry}
+        - name: deploy_router
+          default: {get_param: deploy_router}
+        - name: skip_ansible
+          default: {get_param: skip_ansible}
+        - name: os_auth_url
+          default: {get_param: os_auth_url}
+        - name: os_username
+          default: {get_param: os_username}
+        - name: os_password
+          default: {get_param: os_password}
+        - name: os_tenant_name
+          default: {get_param: os_tenant_name}
+        - name: os_region_name
+          default: {get_param: os_region_name}
+        - name: lb_type
+          default: {get_param: loadbalancer_type}
+        - name: dns_ip
+          default: {get_param: dns_ip}
+        - name: dns_forwarders
+          default:
+            list_join:
+              - ","
+              - {get_param: dns_forwarders}
+        - name: infra_instance_id
+          default: {get_param: infra_node}
+        - name: router_vip
+          default: {get_param: router_vip}
+        - name: volume_quota
+          default: {get_param: volume_quota}
+      outputs:
+        - name: ca_cert
+        - name: ca_key
+      config:
+        get_file: fragments/master-ansible.sh
+
   # activation hook to run the ansible playbooks to install and config a node
   deployment_run_ansible:
     depends_on: [wait_condition, deployment_infra_node_add]
     type: OS::Heat::SoftwareDeployment
     properties:
       config:
-        get_param: infra_run_ansible
+        get_resource: run_ansible
       server:
         get_param: infra_node
       input_values:

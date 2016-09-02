@@ -409,39 +409,15 @@ resources:
       fixed_subnet: {get_resource: fixed_subnet}
       ansible_public_key: {get_attr: [ansible_keys, public_key]}
       ansible_private_key: {get_attr: [ansible_keys, private_key]}
-      deployment_type: {get_param: deployment_type}
-      openshift_sdn: {get_param: openshift_sdn}
       floating_ip: {get_attr: [infra_floating_ip, floating_ip_address]}
       port: {get_resource: infra_port}
       docker_volume_size: {get_param: master_docker_volume_size_gb}
-      deploy_registry: {get_param: deploy_registry}
-      registry_volume_id: {get_attr: [registry_volume, volume_id]}
-      registry_volume_fs: {get_param: registry_volume_fs}
-      prepare_registry: {get_param: prepare_registry}
-      deploy_router: {get_param: deploy_router}
-      skip_ansible: {get_param: skip_ansible}
       openshift_ansible_git_url: {get_param: openshift_ansible_git_url}
       openshift_ansible_git_rev: {get_param: openshift_ansible_git_rev}
-      os_auth_url: {get_param: os_auth_url}
-      os_username: {get_param: os_username}
-      os_password: {get_param: os_password}
-      os_tenant_name: {get_param: os_tenant_name}
-      os_region_name: {get_param: os_region_name}
       skip_dns: {get_param: skip_dns}
       system_update: {get_param: system_update}
-      loadbalancer_type: {get_param: loadbalancer_type}
       extra_repository_urls: {get_param: extra_repository_urls}
       extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
-      dns_forwarders: {get_param: dns_nameserver}
-      lb_ip: {get_attr: [lb_floating_ip, floating_ip_address]}
-      lb_hostname:
-        str_replace:
-          template: "%stackname%-%hostname%"
-          params:
-            '%stackname%': {get_param: 'OS::stack_name'}
-            '%hostname%': {get_param: lb_hostname}
-      router_vip: {get_attr: [ipfailover, router_vip]}
-      volume_quota: {get_param: volume_quota}
 
   openshift_masters:
     depends_on: [external_router_interface, fixed_network, fixed_subnet]
@@ -524,7 +500,6 @@ resources:
           domain_name: {get_param: domain_name}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
           infra_node: {get_attr: [infra_host, resource.host]}
-          infra_run_ansible: {get_attr: [infra_host, resource.run_ansible]}
           infra_node_add: {get_attr: [infra_host, resource.node_add]}
           skip_dns: {get_param: skip_dns}
           system_update: {get_param: system_update}
@@ -536,6 +511,30 @@ resources:
               - " "
               - {get_attr: [openshift_masters, hostname]}
           container_quota: {get_param: container_quota}
+          volume_quota: {get_param: volume_quota}
+          deployment_type: {get_param: deployment_type}
+          openshift_sdn: {get_param: openshift_sdn}
+          deploy_registry: {get_param: deploy_registry}
+          registry_volume_id: {get_attr: [registry_volume, volume_id]}
+          registry_volume_fs: {get_param: registry_volume_fs}
+          prepare_registry: {get_param: prepare_registry}
+          deploy_router: {get_param: deploy_router}
+          os_auth_url: {get_param: os_auth_url}
+          os_username: {get_param: os_username}
+          os_password: {get_param: os_password}
+          os_tenant_name: {get_param: os_tenant_name}
+          os_region_name: {get_param: os_region_name}
+          loadbalancer_type: {get_param: loadbalancer_type}
+          dns_forwarders: {get_param: dns_nameserver}
+          lb_ip: {get_attr: [lb_floating_ip, floating_ip_address]}
+          lb_hostname:
+            str_replace:
+              template: "%stackname%-%hostname%"
+              params:
+                '%stackname%': {get_param: 'OS::stack_name'}
+                '%hostname%': {get_param: lb_hostname}
+          router_vip: {get_attr: [ipfailover, router_vip]}
+          skip_ansible: {get_param: skip_ansible}
 
   # Define the network access policy for openshift nodes
   node_security_group:
