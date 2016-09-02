@@ -122,6 +122,12 @@ parameters:
     type: string
     default: ''
 
+  infra_node:
+    type: string
+    description: >
+      The name or ID of an infrastructure instance.
+    default: ''
+
 outputs:
   console_url:
     description: URL of the OpenShift web console

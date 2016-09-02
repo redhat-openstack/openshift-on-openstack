@@ -579,13 +579,13 @@ resources:
             $SKIP_DNS: {get_param: skip_dns}
           template: {get_file: fragments/infra-node-add.sh}
 
-  # Remove a node's IP/Name mapping from DNS
   node_cleanup:
     type: OS::Heat::SoftwareConfig
     properties:
       group: script
       inputs:
       - name: node_name
+      - name: node_type
       - name: ssh_user
         default: {get_param: ssh_user}
       outputs:
@@ -595,6 +595,26 @@ resources:
           params:
             $SKIP_DNS: {get_param: skip_dns}
           template: {get_file: fragments/infra-node-cleanup.sh}
+
+  # activation hook for removing the node from DNS and from the Kubernetes
+  # cluster
+  deployment_infra_node_cleanup:
+    depends_on: host
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      actions: ['DELETE']
+      input_values:
+        node_type: infra
+        node_name:
+          str_replace:
+            template: "HOST.DOMAIN"
+            params:
+              HOST: {get_param: hostname}
+              DOMAIN: {get_param: domain_name}
+      config:
+        get_resource: node_cleanup
+      server:
+        get_resource: host
 
   # Additional space for Docker container and image storage
   docker_volume:
