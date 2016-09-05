@@ -121,6 +121,9 @@ parameters:
       The name or ID of an infrastructure instance.
     default: ''
 
+  skip_dns:
+    type: boolean
+
 resources:
   lb:
     type: OS::Neutron::LoadBalancer

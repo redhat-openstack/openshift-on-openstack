@@ -118,12 +118,6 @@ parameters:
       The user for SSH access to the VM hosts
     type: string
 
-  infra_node:
-    type: string
-    description: >
-      The name or ID of an infrastructure instance.
-    default: ''
-
   all_master_nodes:
     description: >
       A list of all the master host replicas
@@ -133,12 +127,6 @@ parameters:
   infra_node:
     description:
       A reference to the infrastructure VM resource
-    type: string
-    default: ''
-
-  infra_node_add:
-    description: >
-      Operation that adds the node to the infrastructure server DNS
     type: string
     default: ''
 
@@ -533,13 +521,30 @@ resources:
       server:
         get_param: infra_node
 
+  # Add a node's IP/Name mapping to DNS
+  node_add:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      inputs:
+      - name: node_etc_host
+      - name: node_hostname
+      - name: node_type
+      outputs:
+      - name: result
+      config:
+        str_replace:
+          params:
+            $SKIP_DNS: {get_param: skip_dns}
+          template: {get_file: fragments/infra-node-add.sh}
+
   # activation hook to add the node to DNS and Kubernetes cluster
   deployment_infra_node_add:
     depends_on: host
     type: OS::Heat::SoftwareDeployment
     properties:
       config:
-        get_param: infra_node_add
+        get_resource: node_add
       server:
         get_param: infra_node
       input_values:

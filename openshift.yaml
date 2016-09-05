@@ -448,7 +448,6 @@ resources:
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
           ansible_private_key: {get_attr: [ansible_keys, private_key]}
           infra_node: {get_attr: [infra_host, resource.host]}
-          infra_node_add: {get_attr: [infra_host, resource.node_add]}
           fixed_network: {get_resource: fixed_network}
           fixed_subnet: {get_resource: fixed_subnet}
           internal_network: {get_resource: cluster_network}
@@ -500,7 +499,6 @@ resources:
           domain_name: {get_param: domain_name}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
           infra_node: {get_attr: [infra_host, resource.host]}
-          infra_node_add: {get_attr: [infra_host, resource.node_add]}
           skip_dns: {get_param: skip_dns}
           system_update: {get_param: system_update}
           metadata: {"metering.stack": {get_param: "OS::stack_id"}}
@@ -753,6 +751,7 @@ resources:
       extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
       stack_name: {get_param: 'OS::stack_name'}
       infra_node: {get_attr: [infra_host, resource.host]}
+      skip_dns: {get_param: skip_dns}
 
 outputs:
   dns_ip:

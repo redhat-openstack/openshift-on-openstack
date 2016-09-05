@@ -368,23 +368,6 @@ resources:
       server:
         get_resource: host
 
-  # Add a node's IP/Name mapping to DNS
-  node_add:
-    type: OS::Heat::SoftwareConfig
-    properties:
-      group: script
-      inputs:
-      - name: node_etc_host
-      - name: node_hostname
-      - name: node_type
-      outputs:
-      - name: result
-      config:
-        str_replace:
-          params:
-            $SKIP_DNS: {get_param: skip_dns}
-          template: {get_file: fragments/infra-node-add.sh}
-
   node_cleanup:
     type: OS::Heat::SoftwareConfig
     properties:
