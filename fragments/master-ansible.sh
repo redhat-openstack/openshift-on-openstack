@@ -61,7 +61,8 @@ cat << EOF > $1
     "ldap_preferred_username": "$ldap_preferred_username",
     "infra_instance_id": "$infra_instance_id",
     "ansible_first_run": $([ -e ${INVENTORY}.deployed ] && echo false || echo true),
-    "router_vip": "$router_vip"
+    "router_vip": "$router_vip",
+    "volume_quota": $volume_quota
 }
 EOF
 }
@@ -136,7 +137,7 @@ cp ${INVENTORY} ${INVENTORY}.started
 systemctl status crond && systemctl restart crond
 
 export HOME=/root
-export ANSIBLE_ROLES_PATH=/usr/share/ansible/openshift-ansible/roles
+export ANSIBLE_ROLES_PATH=/usr/share/ansible/openshift-ansible/roles:/var/lib/ansible/roles
 export ANSIBLE_HOST_KEY_CHECKING=False
 
 logfile=/var/log/ansible.$$

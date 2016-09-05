@@ -1,0 +1,8 @@
+{{=<% %>=}}
+---
+- name: update kernel command line to add gquota
+  shell: grep rootflags=gquota /etc/default/grub || sed -i 's/\(GRUB_CMDLINE_LINUX="\)\(.*\)"/\1rootflags=gquota \2"/' /etc/default/grub
+
+- name: regenerate grub configuration
+  shell: /sbin/grub2-mkconfig -o /boot/grub2/grub.cfg
+<%={{ }}=%>

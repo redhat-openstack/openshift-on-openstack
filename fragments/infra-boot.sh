@@ -140,7 +140,7 @@ if is_atomic_host
 then
     systemd_docker_disable_storage_setup
 
-    docker_set_storage_device $DOCKER_VOLUME_ID
+    docker_set_storage_device $VOLUME_ID
 
     systemctl enable lvm2-lvmetad
     systemctl start lvm2-lvmetad

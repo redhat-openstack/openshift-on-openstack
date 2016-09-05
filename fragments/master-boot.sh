@@ -38,7 +38,7 @@ then
     systemd_add_docker_socket
 fi
 
-docker_set_storage_device $DOCKER_VOLUME_ID
+docker_set_storage_device $VOLUME_ID
 
 # lvmetad allows new volumes to be configured and made available as they appear
 # This is good for dynamically created volumes in a cloud provider service

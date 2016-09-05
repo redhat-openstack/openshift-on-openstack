@@ -36,14 +36,19 @@ then
     systemd_add_docker_socket
 fi
 
-if [ -n "$VOLUME_ID" ]
-then
-    docker_set_storage_device $DOCKER_VOLUME_ID
-fi
-
 # lvmetad allows new volumes to be configured and made available as they appear
 # This is good for dynamically created volumes in a cloud provider service
 systemctl enable lvm2-lvmetad
 systemctl start lvm2-lvmetad
+
+if [ -n "$VOLUME_ID" ]
+then
+    docker_set_storage_device $VOLUME_ID
+fi
+
+if [ -n "$CONTAINER_QUOTA" ] && [ "$CONTAINER_QUOTA" != 0 ]
+then
+    docker_set_storage_quota $CONTAINER_QUOTA
+fi
 
 notify_success "OpenShift node has been prepared for running docker."

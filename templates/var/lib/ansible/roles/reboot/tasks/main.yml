@@ -1,0 +1,15 @@
+{{=<% %>=}}
+---
+- name: Reboot server
+  command: /usr/bin/systemd-run --on-active=5 /usr/bin/systemctl reboot
+  async: 0
+  poll: 0
+
+- name: Wait for the server to reboot
+  sudo: no
+  local_action: wait_for host="{{ inventory_hostname }}" search_regex=OpenSSH port=22 timeout=300 state=stopped
+
+- name: Wait for the server to finish rebooting
+  sudo: no
+  local_action: wait_for host="{{ inventory_hostname }}" search_regex=OpenSSH port=22 timeout=300 state=started
+<%={{ }}=%>

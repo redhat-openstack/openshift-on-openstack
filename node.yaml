@@ -180,6 +180,11 @@ parameters:
     description: List of docker repository URLs which will be installed on each node, if a repo is insecure use '#insecure' suffix.
     default: ''
 
+  container_quota:
+    type: number
+    description: Quota for container in GB
+    default: 0
+
 resources:
 
   # Generate a string to distinguish one node from the others
@@ -344,6 +349,7 @@ resources:
             $DNS_IP: {get_param: dns_ip}
             $SKIP_DNS: {get_param: skip_dns}
             $DOCKER_VOLUME_ID: {get_attr: [docker_volume, volume_id]}
+            $CONTAINER_QUOTA: {get_param: container_quota}
           template: {get_file: fragments/node-boot.sh}
 
   # Create a network connection on the fixed network and apply security
