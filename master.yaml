@@ -236,6 +236,23 @@ parameters:
 
 resources:
 
+  node_cleanup:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      inputs:
+      - name: node_name
+      - name: node_type
+      - name: ssh_user
+        default: {get_param: ssh_user}
+      outputs:
+      - name: result
+      config:
+        str_replace:
+          params:
+            $SKIP_DNS: {get_param: skip_dns}
+          template: {get_file: fragments/infra-node-cleanup.sh}
+
   # Create a network connection on the internal communications network
   port:
     type: OS::Neutron::Port
@@ -438,6 +455,26 @@ resources:
                 IP: {get_attr: [host, networks, {get_param: fixed_network}, 0]}
                 HOST: {get_param: hostname}
                 DOMAIN: {get_param: domain_name}
+
+  # activation hook for removing the node from DNS and from the Kubernetes
+  # cluster
+  deployment_infra_node_cleanup:
+    depends_on: host
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      actions: ['DELETE']
+      input_values:
+        node_type: master
+        node_name:
+          str_replace:
+            template: "HOST.DOMAIN"
+            params:
+              HOST: {get_param: hostname}
+              DOMAIN: {get_param: domain_name}
+      config:
+        get_resource: node_cleanup
+      server:
+        get_param: infra_node
 
   # Wait for master_boot (cloud-init) to complete or time out
   wait_condition:

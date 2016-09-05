@@ -148,12 +148,6 @@ parameters:
     type: string
     default: ''
 
-  infra_node_cleanup:
-    description: >
-      Operation that removes the node from the infrastructure DNS
-    type: string
-    default: ''
-
   timeout:
     description: Time to wait until the node is ready.
     type: number
@@ -371,22 +365,24 @@ resources:
       network: {get_param: internal_network}
       subnet: {get_param: internal_subnet}
 
+  node_cleanup:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config: |
+        #!/bin/bash
+        set -eux
+        (subscription-manager unregister && subscription-manager clean) || true
+
   # activation hook for removing the node from DNS and from the Kubernetes
   # cluster
   deployment_infra_node_cleanup:
+    depends_on: host
     type: OS::Heat::SoftwareDeployment
     properties:
       actions: ['DELETE']
-      input_values:
-        node_name:
-          str_replace:
-            template: "HOST-SUFFIX.DOMAIN"
-            params:
-              HOST: {get_param: hostname}
-              SUFFIX: {get_attr: [random_hostname_suffix, value]}
-              DOMAIN: {get_param: domain_name}
       config:
-        get_param: infra_node_cleanup
+        get_resource: node_cleanup
       server:
         get_param: infra_node
 

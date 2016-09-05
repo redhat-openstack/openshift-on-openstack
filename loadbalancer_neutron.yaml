@@ -115,6 +115,12 @@ parameters:
     type: string
     default: ''
 
+  infra_node:
+    type: string
+    description: >
+      The name or ID of an infrastructure instance.
+    default: ''
+
 resources:
   lb:
     type: OS::Neutron::LoadBalancer
