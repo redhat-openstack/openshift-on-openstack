@@ -6,6 +6,13 @@ description: >
 
 parameters:
 
+  # What version of OpenShift Enterprise to install
+  # This value is used to select the RPM repo for the OSE release to install
+  ose_version:
+    type: string
+    description: >
+      The version of OpenShift Enterprise to deploy
+
   key_name:
     description: >
       A pre-submitted SSH key to access the VM hosts
@@ -44,6 +51,24 @@ parameters:
       The password for the RHN user
     type: string
     hidden: true
+
+# Red Hat satellite subscription parameters
+  sat6_hostname:
+    type: string
+    description: >
+      The hostname of the Satellite 6 server which will provide software updates
+    default: ''
+
+  sat6_organization:
+    type: string
+    description: >
+      An organization string provided by Sat6 to group subscriptions
+    default: ''
+
+  sat6_activationkey:
+    type: string
+    description: >
+      An activation key string provided by Sat6 to enable subscriptions
 
   rhn_pool:
     description: >

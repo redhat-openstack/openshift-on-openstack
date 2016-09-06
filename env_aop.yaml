@@ -7,9 +7,14 @@ parameters:
   external_network: ext_net
   dns_nameserver: 8.8.4.4,8.8.8.8
   node_count: 2
+
   rhn_username: "Your RHN Username"
   rhn_password: "Your RHN Password"
+  sat6_hostname: ""
+  sat6_organization: ""
+  sat6_activationkey: ""
   rhn_pool: ''
+
   deployment_type: openshift-enterprise
   domain_name: "example.com"
   master_hostname: "openshift-master"
