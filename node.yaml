@@ -369,10 +369,18 @@ resources:
     type: OS::Heat::SoftwareConfig
     properties:
       group: script
-      config: |
-        #!/bin/bash
-        set -eux
-        (subscription-manager unregister && subscription-manager clean) || true
+      inputs:
+      - name: node_name
+      - name: node_type
+      - name: ssh_user
+        default: {get_param: ssh_user}
+      outputs:
+      - name: result
+      config:
+        str_replace:
+          params:
+            $SKIP_DNS: {get_param: skip_dns}
+          template: {get_file: fragments/infra-node-cleanup.sh}
 
   # activation hook for removing the node from DNS and from the Kubernetes
   # cluster
@@ -381,6 +389,15 @@ resources:
     type: OS::Heat::SoftwareDeployment
     properties:
       actions: ['DELETE']
+      input_values:
+        node_type: node
+        node_name:
+          str_replace:
+            template: "HOST-SUFFIX.DOMAIN"
+            params:
+              HOST: {get_param: hostname}
+              SUFFIX: {get_attr: [random_hostname_suffix, value]}
+              DOMAIN: {get_param: domain_name}
       config:
         get_resource: node_cleanup
       server:
