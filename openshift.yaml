@@ -464,7 +464,7 @@ resources:
           ansible_private_key: {get_attr: [ansible_keys, private_key]}
           infra_node: {get_attr: [infra_host, resource.host]}
           infra_node_add: {get_attr: [infra_host, resource.node_add]}
-          fixed_network: {get_attr: [fixed_network, name]}
+          fixed_network: {get_resource: fixed_network}
           fixed_subnet: {get_resource: fixed_subnet}
           internal_network: {get_resource: cluster_network}
           internal_subnet: {get_resource: cluster_subnet}
@@ -496,7 +496,7 @@ resources:
           key_name: {get_param: ssh_key_name}
           ssh_user: {get_param: ssh_user}
           dns_ip: {get_attr: [infra_host, instance_ip]}
-          fixed_network: {get_attr: [fixed_network, name]}
+          fixed_network: {get_resource: fixed_network}
           fixed_subnet: {get_resource: fixed_subnet}
           internal_network: {get_resource: cluster_network}
           internal_subnet: {get_resource: cluster_subnet}
