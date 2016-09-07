@@ -1,7 +1,7 @@
 heat_template_version: 2014-10-16
 
 description: >
-  A template which provides a creates a dedicated network for container communication
+  A template which creates a dedicated network for container communication
 
 parameters:
   network:
