@@ -322,7 +322,7 @@ resources:
               HOST: {get_param: hostname}
               DOMAIN: {get_param: domain_name}
       config:
-        get_param: node_cleanup
+        get_resource: node_cleanup
       server:
         get_param: infra_node
 
