@@ -405,7 +405,7 @@ resources:
 
   # activation hook to add the node to DNS and Kubernetes cluster
   deployment_infra_node_add:
-    depends_on: host
+    depends_on: wait_condition
     type: OS::Heat::SoftwareDeployment
     properties:
       config:
