@@ -16,11 +16,18 @@ set -eux
 # used by ansible for setting ControlPath ssh param
 export HOME=/root
 
-# remove the node from the openshift service using the first master
 INVENTORY=/var/lib/ansible/inventory
-[ -e $INVENTORY -a "$node_type" == node ] && ansible masters[0] -m shell \
-        -u $ssh_user --sudo -i $INVENTORY \
-        -a "oc --config ~/.kube/config delete node $node_name" || true
+
+# evacuate all the pods and remove the node from the openshift service
+# using the first master
+if [ -e $INVENTORY -a "$node_type" == node ]; then
+    export ANSIBLE_ROLES_PATH=/usr/share/ansible/openshift-ansible/roles
+    export ANSIBLE_HOST_KEY_CHECKING=False
+
+    ansible-playbook -vvvv -e node=$node_name \
+        --inventory /var/lib/ansible/inventory \
+        /var/lib/ansible/playbooks/scaledown.yml &>> /var/log/ansible-scaledown.$$ || true
+fi
 
 # remove from the local list
 NODESFILE=/var/lib/ansible/${node_type}_list
