@@ -28,6 +28,7 @@ function docker_set_storage_device() {
     # By default the cinder volume is mapped to virtio-first_20_chars of cinder
     # volume ID under /dev/disk/by-id/
     devlink=/dev/disk/by-id/virtio-${1:0:20}
+    docker_dev=""
     if ! [ -e "$devlink" ];then
         # It might be that disk is not present under /dev/disk/by-id/
         # https://ask.openstack.org/en/question/50882/are-devdiskby-id-symlinks-unreliable/
