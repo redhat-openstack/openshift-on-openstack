@@ -357,22 +357,67 @@ Persistent volume is not formatted when creating the stack, if you have a new
 unformatted volume you can enforce formatting by passing
 `-P prepare_registry=true`.
 
-== Accessing the Web UI
+== Accessing OpenShift
 
-You can get the URL for the OpenShift Console (the web UI) from Heat by running
-`heat output-show my-openshift master_console_url`.
+From user point of view there are two entry points into the deployed OpenShift:
 
-Currently, the UI and the resolution for the public hostnames that will be associated
-to services running in OpenShift is dependent on the DNS created internally by
-these Heat templates.
+* OpenShift console and API URLs: these URLs usually point to the
+  loadbalancer host and can be obtained by:
 
-So to access the UI, you can get the DNS IP address by `heat output-show
-my-openshift dns_ip` and put `nameserver $DNS_IP` as the first entry in your
-`/etc/resolv.conf`.
+```
+heat output-show my-openshift console_url
+heat output-show my-openshift api_url
+```
 
-We plan to let you supply your own DNS that has the OpenShift cloud domain and
-all the nodes pre-configured and also to optionally have the UI server bind to
-its IP address instead of the hostname.
+* Router IP: the IP address which application OpenShift router service
+  listens on. This IP will be used for setting wildcard DNS for
+  .apps.<domain> subdomain. The IP can be obtained by:
+
+```
+heat output-show my-openshift router_ip
+```
+
+== Setting DNS
+
+To make sure that console and API URLs resolving works properly, you have to
+create a DNS record for the hostname used in `console_url` and `api_url` URLs.
+The floating IP address can be obtained by:
+
+```
+heat output-show my-openshift loadbalancer_ip
+```
+
+For example if `console_url` is `https://default32-lb.example.com:8443/console/`
+and loadbalancer_ip is `172.24.4.166` there should be a DNS record for domain
+`example.com`:
+
+```
+default32-lb  IN A  172.24.4.166
+```
+
+If OpenShift router was deployed (`-P deploy_router=true`) you also may want
+to make sure that
+https://docs.openshift.com/enterprise/3.2/install_config/install/prerequisites.html#wildcard-dns-prereq[wildcard DNS]
+is set for application subdomain. For example if used domain is `example.com`
+and `router_ip` is `172.24.4.168` there should be a DNS record for domain
+`example.com`:
+```
+*.cloudapps.example.com. 300 IN  A 172.24.4.168
+```
+
+[NOTE]
+====
+The above DNS records should be set on the DNS server authoritative for the
+domain used in OpenShift cluster (`example.com` in the example above).
+====
+
+[NOTE]
+====
+A DNS server is set also on infra node during deployment but this
+server is used only by OpenShift nodes internally and should not be used
+for resolving OpenShift user entry points. We plan to use Designate service
+in near future.
+====
 
 == Retrieving the CA certificate
 
