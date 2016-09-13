@@ -29,9 +29,12 @@ configuration.  It can also run local DNS services as
 needed. The host and service configuration is run using
 http://kubernetes.io/[Ansible] playbooks executed from the infrastructure host.
 
-Every VM in this configuration is also given a _floating IP_ address
-on the public network.  This provides direct access to the master and
-node hosts when needed.
+Both _infrastructure server_ and _master nodes_ is also given a _floating IP_
+address on the public network. This provides direct access to the
+_infrastructure server_ from where you can access all nodes by SSH.
+_Master nodes_ have _floating IP_ assigned to make sure these nodes are
+accessible when an _external loadbalancer_ is used for accessing Openshift
+services.
 
 All of the OpenShift hosts (master and node) have block storage for
 Docker images and containers provided by Cinder.  OpenShift will run a
