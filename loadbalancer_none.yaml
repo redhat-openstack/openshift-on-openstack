@@ -152,6 +152,9 @@ parameters:
       The name or ID of an infrastructure instance.
     default: ''
 
+  skip_dns:
+    type: boolean
+
 outputs:
   console_url:
     description: URL of the OpenShift web console

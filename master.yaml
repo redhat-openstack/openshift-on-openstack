@@ -138,12 +138,6 @@ parameters:
     type: string
     default: ''
 
-  infra_node_add:
-    description: >
-      Switch: add the infrastructure node to local /etc/hosts?
-    type: string
-    default: ''
-
   fixed_network:
     description: >
       The name or ID of the admin and public network
@@ -452,16 +446,40 @@ resources:
             $DOCKER_VOLUME_ID: {get_resource: docker_volume}
           template: {get_file: fragments/master-boot.sh}
 
+  # Add a node's IP/Name mapping to DNS
+  node_add:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      inputs:
+      - name: node_etc_host
+      - name: node_hostname
+      - name: node_type
+      outputs:
+      - name: result
+      config:
+        str_replace:
+          params:
+            $SKIP_DNS: {get_param: skip_dns}
+          template: {get_file: fragments/infra-node-add.sh}
+
   # Add the hostname and address of the infrastructure host to the master host
   deployment_infra_node_add:
     depends_on: wait_condition
     type: OS::Heat::SoftwareDeployment
     properties:
       config:
-        get_param: infra_node_add
+        get_resource: node_add
       server:
         get_param: infra_node
       input_values:
+        node_type: master
+        node_hostname:
+          str_replace:
+            template: "HOST.DOMAIN"
+            params:
+              HOST: {get_param: hostname}
+              DOMAIN: {get_param: domain_name}
         node_etc_host:
           str_replace:
               template: "IP HOST.DOMAIN HOST #openshift"

@@ -155,6 +155,9 @@ parameters:
       The name or ID of an infrastructure instance.
     default: ''
 
+  skip_dns:
+    type: boolean
+
 resources:
   floating_ip_assoc:
     type: OS::Neutron::FloatingIPAssociation
