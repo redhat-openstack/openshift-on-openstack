@@ -1,5 +1,5 @@
 Name: openshift-on-openstack
-Version: 0.7.0
+Version: 0.8.0
 Release: 1%{?dist}
 Summary: Set of Openstack Heat templates to deploy OpenShift
 Group: System Environment/Base
@@ -28,11 +28,22 @@ cp -aR heat-docker-agent/ %{buildroot}%{_datadir}/%{name}
 cp -aR tests/ %{buildroot}%{_datadir}/%{name}
 
 %files
-%doc LICENSE.txt README.adoc
+%doc LICENSE.txt README.adoc README_debugging.adoc
 %{_datadir}/%{name}
 %{_bindir}/customize-disk-image
 
 %changelog
+* Wed Sep 14 2016 Sylvain Baubeau <sbaubeau@redhat.com> - 0.8.0-1
+- Bump to version 0.8.0
+- Switch to Ansible 2.1
+- Improve scalability (up to 100 nodes)
+- Use IP failover for OpenShift router
+- Add subscription manager register to satellite
+- Evacuate pods before removing a node
+- Automatic subscription removal
+- Allow setting quotas on container and emptyDir volumes
+- Allow use of external volume for registry storage
+
 * Thu Jun 16 2016 Sylvain Baubeau <sbaubeau@redhat.com> - 0.7.0-1
 - Bump to version 0.7.0
 
