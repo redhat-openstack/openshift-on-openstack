@@ -269,7 +269,7 @@ resources:
             $OSE_VERSION: {get_param: ose_version}
             $RHN_USERNAME: {get_param: rhn_username}
             $RHN_PASSWORD: {get_param: rhn_password}
-            $SAT6_HOSTNAME: {get_param: sat6_ hostname}
+            $SAT6_HOSTNAME: {get_param: sat6_hostname}
             $SAT6_ORGANIZATION: {get_param: sat6_organization}
             $SAT6_ACTIVATIONKEY: {get_param: sat6_activationkey}
             $POOL_ID: {get_param: rhn_pool}
