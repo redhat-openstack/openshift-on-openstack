@@ -162,20 +162,17 @@ else
     yum -y install pyOpenSSL ||
         notify_failure "could not install pyOpenSSL"
 
-    if ! yum info ansible; then
-        # Install the EPEL repository, but leave it disabled
-        # Used only to install Ansible
+    extra_opts=""
+    # Install the EPEL repository, but leave it disabled
+    # Used only to install Ansible
+    if [ -e /etc/centos-release ]; then
         install_epel_repos_disabled $EPEL_RELEASE_VERSION
-
-        # Install from the EPEL repository
-        retry yum -y --enablerepo=epel install ansible ||
-            notify_failure "could not install ansible"
-    else
-        retry yum -y install ansible
+        extra_opts="--enablerepo=epel"
     fi
+    retry yum -y $extra_opts install ansible ||
+        notify_failure "could not install ansible"
 
-    if [ -n "$OPENSHIFT_ANSIBLE_GIT_URL" -a -n "$OPENSHIFT_ANSIBLE_GIT_REV" ]
-    then
+    if [ -n "$OPENSHIFT_ANSIBLE_GIT_URL" -a -n "$OPENSHIFT_ANSIBLE_GIT_REV" ]; then
         clone_openshift_ansible \
             $OPENSHIFT_ANSIBLE_GIT_URL \
             $OPENSHIFT_ANSIBLE_GIT_REV
