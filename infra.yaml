@@ -393,6 +393,7 @@ resources:
 
   # Execute the tuning operation on a host
   deployment_tune_ansible:
+    depends_on: wait_condition
     type: OS::Heat::SoftwareDeployment
     properties:
       actions: ['CREATE']
@@ -411,7 +412,7 @@ resources:
         (subscription-manager unregister && subscription-manager clean) || true
 
   deployment_infra_node_cleanup:
-    depends_on: host
+    depends_on: wait_condition
     type: OS::Heat::SoftwareDeployment
     properties:
       actions: ['DELETE']
