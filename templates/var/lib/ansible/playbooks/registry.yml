@@ -36,7 +36,7 @@
     file: path={{ mktemp.stdout }} state=directory recurse=true mode=0777
 
   - name: Unmount the device
-    mount: name={{ mktemp.stdout }} src=/dev/vdc state=unmounted fstype={{ openshift_hosted_registry_storage_openstack_filesystem }}
+    mount: name={{ mktemp.stdout }} src=/dev/vdc state=absent fstype={{ openshift_hosted_registry_storage_openstack_filesystem }}
 
   - name: Delete temp directory
     file:
