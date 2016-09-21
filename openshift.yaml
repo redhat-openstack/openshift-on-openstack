@@ -471,7 +471,6 @@ resources:
           sat6_activationkey: {get_param: sat6_activationkey}
           rhn_pool: {get_param: rhn_pool}
           extra_rhn_pools: {get_param: extra_rhn_pools}
-          deployment_type: {get_param: deployment_type}
           docker_volume_size: {get_param: master_docker_volume_size_gb}
           hostname:
             str_replace:
@@ -481,18 +480,13 @@ resources:
                 '%hostname%': {get_param: master_hostname}
           domain_name: {get_param: domain_name}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
-          ansible_private_key: {get_attr: [ansible_keys, private_key]}
           bastion_node: {get_attr: [bastion_host, resource.host]}
           fixed_network: {get_resource: fixed_network}
           fixed_subnet: {get_resource: fixed_subnet}
           internal_network: {get_resource: cluster_network}
           internal_subnet: {get_resource: cluster_subnet}
           external_network: {get_param: external_network}
-          router_vip: {get_attr: [ipfailover, router_vip]}
           allowed_address_pairs: {get_attr: [ipfailover, allowed_address_pairs]}
-          openshift_sdn: {get_param: openshift_sdn}
-          deploy_registry: {get_param: deploy_registry}
-          deploy_router: {get_param: deploy_router}
           master_server_group: {get_resource: master_server_group}
           master_security_group: {get_resource: master_security_group}
           skip_dns: {get_param: skip_dns}

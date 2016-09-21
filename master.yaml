@@ -88,11 +88,6 @@ parameters:
     description: List of rhn pools which will be installed on each node.
     default: ''
 
-  deployment_type:
-    description: >
-      Select the community or enterprise version of OpenShift
-    type: string
-
   hostname:
     description: >
       A string to identify master hostnames.
@@ -107,12 +102,6 @@ parameters:
     description: >
       The SSH public key that Ansible will use to access master and node hosts
       This will be placed on each VM host in /root/.ssh/authorized_keys
-    type: string
-
-  ansible_private_key:
-    description: >
-      The private key that Ansible will use to access master and node hosts
-      This file will be placed on the bastion host and protected
     type: string
 
   ssh_user:
@@ -166,11 +155,6 @@ parameters:
     constraints:
     - custom_constraint: neutron.subnet
 
-  router_vip:
-    description: >
-      The Openshift Router Virtual IP
-    type: string
-
   allowed_address_pairs:
     description: >
       Allowed address pairs to apply on the ports of the nodes
@@ -212,21 +196,6 @@ parameters:
       Toggle SSL encryption for LDAP communications
     type: string
     default: false
-
-  openshift_sdn:
-    description: >
-      Enable and select the container communications network: OVS or Flannel
-    type: string
-
-  deploy_registry:
-    description: >
-      Enable or disable the internal Docker registry
-    type: boolean
-
-  deploy_router:
-    description: >
-      Enable or disable direct access to the nodes (??)
-    type: boolean
 
   master_server_group:
     description: >
@@ -360,12 +329,6 @@ resources:
         - path: /usr/local/share/openshift-on-openstack/common_openshift_functions.sh
           permissions: 0755
           content: {get_file: fragments/common_openshift_functions.sh}
-        - path: /root/.ssh/id_rsa
-          permissions: 0600
-          content: {get_param: ansible_private_key}
-        - path: /root/.ssh/id_rsa.pub
-          permissions: 0600
-          content: {get_param: ansible_public_key}
         - path: /usr/local/bin/retry
           permissions: 0755
           content: {get_file: fragments/retry.sh}
