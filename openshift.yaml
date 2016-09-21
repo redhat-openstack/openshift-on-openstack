@@ -40,6 +40,12 @@ parameters:
     constraints:
     - custom_constraint: glance.image
 
+  infra_image:
+    type: string
+    description: Name or ID of the host image registered with Glance
+    constraints:
+    - custom_constraint: glance.image
+
   node_image:
     type: string
     description: Name or ID of the openshift node image registered with Glance
@@ -116,6 +122,18 @@ parameters:
       List of policies applied on master nodes ServerGroup.
     default: ['anti-affinity']
 
+  infra_count:
+    type: number
+    description: >
+      Number of non-master nodes to create.
+    default: 1
+
+  infra_server_group_policies:
+    type: comma_delimited_list
+    description: >
+      List of policies applied on master nodes ServerGroup.
+    default: ['anti-affinity']
+
   node_count:
     type: number
     description: >
@@ -143,17 +161,29 @@ parameters:
   master_hostname:
     type: string
     description: >
-      The hostname that is going to be set for the master.
+      The hostname that is going to be set for master nodes.
     default: "master"
+
+  infra_hostname:
+    type: string
+    description: >
+      The hostname that is going to be set for infra nodes.
+    default: "infra"
 
   node_hostname:
     type: string
     description: >
-      The hostname that is going to be set for the nodes.
+      The hostname that is going to be set for nodes.
     default: "node"
 
-  # Persistant(?) Storage for Docker
   master_docker_volume_size_gb:
+    type: number
+    description: >
+      size of a cinder volume in GB to allocate to docker for container/image
+      storage
+    default: 25
+
+  infra_docker_volume_size_gb:
     type: number
     description: >
       size of a cinder volume in GB to allocate to docker for container/image
@@ -486,9 +516,52 @@ resources:
           internal_network: {get_resource: cluster_network}
           internal_subnet: {get_resource: cluster_subnet}
           external_network: {get_param: external_network}
-          allowed_address_pairs: {get_attr: [ipfailover, allowed_address_pairs]}
           master_server_group: {get_resource: master_server_group}
           master_security_group: {get_resource: master_security_group}
+          skip_dns: {get_param: skip_dns}
+          system_update: {get_param: system_update}
+          extra_repository_urls: {get_param: extra_repository_urls}
+          extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
+
+  openshift_infra_nodes:
+    depends_on: [external_router_interface, fixed_network, fixed_subnet]
+    type: OS::Heat::ResourceGroup
+    properties:
+      count: {get_param: infra_count}
+      resource_def:
+        type: infra.yaml
+        properties:
+          ose_version: {get_param: ose_version}
+          image: {get_param: infra_image}
+          flavor: {get_param: flavor}
+          key_name: {get_param: ssh_key_name}
+          ssh_user: {get_param: ssh_user}
+          dns_ip: {get_attr: [bastion_host, instance_ip]}
+          rhn_username: {get_param: rhn_username}
+          rhn_password: {get_param: rhn_password}
+          sat6_hostname: {get_param: sat6_hostname}
+          sat6_organization: {get_param: sat6_organization}
+          sat6_activationkey: {get_param: sat6_activationkey}
+          rhn_pool: {get_param: rhn_pool}
+          extra_rhn_pools: {get_param: extra_rhn_pools}
+          docker_volume_size: {get_param: infra_docker_volume_size_gb}
+          hostname:
+            str_replace:
+              template: "%stackname%-%hostname%-%index%"
+              params:
+                '%stackname%': {get_param: 'OS::stack_name'}
+                '%hostname%': {get_param: infra_hostname}
+          domain_name: {get_param: domain_name}
+          ansible_public_key: {get_attr: [ansible_keys, public_key]}
+          bastion_node: {get_attr: [bastion_host, resource.host]}
+          fixed_network: {get_resource: fixed_network}
+          fixed_subnet: {get_resource: fixed_subnet}
+          internal_network: {get_resource: cluster_network}
+          internal_subnet: {get_resource: cluster_subnet}
+          external_network: {get_param: external_network}
+          allowed_address_pairs: {get_attr: [ipfailover, allowed_address_pairs]}
+          infra_server_group: {get_resource: infra_server_group}
+          infra_security_group: {get_resource: infra_security_group}
           skip_dns: {get_param: skip_dns}
           system_update: {get_param: system_update}
           extra_repository_urls: {get_param: extra_repository_urls}
@@ -541,6 +614,10 @@ resources:
             list_join:
               - " "
               - {get_attr: [openshift_masters, hostname]}
+          all_infra_nodes:
+            list_join:
+              - " "
+              - {get_attr: [openshift_infra_nodes, hostname]}
           container_quota: {get_param: container_quota}
           volume_quota: {get_param: volume_quota}
           deployment_type: {get_param: deployment_type}
@@ -710,10 +787,6 @@ resources:
         port_range_max: 4789
       - direction: ingress
         protocol: tcp
-        port_range_min: 5000
-        port_range_max: 5000
-      - direction: ingress
-        protocol: tcp
         port_range_min: 8053
         port_range_max: 8053
       - direction: ingress
@@ -742,6 +815,22 @@ resources:
         port_range_min: 2380
         port_range_max: 2380
         remote_mode: remote_group_id
+
+  infra_server_group:
+    type: OS::Nova::ServerGroup
+    properties:
+      name: infra_server_group
+      policies: {get_param: infra_server_group_policies}
+
+  infra_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+      - protocol: icmp
+      - direction: ingress
+        protocol: tcp
+        port_range_min: 22
+        port_range_max: 22
       # bastion node services
       - direction: ingress
         protocol: tcp
@@ -751,6 +840,18 @@ resources:
         protocol: tcp
         port_range_min: 443
         port_range_max: 443
+      - direction: ingress
+        protocol: tcp
+        port_range_min: 10250
+        port_range_max: 10250
+      - direction: ingress
+        protocol: udp
+        port_range_min: 4789
+        port_range_max: 4789
+      - direction: ingress
+        protocol: tcp
+        port_range_min: 5000
+        port_range_max: 5000
       # VRRP
       - protocol: 112
 

@@ -15,13 +15,13 @@ backend atomic-openshift-router-http
     balance source
     mode tcp
 {% for server in servers %}
-    server {{ server.openshift.common.hostname }} {{ server.openshift.common.ip }}:80 check
+    server {{ hostvars[server].ansible_hostname }} {{ hostvars[server]['ansible_default_ipv4'].address }}:80 check
 {% endfor %}
 
 backend atomic-openshift-router-https
     balance source
     mode tcp
 {% for server in servers %}
-    server {{ server.openshift.common.hostname }} {{ server.openshift.common.ip }}:443 check
+    server {{ hostvars[server].ansible_hostname }} {{ hostvars[server]['ansible_default_ipv4'].address }}:443 check
 {% endfor %}
 <%={{ }}=%>

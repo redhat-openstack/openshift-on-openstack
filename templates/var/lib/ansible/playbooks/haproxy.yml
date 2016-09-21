@@ -1,20 +1,10 @@
 {{=<% %>=}}
-- include: /usr/share/ansible/openshift-ansible/playbooks/common/openshift-cluster/evaluate_groups.yml
-  vars:
-    g_etcd_hosts:   "{{ groups.etcd | default([]) }}"
-    g_lb_hosts:     "{{ groups.lb | default([]) }}"
-    g_master_hosts: "{{ groups.masters | default([]) }}"
-    g_node_hosts:   "{{ groups.nodes | default([]) }}"
-    g_new_node_hosts: "{{ groups.new_nodes | default([]) }}"
-    g_nfs_hosts:   "{{ groups.nfs | default([]) }}"
-    g_all_hosts:    "{{ g_master_hosts | union(g_node_hosts) | union(g_etcd_hosts)
-                        | union(g_lb_hosts) | default([]) }}"
-
 - name: Gather facts
-  hosts: masters
-  roles:
-    - { role: 'openshift_facts'}
-
+  hosts: infra
+  gather_facts: False
+  tasks:
+    - setup:
+        filter: ansible_*
 
 - name: Configure load balancers
   hosts: oo_lb_to_config
@@ -30,7 +20,7 @@
   - role: openshift_facts
   tasks:
     - set_fact:
-        servers: "{{ hostvars | oo_select_keys(groups['oo_masters']) }}"
+        servers: "{{ groups.infra }}"
     - name: Configure haproxy
       template:
         src: /var/lib/ansible/templates/etc/haproxy/router.cfg.j2

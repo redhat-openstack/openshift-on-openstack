@@ -29,14 +29,14 @@ configuration.  It can also run local DNS services as
 needed. The host and service configuration is run using
 http://kubernetes.io/[Ansible] playbooks executed from the bastion host.
 
-Both _bastion server_ and _master nodes_ is also given a _floating IP_
+_Bastion server_, _master nodes_ and _infra nodes_ is also given a _floating IP_
 address on the public network. This provides direct access to the
 _bastion server_ from where you can access all nodes by SSH.
-_Master nodes_ have _floating IP_ assigned to make sure these nodes are
-accessible when an _external loadbalancer_ is used for accessing Openshift
-services.
+_Master nodes_ and _infra nodes_ have _floating IP_ assigned to make sure
+these nodes are accessible when an _external loadbalancer_ is used for
+accessing Openshift services.
 
-All of the OpenShift hosts (master and node) have block storage for
+All of the OpenShift hosts (master, infra and node) have block storage for
 Docker images and containers provided by Cinder.  OpenShift will run a
 local Docker registry, also backed by Cinder block storage.  Finally
 all nodes will have access to Cinder volumes which can be created by
@@ -130,6 +130,7 @@ parameters:
    # Set the image type and size for the VMs
    bastion_image: centos72
    master_image: centos72
+   infra_image: centos72
    node_image: centos72
    flavor: m1.medium
 
@@ -144,6 +145,7 @@ parameters:
 
    # Allocate additional space for Docker images
    master_docker_volume_size_gb: 25
+   infra_docker_volume_size_gb: 25
    node_docker_volume_size_gb: 25
 
    # Specify the (initial) number of nodes to deploy
@@ -187,18 +189,12 @@ heat stack-create my-openshift -t 180 \
   -f openshift-on-openstack/openshift.yaml
 ```
 
-The ``node_count`` parameter specifies how many non-master OpenShift nodes you
-want to deploy. In the example above, we will deploy one master and two nodes.
+The ``node_count`` parameter specifies how many compute nodes you
+want to deploy. In the example above, we will deploy one master, one infra node
+and two compute nodes.
 
 The templates will report stack completion back to Heat only when the whole
 OpenShift setup is finished.
-
-To confirm that everything is indeed ready, look for ``OpenShift has been
-installed.`` in the OpenShift master node data in the stack output:
-
-```bash
-heat output-show my-openshift master_data
-```
 
 == Debugging
 
@@ -212,7 +208,7 @@ You can deploy OpenShift with multiple master hosts using the 'native'
 HA method (see
 https://docs.openshift.org/latest/install_config/install/advanced_install.html#multiple-masters
 for details) by increasing number of master nodes. This can be done by setting
-heat parameter ``master_count`` heat parameter:
+``master_count`` heat parameter:
 
 ```bash
 heat stack-create my-openshift \
@@ -226,6 +222,24 @@ point to the loadbalancer server which distributes requests across all
 three nodes. You can get the URLs from Heat by running
 `heat output-show my-openshift console_url` and
 `heat output-show my-openshift api_url`.
+
+== Multiple Infra Nodes
+
+You can deploy OpenShift with multiple infra hosts. Then OpenShift router
+is deployed on each of infra node (only if `-P deploy_router=true` is used)
+and router requests are load balanced by either dedicated or neutron
+loadbalancer. This can be done by setting ``infra_count`` heat parameter:
+
+```bash
+heat stack-create my-openshift \
+   -e openshift_parameters.yaml \
+   -P infra_count=2 \
+   -P deploy_router=true \
+   -f openshift-on-openstack/openshift.yaml
+```
+
+Two infra nodes will be deployed. Loadbalancer server distributes requests on
+ports 80 and 443 across both nodes.
 
 [[LoadBalancing]]
 == Select Loadbalancer Type

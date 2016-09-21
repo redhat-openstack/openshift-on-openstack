@@ -10,8 +10,10 @@ NODESFILE=/var/lib/ansible/node_list
 
 function create_metadata_json() {
     # $1 - metadata filename
-    master_arr=($all_master_nodes)
-    master_count=${#master_arr[@]}
+    infra_arr=($all_infra_nodes)
+    infra_count=${#infra_arr[@]}
+    master_arr=($all_infra_nodes)
+    master_count=${#infra_arr[@]}
     if [ -n "$os_username" ] && [ -n "$os_password" ] && \
             [ -n "$os_auth_url" ] && [ -n "$os_tenant_name" ]; then
         openstack_cloud_provider=true
@@ -35,7 +37,8 @@ cat << EOF > $1
     "dedicated_lb": $([ "$lb_type" == "dedicated" ] && echo true || echo false),
     "no_lb": $([ "$lb_type" == "none" -o "$lb_type" == "external" ] && echo true || echo false),
     "masters": ["$(echo "$all_master_nodes" | sed 's/ /","/g')"],
-    "master_count": $master_count,
+    "infra_nodes": ["$(echo "$all_infra_nodes" | sed 's/ /","/g')"],
+    "infra_count": $infra_count,
     "nodes": ["$(sed ':a;N;$!ba;s/\n/","/g' $NODESFILE)"],
     "deploy_router_or_registry": $deploy_router_or_registry,
     "domainname": "$domainname",
@@ -114,6 +117,10 @@ os-apply-config -m /var/lib/ansible/metadata.json -t /var/lib/os-apply-config/te
 
 for node in $all_master_nodes; do
     create_master_node_vars $node
+done
+
+for node in $all_infra_nodes; do
+    create_openshift_node_vars $node.$domainname
 done
 
 for node in `cat $NODESFILE`; do

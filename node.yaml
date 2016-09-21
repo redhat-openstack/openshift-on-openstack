@@ -149,6 +149,12 @@ parameters:
     type: string
     default: ''
 
+  all_infra_nodes:
+    description: >
+      A list of all the infra host replicas
+    type: string
+    default: ''
+
   bastion_node:
     description:
       A reference to the bastion VM resource
@@ -603,6 +609,7 @@ resources:
       inputs:
         - name: node_hostname
         - name: all_master_nodes
+        - name: all_infra_nodes
         - name: domainname
           default: {get_param: domain_name}
         - name: ssh_user
@@ -690,6 +697,7 @@ resources:
               SUFFIX: {get_attr: [random_hostname_suffix, value]}
               DOMAIN: {get_param: domain_name}
         all_master_nodes: {get_param: all_master_nodes}
+        all_infra_nodes: {get_param: all_infra_nodes}
 
   # Wait for the node_boot (cloud-init) process to complete or time out
   wait_condition:
