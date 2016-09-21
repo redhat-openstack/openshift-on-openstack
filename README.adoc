@@ -57,7 +57,9 @@ running:
 2. http://www.centos.org/[CentOS] 7.2 cloud image (we leverage cloud-init)
 loaded in Glance for OpenShift Origin Deployments.
 https://access.redhat.com/downloads[RHEL]_ 7.2 cloud image if doing Atomic
-Enterprise or OpenShift Enterprise
+Enterprise or OpenShift Enterprise. Make sure to use official images to avoid
+unexpected issues during deployment (e.g. a custom firewall may block OpenShift
+inter-node communication).
 3. An SSH keypair loaded to Nova
 4. A (Neutron) network with a pool of floating IP addresses available
 
