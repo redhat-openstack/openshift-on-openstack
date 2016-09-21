@@ -1,6 +1,6 @@
 parameters:
   ssh_key_name: default
-  infra_image: centos72
+  bastion_image: centos72
   master_image: centos72
   node_image: centos72
   flavor: m1.medium

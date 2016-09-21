@@ -59,7 +59,7 @@ cat << EOF > $1
     "ldap_insecure": "$ldap_insecure",
     "ldap_url": "$ldap_url",
     "ldap_preferred_username": "$ldap_preferred_username",
-    "infra_instance_id": "$infra_instance_id",
+    "bastion_instance_id": "$bastion_instance_id",
     "ansible_first_run": $([ -e ${INVENTORY}.deployed ] && echo false || echo true),
     "router_vip": "$router_vip",
     "volume_quota": $volume_quota

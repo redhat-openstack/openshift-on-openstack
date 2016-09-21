@@ -146,10 +146,10 @@ parameters:
     type: string
     default: ''
 
-  infra_node:
+  bastion_node:
     type: string
     description: >
-      The name or ID of an infrastructure instance.
+      The name or ID of the bastion instance.
     default: ''
 
   skip_dns:

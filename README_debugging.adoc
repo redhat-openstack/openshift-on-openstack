@@ -10,7 +10,7 @@ high-level flow):
 
 * neutron networks/subnets/router
 * ceilometer alarms
-* infra node
+* bastion node
 * master nodes
 * load balancer
 * openshift nodes
@@ -20,7 +20,7 @@ It usually takes 30-60 minutes for creating heat stack (COMPLETE state)
 depending on number of nodes and OpenStack environment. Then the stack should
 either in COMPLETE or FAILED state. All nodes should be up and running in
 30 minutes - you should see all of them with `nova list` command. If you see
-only infra node or master nodes for a long time it usually means that
+only bastion node or master nodes for a long time it usually means that
 cloud-init on some node failed.
 
 == Heat stack
@@ -62,7 +62,7 @@ $ heat deployment-show f031008f-11d6-4d54-b88b-699cee85b1da
     "deploy_stdout": "",
     "deploy_stderr": "
 ...
-Failed to run 'ansible-playbook -vvvv --inventory /var/lib/ansible/inventory     /var/lib/ansible/playbooks/main.yml', full log is in atomic-infra.example.com:/var/log/ansible.11656\n+ exit 1\n
+Failed to run 'ansible-playbook -vvvv --inventory /var/lib/ansible/inventory     /var/lib/ansible/playbooks/main.yml', full log is in atomic-bastion.example.com:/var/log/ansible.11656\n+ exit 1\n
 ",
     "deploy_status_code": 1
   },
@@ -76,7 +76,7 @@ Failed to run 'ansible-playbook -vvvv --inventory /var/lib/ansible/inventory    
 ```
 
 From the output we found out that an error occurred when running openshift-ansible
-and we can find more details in openshift-ansible logfile (on infra host).
+and we can find more details in openshift-ansible logfile (on bastion host).
 
 Note that we used `-n 2` parameter in all heat commands, the reason is that
 we use nested stacks.
@@ -97,18 +97,18 @@ node.
 
 == Os-collect-config
 
-During cloud-init setup os-collect-config tool is installed on infra node.
+During cloud-init setup os-collect-config tool is installed on bastion node.
 Os-collect-config polls Heat server for new metadata and runs a script if
 metadata change.
 
 Os-collect-config supports various sources for fetching metadata, so you can
-see warnings like this in your logs on infra node:
+see warnings like this in your logs on bastion node:
 
 ```bash
-May 18 13:09:59 flannel-infra os-collect-config[19193]: 2016-05-18 13:09:59.586 19193 WARNING os-collect-config [-] Source [request] Unavailable.
-May 18 13:09:59 flannel-infra os-collect-config[19193]: 2016-05-18 13:09:59.586 19193 WARNING os_collect_config.local [-] /var/lib/os-collect-config/local-data not found. Skipping
-May 18 13:09:59 flannel-infra os-collect-config[19193]: 2016-05-18 13:09:59.587 19193 WARNING os_collect_config.local [-] No local metadata found (['/var/lib/os-collect-config/local-data'])
-May 18 13:09:59 flannel-infra os-collect-config[19193]: 2016-05-18 13:09:59.587 19193 WARNING os_collect_config.zaqar [-] No auth_url configured.
+May 18 13:09:59 flannel-bastion os-collect-config[19193]: 2016-05-18 13:09:59.586 19193 WARNING os-collect-config [-] Source [request] Unavailable.
+May 18 13:09:59 flannel-bastion os-collect-config[19193]: 2016-05-18 13:09:59.586 19193 WARNING os_collect_config.local [-] /var/lib/os-collect-config/local-data not found. Skipping
+May 18 13:09:59 flannel-bastion os-collect-config[19193]: 2016-05-18 13:09:59.587 19193 WARNING os_collect_config.local [-] No local metadata found (['/var/lib/os-collect-config/local-data'])
+May 18 13:09:59 flannel-bastion os-collect-config[19193]: 2016-05-18 13:09:59.587 19193 WARNING os_collect_config.zaqar [-] No auth_url configured.
 ```
 
 These are not important as we use heat-api-cfn service, what is important are
@@ -123,13 +123,13 @@ At first you can check if correct metadata URL is set in
 `/etc/os-collect-config.conf`:
 
 ```bash
-[root@flannel-infra ~]# cat /etc/os-collect-config.conf
+[root@flannel-bastion ~]# cat /etc/os-collect-config.conf
 [DEFAULT]
 command = os-refresh-config
 
 [cfn]
 metadata_url = http://10.16.66.83:8000/v1/
-stack_name = flannel-infra_host-25ppv7is7f7q
+stack_name = flannel-bastion_host-25ppv7is7f7q
 secret_access_key = bf9ada46ac8d43ada7a498e30d5b7bf8
 access_key_id = 5bf23697b1f4407286f3079778631316
 path = host.Metadata
@@ -138,35 +138,35 @@ path = host.Metadata
 
 And if you can GET the URL:
 ```bash
-[root@flannel-infra ~]# curl http://10.16.66.83:8000/
+[root@flannel-bastion ~]# curl http://10.16.66.83:8000/
 {"versions": [{"status": "CURRENT", "id": "v1.0", "links": [{"href": "http://10.16.66.83:8000/v1/", "rel": "self"}]}]}
 ```
 
 If metadata fetching works you should see similar lines in journalctl:
 ```bash
-[root@flannel-infra ~]# journalctl -u os-collect-config
+[root@flannel-bastion ~]# journalctl -u os-collect-config
 
 -- Logs begin at Wed 2016-05-18 13:04:51 UTC, end at Wed 2016-05-18 13:19:05 UTC. --
-May 18 13:09:55 flannel-infra systemd[1]: Started Collect metadata and run hook commands..
-May 18 13:09:55 flannel-infra systemd[1]: Starting Collect metadata and run hook commands....
-May 18 13:09:59 flannel-infra os-collect-config[19193]: 2016-05-18 13:09:59.586 19193 WARNING os-collect-config [-] Source [request] Unavailable.
-May 18 13:09:59 flannel-infra os-collect-config[19193]: 2016-05-18 13:09:59.586 19193 WARNING os_collect_config.local [-] /var/lib/os-collect-config/local-data not found. Skipping
-May 18 13:09:59 flannel-infra os-collect-config[19193]: 2016-05-18 13:09:59.587 19193 WARNING os_collect_config.local [-] No local metadata found (['/var/lib/os-collect-config/local-data'])
-May 18 13:09:59 flannel-infra os-collect-config[19193]: 2016-05-18 13:09:59.587 19193 WARNING os_collect_config.zaqar [-] No auth_url configured.
-May 18 13:09:59 flannel-infra os-collect-config[19193]: WARNING:root:Base directory /opt/stack/os-config-refresh is deprecated. The recommended base directory is /usr/libexec/os-refresh-con
-May 18 13:09:59 flannel-infra os-collect-config[19193]: [2016-05-18 13:09:59,640] (os-refresh-config) [INFO] Starting phase pre-configure
-May 18 13:09:59 flannel-infra os-collect-config[19193]: INFO:os-refresh-config:Starting phase pre-configure
-May 18 13:09:59 flannel-infra os-collect-config[19193]: ----------------------- PROFILING -----------------------
-May 18 13:09:59 flannel-infra os-collect-config[19193]: Target: pre-configure.d
-May 18 13:09:59 flannel-infra os-collect-config[19193]: Script                                     Seconds
-May 18 13:09:59 flannel-infra os-collect-config[19193]: ---------------------------------------  ----------
-May 18 13:09:59 flannel-infra os-collect-config[19193]: --------------------- END PROFILING ---------------------
+May 18 13:09:55 flannel-bastion systemd[1]: Started Collect metadata and run hook commands..
+May 18 13:09:55 flannel-bastion systemd[1]: Starting Collect metadata and run hook commands....
+May 18 13:09:59 flannel-bastion os-collect-config[19193]: 2016-05-18 13:09:59.586 19193 WARNING os-collect-config [-] Source [request] Unavailable.
+May 18 13:09:59 flannel-bastion os-collect-config[19193]: 2016-05-18 13:09:59.586 19193 WARNING os_collect_config.local [-] /var/lib/os-collect-config/local-data not found. Skipping
+May 18 13:09:59 flannel-bastion os-collect-config[19193]: 2016-05-18 13:09:59.587 19193 WARNING os_collect_config.local [-] No local metadata found (['/var/lib/os-collect-config/local-data'])
+May 18 13:09:59 flannel-bastion os-collect-config[19193]: 2016-05-18 13:09:59.587 19193 WARNING os_collect_config.zaqar [-] No auth_url configured.
+May 18 13:09:59 flannel-bastion os-collect-config[19193]: WARNING:root:Base directory /opt/stack/os-config-refresh is deprecated. The recommended base directory is /usr/libexec/os-refresh-con
+May 18 13:09:59 flannel-bastion os-collect-config[19193]: [2016-05-18 13:09:59,640] (os-refresh-config) [INFO] Starting phase pre-configure
+May 18 13:09:59 flannel-bastion os-collect-config[19193]: INFO:os-refresh-config:Starting phase pre-configure
+May 18 13:09:59 flannel-bastion os-collect-config[19193]: ----------------------- PROFILING -----------------------
+May 18 13:09:59 flannel-bastion os-collect-config[19193]: Target: pre-configure.d
+May 18 13:09:59 flannel-bastion os-collect-config[19193]: Script                                     Seconds
+May 18 13:09:59 flannel-bastion os-collect-config[19193]: ---------------------------------------  ----------
+May 18 13:09:59 flannel-bastion os-collect-config[19193]: --------------------- END PROFILING ---------------------
 ```
 
 If a SoftwareDeployment script failed, you can fine the error in journalctl too:
 
 ```bash
-Failed to run 'ansible-playbook -vvvv --inventory /var/lib/ansible/inventory     /var/lib/ansible/playbooks/main.yml', full log is in atomic-infra.example.com:/var/log/ansible.11656
+Failed to run 'ansible-playbook -vvvv --inventory /var/lib/ansible/inventory     /var/lib/ansible/playbooks/main.yml', full log is in atomic-bastion.example.com:/var/log/ansible.11656
 + exit 1
 
 [2016-05-18 11:12:52,787] (heat-config) [ERROR] Error running /var/lib/heat-config/heat-config-script/ee5bdeea-5991-4f27-aaba-786efeaa2b2b. [1]

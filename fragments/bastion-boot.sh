@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Prepare the infrastructure server for Docker and Ansible
+# Prepare the bastion server for Docker and Ansible
 #
 # ENVVARS
 #   WC_NOTIFY - a curl URL fragment from an OpenStack WaitCondition

@@ -31,7 +31,7 @@
         dest: "/etc/resolv.conf"
 <%/dedicated_lb%>
 
-- name: Copy resolv.conf on infra host
+- name: Copy resolv.conf on bastion host
   hosts: localhost
   connection: local
   vars:
