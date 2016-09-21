@@ -1,5 +1,5 @@
 Name: openshift-on-openstack
-Version: 0.8.0
+Version: 0.8.1
 Release: 1%{?dist}
 Summary: Set of Openstack Heat templates to deploy OpenShift
 Group: System Environment/Base
@@ -33,6 +33,13 @@ cp -aR tests/ %{buildroot}%{_datadir}/%{name}
 %{_bindir}/customize-disk-image
 
 %changelog
+* Wed Sep 14 2016 Sylvain Baubeau <sbaubeau@redhat.com> - 0.8.1-1
+- Bump to version 0.8.1
+- Bug fixes:
+  - Make sure registry volume is not left in /etc/fstab
+  - Fix EPEL repository enablement
+  - Explicitly set replica=1 for registry
+
 * Wed Sep 14 2016 Sylvain Baubeau <sbaubeau@redhat.com> - 0.8.0-1
 - Bump to version 0.8.0
 - Switch to Ansible 2.1
