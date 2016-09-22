@@ -464,7 +464,7 @@ resources:
   # activation hook for removing the node from DNS and from the Kubernetes
   # cluster
   deployment_bastion_node_cleanup:
-    depends_on: wait_condition
+    depends_on: [host, wait_condition]
     type: OS::Heat::SoftwareDeployment
     properties:
       actions: ['DELETE']
