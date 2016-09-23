@@ -444,7 +444,7 @@ resources:
 
   # VM Host definitions
   bastion_host:
-    depends_on: [external_router_interface, fixed_network, fixed_subnet]
+    depends_on: [external_router_interface, fixed_network, fixed_subnet, registry_volume]
     type: bastion.yaml
     properties:
       ose_version: {get_param: ose_version}
