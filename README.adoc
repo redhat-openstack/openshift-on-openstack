@@ -478,7 +478,7 @@ heat output-show --format=raw my-openshift router_ip
 == Removing or Replacing Specific Nodes
 
 Sometimes it's necessary to remove or replace specific nodes from the stack.
-For example because of a hardware issue. Because openshift "compute" ndoes are
+For example because of a hardware issue. Because OpenShift "compute" nodes are
 members of heat AutoScalingGroup adding or removing nodes is by default handled
 by a scaling policy and when removing a node the oldest one is
 selected by Heat by default. A specific node can be removed with following
@@ -500,6 +500,20 @@ $ heat stack-update <parameters> -P node_count=<desired_count>
 
 Here is the link:README_bugs.adoc[list] of bugs which are not fixed
 and you may hit.
+
+== Customize OpenShift installation ==
+
+Those Heat templates make use of openshift-ansible to deploy OpenShift.
+You can provide additional parameters to openshift-ansible by specifying
+a JSON string as the `extra_openshift_ansible_params` parameter.
+For example :
+
+```bash
+$ heat stack-create <parameters> -P extra_openshift_ansible_params='{"osm_use_cockpit":true}'
+```
+
+This parameter must be used with caution as it may conflict with other
+parameters passed to openshift-ansible by the Heat templates.
 
 == Current Status
 

@@ -257,6 +257,9 @@ resources:
         - path: /usr/local/bin/retry
           permissions: 0755
           content: {get_file: fragments/retry.sh}
+        - path: /usr/local/bin/merge_dict
+          permissions: 0755
+          content: {get_file: fragments/merge_dict.py}
         - path: /usr/local/share/openshift-on-openstack/common_functions.sh
           permissions: 0755
           content:
