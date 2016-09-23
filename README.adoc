@@ -24,14 +24,14 @@ applications run on one or more _OpenShift node_ VMs.  These are
 connected by a private _software defined network_ (SDN) which can be
 implemented either with http://openvswitch.org/[OpenVSwitch] or https://github.com/coreos/flannel[Flannel].
 
-An _infrastructure server_ is used to control the host and service
+A _bastion server_ is used to control the host and service
 configuration.  It can also run local DNS services as
 needed. The host and service configuration is run using
-http://kubernetes.io/[Ansible] playbooks executed from the infrastructure host.
+http://kubernetes.io/[Ansible] playbooks executed from the bastion host.
 
-Both _infrastructure server_ and _master nodes_ is also given a _floating IP_
+Both _bastion server_ and _master nodes_ is also given a _floating IP_
 address on the public network. This provides direct access to the
-_infrastructure server_ from where you can access all nodes by SSH.
+_bastion server_ from where you can access all nodes by SSH.
 _Master nodes_ have _floating IP_ assigned to make sure these nodes are
 accessible when an _external loadbalancer_ is used for accessing Openshift
 services.
@@ -128,7 +128,7 @@ parameters:
    ssh_key_name: default
 
    # Set the image type and size for the VMs
-   infra_image: centos72
+   bastion_image: centos72
    master_image: centos72
    node_image: centos72
    flavor: m1.medium

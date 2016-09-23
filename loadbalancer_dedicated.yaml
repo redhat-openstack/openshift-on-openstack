@@ -21,7 +21,7 @@ parameters:
 
   image:
     description: >
-      Select a base image to use for the infrastructure server
+      Select a base image to use for the bastion server
     type: string
     constraints:
     - custom_constraint: glance.image
@@ -149,10 +149,10 @@ parameters:
     type: number
     default: 4000
 
-  infra_node:
+  bastion_node:
     type: string
     description: >
-      The name or ID of an infrastructure instance.
+      The name or ID of an bastion instance.
     default: ''
 
   skip_dns:
@@ -336,11 +336,11 @@ resources:
         str_replace:
           params:
             $SKIP_DNS: {get_param: skip_dns}
-          template: {get_file: fragments/infra-node-cleanup.sh}
+          template: {get_file: fragments/bastion-node-cleanup.sh}
 
   # activation hook for removing the node from DNS and from the Kubernetes
   # cluster
-  deployment_infra_node_cleanup:
+  deployment_bastion_node_cleanup:
     depends_on: host
     type: OS::Heat::SoftwareDeployment
     properties:
@@ -356,7 +356,7 @@ resources:
       config:
         get_resource: node_cleanup
       server:
-        get_param: infra_node
+        get_param: bastion_node
 
   # Wait for the load balancer host to complete cloud-init or time out
   wait_condition:

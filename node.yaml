@@ -23,7 +23,7 @@ parameters:
 
   image:
     description: >
-      Select a base image to use for the infrastructure server
+      Select a base image to use for the bastion server
     type: string
     constraints:
     - custom_constraint: glance.image
@@ -149,9 +149,9 @@ parameters:
     type: string
     default: ''
 
-  infra_node:
+  bastion_node:
     description:
-      A reference to the infrastructure VM resource
+      A reference to the bastion VM resource
     type: string
     default: ''
 
@@ -527,11 +527,11 @@ resources:
         str_replace:
           params:
             $SKIP_DNS: {get_param: skip_dns}
-          template: {get_file: fragments/infra-node-cleanup.sh}
+          template: {get_file: fragments/bastion-node-cleanup.sh}
 
   # activation hook for removing the node from DNS and from the Kubernetes
   # cluster
-  deployment_infra_node_cleanup:
+  deployment_bastion_node_cleanup:
     depends_on: wait_condition
     type: OS::Heat::SoftwareDeployment
     properties:
@@ -548,7 +548,7 @@ resources:
       config:
         get_resource: node_cleanup
       server:
-        get_param: infra_node
+        get_param: bastion_node
 
   # Add a node's IP/Name mapping to DNS
   node_add:
@@ -565,17 +565,17 @@ resources:
         str_replace:
           params:
             $SKIP_DNS: {get_param: skip_dns}
-          template: {get_file: fragments/infra-node-add.sh}
+          template: {get_file: fragments/bastion-node-add.sh}
 
   # activation hook to add the node to DNS and Kubernetes cluster
-  deployment_infra_node_add:
+  deployment_bastion_node_add:
     depends_on: wait_condition
     type: OS::Heat::SoftwareDeployment
     properties:
       config:
         get_resource: node_add
       server:
-        get_param: infra_node
+        get_param: bastion_node
       input_values:
         node_type: node
         node_hostname:
@@ -594,7 +594,7 @@ resources:
                 SUFFIX: {get_attr: [random_hostname_suffix, value]}
                 DOMAIN: {get_param: domain_name}
 
-  # Execute the ansible playbook(s) on the infra server to configure the
+  # Execute the ansible playbook(s) on the bastion server to configure the
   # openshift hosts and services
   run_ansible:
     type: OS::Heat::SoftwareConfig
@@ -660,8 +660,8 @@ resources:
             list_join:
               - ","
               - {get_param: dns_forwarders}
-        - name: infra_instance_id
-          default: {get_param: infra_node}
+        - name: bastion_instance_id
+          default: {get_param: bastion_node}
         - name: router_vip
           default: {get_param: router_vip}
         - name: volume_quota
@@ -674,13 +674,13 @@ resources:
 
   # activation hook to run the ansible playbooks to install and config a node
   deployment_run_ansible:
-    depends_on: [wait_condition, deployment_infra_node_add]
+    depends_on: [wait_condition, deployment_bastion_node_add]
     type: OS::Heat::SoftwareDeployment
     properties:
       config:
         get_resource: run_ansible
       server:
-        get_param: infra_node
+        get_param: bastion_node
       input_values:
         node_hostname:
           str_replace:

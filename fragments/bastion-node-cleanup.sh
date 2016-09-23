@@ -1,7 +1,4 @@
 #!/bin/bash
-#
-# Remove a host entry from the Dnsmasq host table on the infrastructure host
-#
 # ENVVARS
 #   SKIP_DNS = boolean: local DNS updates are disabled
 #   node_name = "<hostname>"

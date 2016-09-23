@@ -1,6 +1,6 @@
 parameters:
   ssh_key_name: default
-  infra_image: rhel72
+  bastion_image: rhel72
   master_image: rhel72
   node_image: rhel72
   flavor: m1.medium

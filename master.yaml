@@ -112,7 +112,7 @@ parameters:
   ansible_private_key:
     description: >
       The private key that Ansible will use to access master and node hosts
-      This file will be placed on the infrastructure host and protected
+      This file will be placed on the bastion host and protected
     type: string
 
   ssh_user:
@@ -132,9 +132,9 @@ parameters:
     constraints:
     - custom_constraint: neutron.network
 
-  infra_node:
+  bastion_node:
     description: >
-      The hostname of the infrastructure node in the deployment
+      The hostname of the bastion node in the deployment
     type: string
     default: ''
 
@@ -461,17 +461,17 @@ resources:
         str_replace:
           params:
             $SKIP_DNS: {get_param: skip_dns}
-          template: {get_file: fragments/infra-node-add.sh}
+          template: {get_file: fragments/bastion-node-add.sh}
 
-  # Add the hostname and address of the infrastructure host to the master host
-  deployment_infra_node_add:
+  # Add the hostname and address of the bastion host to the master host
+  deployment_bastion_node_add:
     depends_on: wait_condition
     type: OS::Heat::SoftwareDeployment
     properties:
       config:
         get_resource: node_add
       server:
-        get_param: infra_node
+        get_param: bastion_node
       input_values:
         node_type: master
         node_hostname:
@@ -503,11 +503,11 @@ resources:
         str_replace:
           params:
             $SKIP_DNS: {get_param: skip_dns}
-          template: {get_file: fragments/infra-node-cleanup.sh}
+          template: {get_file: fragments/bastion-node-cleanup.sh}
 
   # activation hook for removing the node from DNS and from the Kubernetes
   # cluster
-  deployment_infra_node_cleanup:
+  deployment_bastion_node_cleanup:
     depends_on: wait_condition
     type: OS::Heat::SoftwareDeployment
     properties:
@@ -523,7 +523,7 @@ resources:
       config:
         get_resource: node_cleanup
       server:
-        get_param: infra_node
+        get_param: bastion_node
 
   # Wait for master_boot (cloud-init) to complete or time out
   wait_condition:

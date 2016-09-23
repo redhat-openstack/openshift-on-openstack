@@ -1,7 +1,5 @@
 #!/bin/bash
-#
-# Append a host entry to the Dnsmasq host table on the infrastructure host
-#
+
 set -eux
 
 # ENVVARS

@@ -1,5 +1,5 @@
 ansible_first_run: {{ansible_first_run}}
-infra_instance_id: {{infra_instance_id}}
+bastion_instance_id: {{bastion_instance_id}}
 ansible_ssh_user: {{ssh_user}}
 ansible_sudo: true
 ansible_become: true

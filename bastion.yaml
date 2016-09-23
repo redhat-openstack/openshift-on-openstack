@@ -23,7 +23,7 @@ parameters:
 
   image:
     description: >
-      Select a base image to use for the infrastructure server
+      Select a base image to use for the bastion server
     type: string
     constraints:
     - custom_constraint: glance.image
@@ -116,7 +116,7 @@ parameters:
   ansible_private_key:
     description: >
       The private key that Ansible will use to access master and node hosts
-      This file will be placed on the infrastructure host and protected
+      This file will be placed on the bastion host and protected
     type: string
 
   docker_volume_size:
@@ -219,10 +219,10 @@ resources:
       - config: {get_resource: host_update}
       - config: {get_attr: [config_agent, config]}
         type: multipart
-      - config: {get_resource: infra_boot}
+      - config: {get_resource: bastion_boot}
 
   # Install the DNS server and retrieve the Ansible playbooks for OpenShift
-  infra_boot:
+  bastion_boot:
     type: OS::Heat::SoftwareConfig
     properties:
       group: script
@@ -233,7 +233,7 @@ resources:
             $OPENSHIFT_ANSIBLE_GIT_URL: {get_param: openshift_ansible_git_url}
             $OPENSHIFT_ANSIBLE_GIT_REV: {get_param: openshift_ansible_git_rev}
             $DOCKER_VOLUME_ID: {get_resource: docker_volume}
-          template: {get_file: fragments/infra-boot.sh}
+          template: {get_file: fragments/bastion-boot.sh}
 
   # Compose the FQDN for cloud-init
   set_hostname:
@@ -342,7 +342,7 @@ resources:
             $SAT6_ORGANIZATION: {get_param: sat6_organization}
             $SAT6_ACTIVATIONKEY: {get_param: sat6_activationkey}
             $POOL_ID: {get_param: rhn_pool}
-            $EXTRA_POOL_IDS: 
+            $EXTRA_POOL_IDS:
               list_join:
                 - " --pool="
                 - {get_param: extra_rhn_pools}
@@ -411,7 +411,7 @@ resources:
         set -eux
         (subscription-manager unregister && subscription-manager clean) || true
 
-  deployment_infra_node_cleanup:
+  deployment_bastion_node_cleanup:
     depends_on: wait_condition
     type: OS::Heat::SoftwareDeployment
     properties:
@@ -441,7 +441,7 @@ resources:
       handle: {get_resource: wait_handle}
       timeout: {get_param: timeout}
 
-  # This is passed to infra_init cloud-init script as a curl CLI command
+  # This is passed to bastion_init cloud-init script as a curl CLI command
   # When the cloud-init process ends it queries the URL with
   # a message which ends the wait and returns the value
   wait_handle:

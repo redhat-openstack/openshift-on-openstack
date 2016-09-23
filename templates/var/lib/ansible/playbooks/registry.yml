@@ -21,7 +21,7 @@
     yum: name=python-novaclient,python-cinderclient,python-keystoneclient state=latest
 
   - name: Attach the volume to the VM
-    shell: nova --os-auth-url {{ openshift_cloudprovider_openstack_auth_url }} --os-username {{ openshift_cloudprovider_openstack_username }} --os-password {{ openshift_cloudprovider_openstack_password }} --os-tenant-name {{ openshift_cloudprovider_openstack_tenant_name }} volume-attach {{ infra_instance_id }} {{ openshift_hosted_registry_storage_openstack_volumeID }}
+    shell: nova --os-auth-url {{ openshift_cloudprovider_openstack_auth_url }} --os-username {{ openshift_cloudprovider_openstack_username }} --os-password {{ openshift_cloudprovider_openstack_password }} --os-tenant-name {{ openshift_cloudprovider_openstack_tenant_name }} volume-attach {{ bastion_instance_id }} {{ openshift_hosted_registry_storage_openstack_volumeID }}
 
   - name: Wait for the device to appear
     wait_for: path=/dev/vdc
@@ -45,5 +45,5 @@
     changed_when: False
 
   - name: Detach the volume to the VM
-    shell: nova --os-auth-url {{ openshift_cloudprovider_openstack_auth_url }} --os-username {{ openshift_cloudprovider_openstack_username }} --os-password {{ openshift_cloudprovider_openstack_password }} --os-tenant-name {{ openshift_cloudprovider_openstack_tenant_name }} volume-detach {{ infra_instance_id }} {{ openshift_hosted_registry_storage_openstack_volumeID }}
+    shell: nova --os-auth-url {{ openshift_cloudprovider_openstack_auth_url }} --os-username {{ openshift_cloudprovider_openstack_username }} --os-password {{ openshift_cloudprovider_openstack_password }} --os-tenant-name {{ openshift_cloudprovider_openstack_tenant_name }} volume-detach {{ bastion_instance_id }} {{ openshift_hosted_registry_storage_openstack_volumeID }}
 <%={{ }}=%>

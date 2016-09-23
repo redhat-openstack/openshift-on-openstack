@@ -1,6 +1,6 @@
 # Create an OSEv3 group that contains the masters and nodes groups
 [OSv3:children]
-infra
+bastion
 masters
 nodes
 etcd
@@ -10,7 +10,7 @@ lb
 [lb]
 loadbalancer
 {{/dedicated_lb}}
-[infra]
+[bastion]
 localhost
 
 [masters]

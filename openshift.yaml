@@ -28,9 +28,9 @@ parameters:
     - custom_constraint: nova.keypair
 
   # VM characteristics
-  infra_image:
+  bastion_image:
     type: string
-    description: Name or ID of the infra image registered with Glance
+    description: Name or ID of the bastion image registered with Glance
     constraints:
     - custom_constraint: glance.image
 
@@ -134,11 +134,11 @@ parameters:
       The hostname that is going to be set for the loadbalancer server.
     default: 'lb'
 
-  infra_hostname:
+  bastion_hostname:
     type: string
     description: >
-      The hostname that is going to be set for the dedicated infra node.
-    default: 'infra'
+      The hostname that is going to be set for the dedicated bastion node.
+    default: 'bastion'
 
   master_hostname:
     type: string
@@ -413,12 +413,12 @@ resources:
       external_network: {get_param: external_network}
 
   # VM Host definitions
-  infra_host:
+  bastion_host:
     depends_on: [external_router_interface, fixed_network, fixed_subnet]
-    type: infra.yaml
+    type: bastion.yaml
     properties:
       ose_version: {get_param: ose_version}
-      image: {get_param: infra_image}
+      image: {get_param: bastion_image}
       flavor: {get_param: flavor}
       key_name: {get_param: ssh_key_name}
       ssh_user: {get_param: ssh_user}
@@ -434,14 +434,14 @@ resources:
           template: "%stackname%-%hostname%"
           params:
             '%stackname%': {get_param: 'OS::stack_name'}
-            '%hostname%': {get_param: infra_hostname}
+            '%hostname%': {get_param: bastion_hostname}
       domain_name: {get_param: domain_name}
       fixed_network: {get_resource: fixed_network}
       fixed_subnet: {get_resource: fixed_subnet}
       ansible_public_key: {get_attr: [ansible_keys, public_key]}
       ansible_private_key: {get_attr: [ansible_keys, private_key]}
-      floating_ip: {get_attr: [infra_floating_ip, floating_ip_address]}
-      port: {get_resource: infra_port}
+      floating_ip: {get_attr: [bastion_floating_ip, floating_ip_address]}
+      port: {get_resource: bastion_port}
       docker_volume_size: {get_param: master_docker_volume_size_gb}
       openshift_ansible_git_url: {get_param: openshift_ansible_git_url}
       openshift_ansible_git_rev: {get_param: openshift_ansible_git_rev}
@@ -463,7 +463,7 @@ resources:
           flavor: {get_param: flavor}
           key_name: {get_param: ssh_key_name}
           ssh_user: {get_param: ssh_user}
-          dns_ip: {get_attr: [infra_host, instance_ip]}
+          dns_ip: {get_attr: [bastion_host, instance_ip]}
           rhn_username: {get_param: rhn_username}
           rhn_password: {get_param: rhn_password}
           sat6_hostname: {get_param: sat6_hostname}
@@ -482,7 +482,7 @@ resources:
           domain_name: {get_param: domain_name}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
           ansible_private_key: {get_attr: [ansible_keys, private_key]}
-          infra_node: {get_attr: [infra_host, resource.host]}
+          bastion_node: {get_attr: [bastion_host, resource.host]}
           fixed_network: {get_resource: fixed_network}
           fixed_subnet: {get_resource: fixed_subnet}
           internal_network: {get_resource: cluster_network}
@@ -515,7 +515,7 @@ resources:
           flavor: {get_param: flavor}
           key_name: {get_param: ssh_key_name}
           ssh_user: {get_param: ssh_user}
-          dns_ip: {get_attr: [infra_host, instance_ip]}
+          dns_ip: {get_attr: [bastion_host, instance_ip]}
           fixed_network: {get_resource: fixed_network}
           fixed_subnet: {get_resource: fixed_subnet}
           internal_network: {get_resource: cluster_network}
@@ -537,7 +537,7 @@ resources:
                 '%hostname%': {get_param: node_hostname}
           domain_name: {get_param: domain_name}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
-          infra_node: {get_attr: [infra_host, resource.host]}
+          bastion_node: {get_attr: [bastion_host, resource.host]}
           skip_dns: {get_param: skip_dns}
           system_update: {get_param: system_update}
           metadata: {"metering.stack": {get_param: "OS::stack_id"}}
@@ -637,17 +637,17 @@ resources:
       matching_metadata: {'metadata.user_metadata.stack': {get_param: "OS::stack_id"}}
       comparison_operator: lt
 
-  infra_port:
+  bastion_port:
     type: OS::Neutron::Port
     properties:
       security_groups:
-      - {get_resource: infra_security_group}
+      - {get_resource: bastion_security_group}
       network: {get_resource: fixed_network}
       fixed_ips:
       - subnet: {get_resource: fixed_subnet}
       replacement_policy: AUTO
 
-  infra_security_group:
+  bastion_security_group:
     type: OS::Neutron::SecurityGroup
     properties:
       rules:
@@ -662,11 +662,11 @@ resources:
         port_range_min: 53
         port_range_max: 53
 
-  infra_floating_ip:
+  bastion_floating_ip:
     type: OS::Neutron::FloatingIP
     properties:
       floating_network: {get_param: external_network}
-      port_id: {get_resource: infra_port}
+      port_id: {get_resource: bastion_port}
 
   ansible_keys:
     type: OS::Nova::KeyPair
@@ -748,7 +748,7 @@ resources:
         port_range_min: 2380
         port_range_max: 2380
         remote_mode: remote_group_id
-      # infra node services
+      # bastion node services
       - direction: ingress
         protocol: tcp
         port_range_min: 80
@@ -783,7 +783,7 @@ resources:
       hostname: {get_param: lb_hostname}
       domain_name: {get_param: domain_name}
       ansible_public_key: {get_attr: [ansible_keys, public_key]}
-      dns_ip: {get_attr: [infra_floating_ip, floating_ip_address]}
+      dns_ip: {get_attr: [bastion_floating_ip, floating_ip_address]}
       fixed_subnet: {get_resource: fixed_subnet}
       members: {get_attr: [openshift_masters, host]}
       master_hostname: {get_attr: [openshift_masters, resource.0.hostname]}
@@ -793,13 +793,13 @@ resources:
       extra_repository_urls: {get_param: extra_repository_urls}
       extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
       stack_name: {get_param: 'OS::stack_name'}
-      infra_node: {get_attr: [infra_host, resource.host]}
+      bastion_node: {get_attr: [bastion_host, resource.host]}
       skip_dns: {get_param: skip_dns}
 
 outputs:
   dns_ip:
     description: IP address of the DNS server OpenShift relies on
-    value: {get_attr: [infra_floating_ip, floating_ip_address]}
+    value: {get_attr: [bastion_floating_ip, floating_ip_address]}
 
   loadbalancer_ip:
     description: External IP address of the loadbalancer for master nodes.

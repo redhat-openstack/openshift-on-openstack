@@ -12,7 +12,7 @@
             -P flavor=m1.shift
             -P node_count={{node_count | default(2)}}
             -P master_count={{master_count | default(1)}}
-            -P infra_image=centos72
+            -P bastion_image=centos72
             -P master_image=centos72
             -P node_image=centos72
             -P master_server_group_policies=affinity
