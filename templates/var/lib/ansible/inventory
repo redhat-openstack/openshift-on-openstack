@@ -10,6 +10,7 @@ lb
 [lb]
 loadbalancer
 {{/dedicated_lb}}
+
 [bastion]
 localhost
 
@@ -23,10 +24,20 @@ localhost
 {{.}}.{{domainname}}
 {{/masters}}
 
+# FIXME: this is used only in playbooks/haproxy.yml for
+# setting up dedicated loadbalancer
+[infra]
+{{#infra_nodes}}
+{{.}}.{{domainname}}
+{{/infra_nodes}}
+
 [nodes]
 {{#masters}}
-{{.}}.{{domainname}} openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+{{.}}.{{domainname}} openshift_node_labels="{'zone': 'default'}"
 {{/masters}}
+{{#infra_nodes}}
+{{.}}.{{domainname}} openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+{{/infra_nodes}}
 {{#nodes}}
 {{.}} openshift_node_labels="{'region': 'primary', 'zone': 'default'}"
 {{/nodes}}

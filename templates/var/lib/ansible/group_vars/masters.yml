@@ -1,4 +1,4 @@
-num_infra: {{master_count}}
+num_infra: {{infra_count}}
 router_vip: {{router_vip}}
 openshift_schedulable: true
 openshift_master_api_port: 8443

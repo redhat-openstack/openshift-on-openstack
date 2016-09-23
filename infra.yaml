@@ -23,7 +23,7 @@ parameters:
 
   image:
     description: >
-      Select a base image to use for the master servers
+      Select a base image to use for the infra servers
     type: string
     constraints:
     - custom_constraint: glance.image
@@ -90,7 +90,7 @@ parameters:
 
   hostname:
     description: >
-      A string to identify master hostnames.
+      A string to identify infra hostnames.
     type: string
 
   domain_name:
@@ -110,9 +110,15 @@ parameters:
     type: string
 
   timeout:
-    description: Time to wait until the master setup is ready.
+    description: Time to wait until the infra setup is ready.
     type: number
     default: 10800
+
+  bastion_node:
+    description: >
+      The hostname of the bastion node in the deployment
+    type: string
+    default: ''
 
   external_network:
     description: >
@@ -120,12 +126,6 @@ parameters:
     type: string
     constraints:
     - custom_constraint: neutron.network
-
-  bastion_node:
-    description: >
-      The hostname of the bastion node in the deployment
-    type: string
-    default: ''
 
   fixed_network:
     description: >
@@ -154,6 +154,13 @@ parameters:
     type: string
     constraints:
     - custom_constraint: neutron.subnet
+
+  allowed_address_pairs:
+    description: >
+      Allowed address pairs to apply on the ports of the nodes
+      that host the Openshift router
+    type: json
+
 
   ldap_url:
     description: >
@@ -191,14 +198,14 @@ parameters:
     type: string
     default: false
 
-  master_server_group:
+  infra_server_group:
     description: >
-      ID of a server group containing all of the master hosts
+      ID of a server group containing all of the infra hosts
     type: string
 
-  master_security_group:
+  infra_security_group:
     description: >
-      ID of the network access policies for the OpenShift master hosts
+      ID of the network access policies for the OpenShift infra hosts
     type: string
 
   skip_dns:
@@ -224,21 +231,29 @@ resources:
     type: OS::Neutron::Port
     properties:
       security_groups:
-      - {get_param: master_security_group}
+      - {get_param: infra_security_group}
       network: {get_param: fixed_network}
+      allowed_address_pairs: {get_param: allowed_address_pairs}
       fixed_ips:
       - subnet: {get_param: fixed_subnet}
       replacement_policy: AUTO
+
+  # Provide access to the Master on the public network
+  floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: {get_param: external_network}
+      port_id: {get_resource: port}
 
   # Create a network connection on the internal communications network
   internal_port:
     type: OOShift::ContainerPort
     properties:
-      security_group: {get_param: master_security_group}
+      security_group: {get_param: infra_security_group}
       network: {get_param: internal_network}
       subnet: {get_param: internal_subnet}
 
-  # Create the VM instance to host the OpenShift master service
+  # Create the VM instance to host the OpenShift infra service
   host:
     type: OS::Nova::Server
     properties:
@@ -258,7 +273,7 @@ resources:
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
       scheduler_hints:
-        group: {get_param: master_server_group}
+        group: {get_param: infra_server_group}
 
   # Create space for Docker containers and images
   docker_volume:
@@ -273,13 +288,6 @@ resources:
       instance_uuid: {get_resource: host}
       volume_id: {get_resource: docker_volume}
 
-  # Provide access to the Master on the public network
-  floating_ip:
-    type: OS::Neutron::FloatingIP
-    properties:
-      floating_network: {get_param: external_network}
-      port_id: {get_resource: port}
-
   # Compose configuration data into a single structure
   init:
     type: OS::Heat::MultipartMime
@@ -291,7 +299,7 @@ resources:
       - config: {get_resource: set_extra_repos}
       - config: {get_resource: set_extra_docker_repos}
       - config: {get_resource: host_update}
-      - config: {get_resource: master_boot}
+      - config: {get_resource: infra_boot}
 
   # Compose the short hostname and fully qualified domain name for the new host
   set_hostname:
@@ -390,7 +398,7 @@ resources:
           template: {get_file: fragments/host-update.sh}
 
   # Prepare the host to run Docker and Ansible for OpenShift install and config
-  master_boot:
+  infra_boot:
     type: OS::Heat::SoftwareConfig
     properties:
       group: script
@@ -400,7 +408,7 @@ resources:
             $DNS_IP: {get_param: dns_ip}
             $SKIP_DNS: {get_param: skip_dns}
             $DOCKER_VOLUME_ID: {get_resource: docker_volume}
-          template: {get_file: fragments/master-boot.sh}
+          template: {get_file: fragments/infra-boot.sh}
 
   # Add a node's IP/Name mapping to DNS
   node_add:
@@ -419,7 +427,7 @@ resources:
             $SKIP_DNS: {get_param: skip_dns}
           template: {get_file: fragments/bastion-node-add.sh}
 
-  # Add the hostname and address of the bastion host to the master host
+  # Add the hostname and address of the bastion host to the infra host
   deployment_bastion_node_add:
     depends_on: wait_condition
     type: OS::Heat::SoftwareDeployment
@@ -429,7 +437,7 @@ resources:
       server:
         get_param: bastion_node
       input_values:
-        node_type: master
+        node_type: infra
         node_hostname:
           str_replace:
             template: "HOST.DOMAIN"
@@ -469,7 +477,7 @@ resources:
     properties:
       actions: ['DELETE']
       input_values:
-        node_type: master
+        node_type: infra
         node_name:
           str_replace:
             template: "HOST.DOMAIN"
@@ -481,7 +489,7 @@ resources:
       server:
         get_param: bastion_node
 
-  # Wait for master_boot (cloud-init) to complete or time out
+  # Wait for infra_boot (cloud-init) to complete or time out
   wait_condition:
     type: OS::Heat::WaitCondition
     properties:
@@ -517,7 +525,7 @@ outputs:
     description: The actual short name for the host
     value: {get_param: hostname}
   host:
-    description: A reference to the master host identifier
+    description: A reference to the infra host identifier
     value: {get_resource: host}
   ip_address:
     description: IP address of the node
