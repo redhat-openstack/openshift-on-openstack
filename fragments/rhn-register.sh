@@ -49,7 +49,7 @@ function register_sat6() {
     # SAT6_ORGANIZATION=$1
     # SAT6_ACTIVATIONKEY=$2
     # register as a sat6 client
-    retry subscription-manager register --org="$1" --activationkey="$1"
+    retry subscription-manager register --org="$1" --activationkey="$2"
 }
 
 # =============================================================================
