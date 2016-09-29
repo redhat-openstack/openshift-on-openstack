@@ -496,6 +496,11 @@ $ heat action-check stack_name
 $ heat stack-update <parameters> -P node_count=<desired_count>
 ```
 
+== Known Bugs
+
+Here is the link:README_bugs.adoc[list] of bugs which are not fixed
+and you may hit.
+
 == Current Status
 
 1. The CA certificate used with OpenShift is currently not configurable.
