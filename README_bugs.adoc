@@ -1,0 +1,43 @@
+= Known Bugs
+
+== Stack is stuck in DELETE_IN_PROGRESS
+
+It should not take more than few minutes to delete a stack. There is couple of
+operations done for each node on delete:
+
+* existing pods are evacuated from OpenShift nodes
+* each node is unregistered with subscription-manager
+
+These operations are represented by `deployment_*_cleanup` Software Deployments
+in heat templates for each type of node and are executed by
+`os-collect-config` service. Heat waits for finishing cleanup script
+on each node until heat-agent sends signal back to Heat that the script has
+finished. If the script is not executed or gets stuck for some reason (e.g.
+os-collect-config service is not running on `bastion` host or
+`bastion` host has been deleted), then Heat timeouts
+when waiting on the signal from heat-agent. You can check
+`journalctl -u os-collect-config` on `bastion` host for details, if it doesn't
+help you can manually send signal for the hanging resource:
+
+```
+$ # check what resources are in progress
+$ heat resource-list -n 2 mystack|grep PROGRESS
+| openshift_infra_nodes           | 9d7ba190-81dc-4ea2-b99e-627ac045fb92                                                | OS::Heat::ResourceGroup                                                                       | DELETE_IN_PROGRESS | 2016-09-29T01:58:05 | mystack                                                     |
+| openshift_masters               | 2f90c3a1-ac7c-4314-aa99-c9dd77062f26                                                | OS::Heat::ResourceGroup                                                                       | DELETE_IN_PROGRESS | 2016-09-29T01:58:05 | mystack                                                     |
+| 0                               | 867696e5-cbcc-4b1d-82f7-f5a94ae6f6f2                                                | file:///root/openshift-on-openstack/master.yaml                                               | DELETE_IN_PROGRESS | 2016-09-29T02:16:01 | mystack-openshift_masters-bum3pew2mbex                      |
+| 0                               | d87be046-5b90-4939-9492-076e6e82c31c                                                | file:///root/openshift-on-openstack/infra.yaml                                                | DELETE_IN_PROGRESS | 2016-09-29T02:16:03 | mystack-openshift_infra_nodes-v4p5h5354avk                  |
+| deployment_bastion_node_cleanup | 9b76a4af-d35d-4777-8236-88609a4cd2f0                                                | OS::Heat::SoftwareDeployment                                                                  | DELETE_IN_PROGRESS | 2016-09-29T02:16:06 | mystack-openshift_masters-bum3pew2mbex-0-jfs2liw5l3yq       |
+| deployment_bastion_node_cleanup | 18849c7e-b9fc-4f49-a4ce-5bce5f0b52a4                                                | OS::Heat::SoftwareDeployment                                                                  | DELETE_IN_PROGRESS | 2016-09-29T02:16:07 | mystack-openshift_infra_nodes-v4p5h5354avk-0-a3ieqspeho2m   |
+```
+
+In the above output we can see two deployment_bastion_node_cleanup resources.
+We can send signal manually by:
+
+```
+$ # heat resource-signal <parent_stack_name> <resource_name>
+$ heat resource-signal mystack-openshift_infra_nodes-v4p5h5354avk-0-a3ieqspeho2m deployment_bastion_node_cleanup
+$ heat resource-signal mystack-openshift_masters-bum3pew2mbex-0-jfs2liw5l3yq deployment_bastion_node_cleanup
+```
+
+This command works when the stack is in DELETE_IN_PROGRESS state. If it's in
+DELETE_FAILED then run `heat stack-delete mystack` at first.
