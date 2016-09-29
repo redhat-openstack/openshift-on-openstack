@@ -129,10 +129,13 @@ parameters:
 
    # Set the image type and size for the VMs
    bastion_image: centos72
+   bastion_flavor: m1.medium
    master_image: centos72
+   master_flavor: m1.medium
    infra_image: centos72
+   infra_flavor: m1.medium
    node_image: centos72
-   flavor: m1.medium
+   node_flavor: m1.medium
 
    # Set an existing network for inbound and outbound traffic
    external_network: public
