@@ -312,6 +312,9 @@ resources:
         - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/ipfailover.yml
           permissions: 0644
           content: {get_file: templates/var/lib/ansible/playbooks/ipfailover.yml}
+        - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/flannel.yml
+          permissions: 0644
+          content: {get_file: templates/var/lib/ansible/playbooks/flannel.yml}
         - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/quota.yml
           permissions: 0644
           content: {get_file: templates/var/lib/ansible/playbooks/quota.yml}
