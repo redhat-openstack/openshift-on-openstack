@@ -22,7 +22,7 @@ set -o pipefail
 source /usr/local/share/openshift-on-openstack/common_functions.sh
 source /usr/local/share/openshift-on-openstack/common_openshift_functions.sh
 
-[ "$SKIP_DNS" != "true" ] && add_nameserver $DNS_IP
+[ "$SKIP_DNS" != "True" ] && add_nameserver $DNS_IP
 
 disable_peerdns eth0
 ifup eth1

@@ -38,9 +38,6 @@ fi
         -u $ssh_user --sudo -i $INVENTORY \
         -a "subscription-manager unregister && subscription-manager clean" || true
 
-# If Local DNS is disabled, make no changes
-[ "$SKIP_DNS" = "true" ] && exit 0
-
 # Save a copy of the current host file
 cp /etc/hosts{,.bkp}
 

@@ -1,4 +1,21 @@
 {{=<% %>=}}
+<%#skip_dns%>
+- hosts: nodes
+  sudo: yes
+  tasks:
+  - name: Copy /etc/hosts
+    copy: src=/etc/hosts dest=/etc/hosts owner=root group=root mode=0644
+
+<%#dedicated_lb%>
+- hosts: loadbalancer
+  sudo: yes
+  tasks:
+  - name: Copy /etc/hosts
+    copy: src=/etc/hosts dest=/etc/hosts owner=root group=root mode=0644
+<%/dedicated_lb%>
+<%/skip_dns%>
+
+<%^skip_dns%>
 - name: Gather facts
   hosts: nodes
   gather_facts: False
@@ -49,4 +66,5 @@
         src: "/var/lib/ansible/templates/etc/resolv.conf"
         dest: "/etc/resolv.conf"
       when: not openshift.common.is_containerized | bool
+<%/skip_dns%>
 <%={{ }}=%>

@@ -1,7 +1,6 @@
 {{=<% %>=}}
-<%^skip_dns%>
 - include: /var/lib/ansible/playbooks/dns.yml
-<%/skip_dns%>
+
 <%#ansible_first_run%>
 <%#deploy_registry%>
 <%#prepare_registry%>

@@ -427,10 +427,12 @@ domain used in OpenShift cluster (`example.com` in the example above).
 
 [NOTE]
 ====
-A DNS server is set also on infra node during deployment but this
+A DNS server is set also on bastion node during deployment but this
 server is used only by OpenShift nodes internally and should not be used
 for resolving OpenShift user entry points. We plan to use Designate service
-in near future.
+in near future. Alternatively `skip_dns=true` parameter can be used, then
+instead of DNS server on bastion node openshift-ansible deploys dnsmasq on
+each node.
 ====
 
 == Retrieving the CA certificate
