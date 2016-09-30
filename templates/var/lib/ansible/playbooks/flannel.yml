@@ -1,0 +1,13 @@
+{{=<% %>=}}
+- hosts: nodes
+  sudo: yes
+  tasks:
+  - name: Allow docker traffic
+    shell: iptables -A DOCKER -p tcp -j ACCEPT
+
+  - name: Set up masquerading on flannel interface
+    shell: iptables -t nat -A POSTROUTING -o {{ flannel_interface }} -j MASQUERADE
+
+  - name: Make iptables rules permanent
+    shell: /usr/libexec/iptables/iptables.init save
+<%={{ }}=%>
