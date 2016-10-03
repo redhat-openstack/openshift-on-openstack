@@ -1,5 +1,5 @@
 Name: openshift-on-openstack
-Version: 0.8.1
+Version: 0.9.0
 Release: 1%{?dist}
 Summary: Set of Openstack Heat templates to deploy OpenShift
 Group: System Environment/Base
@@ -33,6 +33,13 @@ cp -aR tests/ %{buildroot}%{_datadir}/%{name}
 %{_bindir}/customize-disk-image
 
 %changelog
+* Mon Oct 3 2016 Sylvain Baubeau <sbaubeau@redhat.com> - 0.9.0-1
+- Rename 'infra' node to 'bastion'
+- Dedicated infra nodes
+- Setup masquerading when using flannel
+- Allow passing parameters to openshift-ansible as JSON
+- Satellite fixes
+
 * Wed Sep 14 2016 Sylvain Baubeau <sbaubeau@redhat.com> - 0.8.1-1
 - Bump to version 0.8.1
 - Bug fixes:
