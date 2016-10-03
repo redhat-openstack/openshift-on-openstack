@@ -328,6 +328,10 @@ parameters:
     type: number
     description: Quota for emptyDir volumes in GBi
 
+  extra_openshift_ansible_params:
+    type: string
+    description: Extra parameters for openshift-ansible
+
 resources:
 
   # Generate a string to distinguish one node from the others
@@ -673,6 +677,8 @@ resources:
           default: {get_param: router_vip}
         - name: volume_quota
           default: {get_param: volume_quota}
+        - name: extra_openshift_ansible_params
+          default: {get_param: extra_openshift_ansible_params}
       outputs:
         - name: ca_cert
         - name: ca_key

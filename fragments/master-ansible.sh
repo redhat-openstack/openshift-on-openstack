@@ -23,7 +23,7 @@ function create_metadata_json() {
     deploy_router_or_registry=$([ "$deploy_router" == "True" -o \
         "$deploy_registry" == "True" ] && echo true || echo false)
 
-cat << EOF > $1
+    cat << EOF > $1
 {
     "openshift_use_openshift_sdn": $([ "$openshift_sdn" == "openshift-sdn" ] && echo true || echo false),
     "openshift_use_flannel": $([ "$openshift_sdn" == "flannel" ] && echo true || echo false),
@@ -68,6 +68,17 @@ cat << EOF > $1
     "volume_quota": $volume_quota
 }
 EOF
+}
+
+function create_global_vars() {
+    if [ -n "$extra_openshift_ansible_params" ]; then
+        cat << EOF > /tmp/extra_openshift_ansible_params.json
+$extra_openshift_ansible_params
+EOF
+        /usr/local/bin/merge_dict /tmp/extra_openshift_ansible_params.json \
+            /var/lib/ansible/group_vars/OSv3.yml
+        rm /tmp/extra_openshift_ansible_params.json
+    fi
 }
 
 function create_master_node_vars() {
@@ -126,6 +137,8 @@ done
 for node in `cat $NODESFILE`; do
     create_openshift_node_vars $node
 done
+
+create_global_vars
 
 while pidof -x /bin/ansible-playbook /usr/bin/ansible-playbook; do
   echo "waiting for another ansible-playbook to finish"

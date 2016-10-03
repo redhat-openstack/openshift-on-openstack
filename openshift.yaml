@@ -392,6 +392,11 @@ parameters:
     description: Quota for container in GB
     default: 0
 
+  extra_openshift_ansible_params:
+    type: string
+    description: Extra parameters for openshift-ansible as a JSON string
+    default: ""
+
 resources:
 
   # Network Components
@@ -643,6 +648,7 @@ resources:
                 '%hostname%': {get_param: lb_hostname}
           router_vip: {get_attr: [ipfailover, router_vip]}
           skip_ansible: {get_param: skip_ansible}
+          extra_openshift_ansible_params: {get_param: extra_openshift_ansible_params}
 
   # Define the network access policy for openshift nodes
   node_security_group:
