@@ -6,6 +6,18 @@
     - setup:
         filter: ansible_*
 
+- name: Enable DNS ports
+  hosts: bastion
+  vars:
+    os_firewall_use_firewalld: false
+    os_firewall_allow:
+    - service: dns tcp
+      port: "53/tcp"
+    - service: dns udp
+      port: "53/udp"
+  roles:
+  - role: os_firewall
+
 - name: Configure the DNS
   hosts: dns
   roles:
