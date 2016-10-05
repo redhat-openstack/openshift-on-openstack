@@ -59,13 +59,40 @@ parameters:
     type: string
     default: ''
 
-  flavor:
+  bastion_flavor:
+    type: string
+    description: The Nova flavor to use for the bastion node
+    default: m1.medium
+    constraints:
+    - custom_constraint: nova.flavor
+
+  loadbalancer_flavor:
+    type: string
+    description: The Nova flavor to use for the dedicated load balancer
+    default: m1.medium
+    constraints:
+    - custom_constraint: nova.flavor
+
+  infra_flavor:
+    type: string
+    description: The Nova flavor to use for the OpenShift infra nodes
+    default: m1.medium
+    constraints:
+    - custom_constraint: nova.flavor
+
+  master_flavor:
+    type: string
+    description: The Nova flavor to use for the OpenShift masters
+    default: m1.medium
+    constraints:
+    - custom_constraint: nova.flavor
+
+  node_flavor:
     type: string
     description: The Nova flavor to use for the OpenShift nodes
     default: m1.medium
     constraints:
     - custom_constraint: nova.flavor
-
 
   # Networks to connect to or create
   external_network:
@@ -454,7 +481,7 @@ resources:
     properties:
       ose_version: {get_param: ose_version}
       image: {get_param: bastion_image}
-      flavor: {get_param: flavor}
+      flavor: {get_param: bastion_flavor}
       key_name: {get_param: ssh_key_name}
       ssh_user: {get_param: ssh_user}
       rhn_username: {get_param: rhn_username}
@@ -495,7 +522,7 @@ resources:
         properties:
           ose_version: {get_param: ose_version}
           image: {get_param: master_image}
-          flavor: {get_param: flavor}
+          flavor: {get_param: master_flavor}
           key_name: {get_param: ssh_key_name}
           ssh_user: {get_param: ssh_user}
           dns_ip: {get_attr: [bastion_host, instance_ip]}
@@ -538,7 +565,7 @@ resources:
         properties:
           ose_version: {get_param: ose_version}
           image: {get_param: infra_image}
-          flavor: {get_param: flavor}
+          flavor: {get_param: infra_flavor}
           key_name: {get_param: ssh_key_name}
           ssh_user: {get_param: ssh_user}
           dns_ip: {get_attr: [bastion_host, instance_ip]}
@@ -584,7 +611,7 @@ resources:
         properties:
           ose_version: {get_param: ose_version}
           image: {get_param: node_image}
-          flavor: {get_param: flavor}
+          flavor: {get_param: node_flavor}
           key_name: {get_param: ssh_key_name}
           ssh_user: {get_param: ssh_user}
           dns_ip: {get_attr: [bastion_host, instance_ip]}
@@ -871,7 +898,7 @@ resources:
     properties:
       ose_version: {get_param: ose_version}
       image: {get_param: loadbalancer_image}
-      flavor: {get_param: flavor}
+      flavor: {get_param: loadbalancer_flavor}
       key_name: {get_param: ssh_key_name}
       ssh_user: {get_param: ssh_user}
       rhn_username: {get_param: rhn_username}
