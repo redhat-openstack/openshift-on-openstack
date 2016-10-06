@@ -1,3 +1,6 @@
+mkdir -p /var/lib/os-apply-config/templates/var/lib/ansible/group_vars
+cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/group_vars/nodes.yml
 {{#volume_quota}}
 openshift_node_local_quota_per_fsgroup: {{ volume_quota }}Gi
 {{/volume_quota}}
+EOF

@@ -1,3 +1,5 @@
+mkdir -p /var/lib/os-apply-config/templates/var/lib/ansible/playbooks
+cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/registry.yml
 ---
 {{=<% %>=}}
 - hosts: localhost
@@ -47,3 +49,4 @@
   - name: Detach the volume to the VM
     shell: nova --os-auth-url {{ openshift_cloudprovider_openstack_auth_url }} --os-username {{ openshift_cloudprovider_openstack_username }} --os-password {{ openshift_cloudprovider_openstack_password }} --os-tenant-name {{ openshift_cloudprovider_openstack_tenant_name }} volume-detach {{ bastion_instance_id }} {{ openshift_hosted_registry_storage_openstack_volumeID }}
 <%={{ }}=%>
+EOF

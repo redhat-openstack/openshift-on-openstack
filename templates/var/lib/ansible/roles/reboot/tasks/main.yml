@@ -1,3 +1,5 @@
+mkdir -p /var/lib/os-apply-config/templates/var/lib/ansible/roles/reboot/tasks/
+cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/roles/reboot/tasks/main.yml
 {{=<% %>=}}
 ---
 - name: Reboot server
@@ -13,3 +15,4 @@
   sudo: no
   local_action: wait_for host="{{ inventory_hostname }}" search_regex=OpenSSH port=22 timeout=300 state=started
 <%={{ }}=%>
+EOF

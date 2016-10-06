@@ -1,3 +1,5 @@
+mkdir -p /var/lib/os-apply-config/templates/var/lib/ansible/roles/fstab_mount_options/tasks/
+cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/roles/fstab_mount_options/tasks/main.yml
 {{=<% %>=}}
 ---
 - name: grab mount point line from fstab
@@ -33,3 +35,4 @@
     dump: "{{ mount_opts[4] }}"
     passno: "{{ mount_opts[5] }}"
 <%={{ }}=%>
+EOF

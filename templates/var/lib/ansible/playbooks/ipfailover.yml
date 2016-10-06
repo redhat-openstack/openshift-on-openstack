@@ -1,3 +1,5 @@
+mkdir -p /var/lib/os-apply-config/templates/var/lib/ansible/playbooks
+cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/ipfailover.yml
 ---
 {{=<% %>=}}
 - hosts: masters[0]
@@ -21,3 +23,4 @@
   - name: Allow multicast for keepalived
     command: /sbin/iptables -I INPUT -i eth0 -d 224.0.0.18/32 -j ACCEPT
 <%={{ }}=%>
+EOF

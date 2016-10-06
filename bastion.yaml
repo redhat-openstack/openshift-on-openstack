@@ -273,63 +273,6 @@ resources:
         - path: /root/.ssh/id_rsa.pub
           permissions: 0600
           content: {get_param: ansible_public_key}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/templates/etc/resolv.conf
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/templates/etc/resolv.conf}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/group_vars/masters.yml
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/group_vars/masters.yml}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/group_vars/nodes.yml
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/group_vars/nodes.yml}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/host_vars/loadbalancer.yml
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/host_vars/loadbalancer.yml}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/group_vars/OSv3.yml
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/group_vars/OSv3.yml}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/registry.yml
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/playbooks/registry.yml}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/dns.yml
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/playbooks/dns.yml}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/main.yml
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/playbooks/main.yml}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/scaleup.yml
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/playbooks/scaleup.yml}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/scaledown.yml
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/playbooks/scaledown.yml}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/inventory
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/inventory}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/haproxy.yml
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/playbooks/haproxy.yml}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/templates/etc/haproxy/router.cfg.j2
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/templates/etc/haproxy/router.cfg.j2}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/ipfailover.yml
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/playbooks/ipfailover.yml}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/flannel.yml
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/playbooks/flannel.yml}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/quota.yml
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/playbooks/quota.yml}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/roles/reboot/tasks/main.yml
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/roles/reboot/tasks/main.yml}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/roles/fstab_mount_options/tasks/main.yml
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/roles/fstab_mount_options/tasks/main.yml}
-        - path: /var/lib/os-apply-config/templates/var/lib/ansible/roles/xfs_grub_quota/tasks/main.yml
-          permissions: 0644
-          content: {get_file: templates/var/lib/ansible/roles/xfs_grub_quota/tasks/main.yml}
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
 
@@ -388,6 +331,44 @@ resources:
           params:
             $SYSTEM_UPDATE: {get_param: system_update}
           template: {get_file: fragments/host-update.sh}
+
+  write_templates:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config:
+        list_join:
+        - "\n"
+        - - "#!/bin/bash"
+          - "set -eux"
+          - get_file: templates/var/lib/ansible/templates/etc/resolv.conf
+          - get_file: templates/var/lib/ansible/group_vars/masters.yml
+          - get_file: templates/var/lib/ansible/group_vars/nodes.yml
+          - get_file: templates/var/lib/ansible/host_vars/loadbalancer.yml
+          - get_file: templates/var/lib/ansible/group_vars/OSv3.yml
+          - get_file: templates/var/lib/ansible/playbooks/registry.yml
+          - get_file: templates/var/lib/ansible/playbooks/dns.yml
+          - get_file: templates/var/lib/ansible/playbooks/main.yml
+          - get_file: templates/var/lib/ansible/playbooks/scaleup.yml
+          - get_file: templates/var/lib/ansible/playbooks/scaledown.yml
+          - get_file: templates/var/lib/ansible/inventory
+          - get_file: templates/var/lib/ansible/playbooks/haproxy.yml
+          - get_file: templates/var/lib/ansible/templates/etc/haproxy/router.cfg.j2
+          - get_file: templates/var/lib/ansible/playbooks/ipfailover.yml
+          - get_file: templates/var/lib/ansible/playbooks/flannel.yml
+          - get_file: templates/var/lib/ansible/playbooks/quota.yml
+          - get_file: templates/var/lib/ansible/roles/reboot/tasks/main.yml
+          - get_file: templates/var/lib/ansible/roles/fstab_mount_options/tasks/main.yml
+          - get_file: templates/var/lib/ansible/roles/xfs_grub_quota/tasks/main.yml
+
+  deployment_write_templates:
+    depends_on: wait_condition
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      config:
+        get_resource: write_templates
+      server:
+        get_resource: host
 
   # Apply ansible performance tuning values
   tune_ansible:
