@@ -113,6 +113,14 @@ function is_scaleup() {
         grep '^[<>]' | grep -v '^< .*-node') && return 1 || return 0
 }
 
+function update_etc_hosts() {
+    # $1 - IP
+    # $2 - hostname
+    grep -q "$2" /etc/hosts || echo "$1 $2" >> /etc/hosts
+}
+
+update_etc_hosts "$lb_ip" "$lb_hostname.$domainname"
+
 [ "$skip_ansible" == "True" ] && exit 0
 
 mkdir -p /var/lib/ansible/group_vars

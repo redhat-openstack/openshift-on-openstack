@@ -7,8 +7,6 @@
 #               used to signal OpenStack of completion status
 #   DNS_IP    - The IP address of the nearest resolver host
 #
-#   SKIP_DNS  - true|false - enable local DNS service updates
-#
 #   OPENSHIFT_ANSIBLE_GIT_URL - the URL of a git repository containing the
 #                               openshift ansible playbooks and configs
 #   OPENSHIFT_ANSIBLE_GIT_REV - the release/revision of the playbooks to use
