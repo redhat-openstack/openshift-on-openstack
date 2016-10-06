@@ -1,3 +1,5 @@
+mkdir -p /var/lib/os-apply-config/templates/var/lib/ansible/templates/etc/haproxy
+cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/templates/etc/haproxy/router.cfg.j2
 {{=<% %>=}}
 frontend  atomic-openshift-router-http
     bind *:80
@@ -25,3 +27,4 @@ backend atomic-openshift-router-https
     server {{ hostvars[server].ansible_hostname }} {{ hostvars[server]['ansible_default_ipv4'].address }}:443 check
 {% endfor %}
 <%={{ }}=%>
+EOF

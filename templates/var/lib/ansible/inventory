@@ -1,3 +1,5 @@
+mkdir -p /var/lib/os-apply-config/templates/var/lib/ansible
+cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/inventory
 # Create an OSEv3 group that contains the masters and nodes groups
 [OSv3:children]
 bastion
@@ -49,3 +51,4 @@ localhost
 [extradnsitems]
 loadbalancer
 {{/no_lb}}
+EOF

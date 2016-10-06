@@ -1,3 +1,5 @@
+mkdir -p /var/lib/os-apply-config/templates/var/lib/ansible/playbooks
+cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/dns.yml
 {{=<% %>=}}
 <%#skip_dns%>
 - hosts: nodes
@@ -80,3 +82,4 @@
       when: not openshift.common.is_containerized | bool
 <%/skip_dns%>
 <%={{ }}=%>
+EOF

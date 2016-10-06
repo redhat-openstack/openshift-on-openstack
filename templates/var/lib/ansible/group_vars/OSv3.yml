@@ -1,3 +1,5 @@
+mkdir -p /var/lib/os-apply-config/templates/var/lib/ansible/group_vars
+cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/group_vars/OSv3.yml
 ansible_first_run: {{ansible_first_run}}
 bastion_instance_id: {{bastion_instance_id}}
 ansible_ssh_user: {{ssh_user}}
@@ -67,3 +69,4 @@ openshift_hosted_registry_storage_openstack_filesystem: {{registry_volume_fs}}
 {{/openstack_cloud_provider}}
 openshift_hosted_manage_registry: {{deploy_registry}}
 openshift_hosted_manage_router: {{deploy_router}}
+EOF

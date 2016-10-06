@@ -1,3 +1,5 @@
+mkdir -p /var/lib/os-apply-config/templates/var/lib/ansible/roles/xfs_grub_quota/tasks
+cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/roles/xfs_grub_quota/tasks/main.yml
 {{=<% %>=}}
 ---
 - name: update kernel command line to add gquota
@@ -6,3 +8,4 @@
 - name: regenerate grub configuration
   shell: /sbin/grub2-mkconfig -o /boot/grub2/grub.cfg
 <%={{ }}=%>
+EOF
