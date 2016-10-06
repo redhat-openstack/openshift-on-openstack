@@ -1,5 +1,5 @@
 Name: openshift-on-openstack
-Version: 0.9.0
+Version: 0.9.1
 Release: 1%{?dist}
 Summary: Set of Openstack Heat templates to deploy OpenShift
 Group: System Environment/Base
@@ -33,6 +33,14 @@ cp -aR tests/ %{buildroot}%{_datadir}/%{name}
 %{_bindir}/customize-disk-image
 
 %changelog
+* Thu Oct 6 2016 Sylvain Baubeau <sbaubeau@redhat.com> - 0.9.1-1
+- Allow specifying different flavors for every node type
+- Bug fixes:
+  - Write template files in post cloud-init phase to avoid 64k
+    limit of cloud-init
+  - Explicitly enable port 53 for DNS server
+  - Refactor skip_dns parameter
+
 * Mon Oct 3 2016 Sylvain Baubeau <sbaubeau@redhat.com> - 0.9.0-1
 - Rename 'infra' node to 'bastion'
 - Dedicated infra nodes
