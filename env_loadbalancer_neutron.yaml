@@ -1,0 +1,6 @@
+parameters:
+    loadbalancer_type: 'neutron'
+
+resource_registry:
+    OOShift::LoadBalancer: loadbalancer_neutron.yaml
+    OOShift::IPFailover: ipfailover_keepalived.yaml
