@@ -16,6 +16,10 @@ cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/ipfa
   - name: Deploy Openshift IP failover for router
     command: oadm ipfailover --create --service-account=ipfailover --interface=eth0 --selector='region=infra' --replicas={{ num_infra }} --virtual-ips="{{ router_vip }}" --credentials=/etc/origin/master/openshift-router.kubeconfig
     when: ansible_first_run | default(false) | bool
+    # oadm ipfailover returns error code if service account already exists even
+    # if ipfailover pod is created successfully
+    # remove when https://bugzilla.redhat.com/show_bug.cgi?id=1332432 is fixed
+    ignore_errors: yes
 
 - hosts: masters
   sudo: yes
