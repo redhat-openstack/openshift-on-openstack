@@ -683,7 +683,7 @@ resources:
         - name: ca_cert
         - name: ca_key
       config:
-        get_file: fragments/master-ansible.sh
+        get_file: fragments/bastion-ansible.sh
 
   # activation hook to run the ansible playbooks to install and config a node
   deployment_run_ansible:
