@@ -1,5 +1,26 @@
 = Known Bugs
 
+== Stack creation times out
+
+By default heat client timeout is set to 60 minutes, if a stack operation
+doesn't finish in the specified timeframe Heat sets the stack in FAILED state.
+In some cases timeout is caused by a reason which can not be fixed (e.g. slow
+hardware or network). Then it's possible to increase timeout and give Heat
+more time to finish a stack operation. You can increase timeout by passing
+`-t <minutes>` when running `heat stack-create` command. 
+
+Also make sure you increase keystone token timeout in `/etc/keystone/keystone.conf`:
+
+```
+[token]
+expiration = <seconds> # e.g. 7200 for two hours
+```
+
+And restart keystone service. Otherwise token expires sooner than heat
+finishes openshift-ansible run and fails to create some resources (e.g.
+ceilometer alarms).
+
+
 == Stack is stuck in DELETE_IN_PROGRESS
 
 It should not take more than few minutes to delete a stack. There is couple of
