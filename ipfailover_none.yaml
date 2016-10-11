@@ -25,11 +25,14 @@ parameters:
     constraints:
     - custom_constraint: neutron.network
 
+  loadbalancer_ip:
+    type: string
+
 outputs:
   router_ip:
     description: >
       The Openshift Router external IP
-    value: ""
+    value: {get_param: loadbalancer_ip}
 
   router_vip:
     description: >

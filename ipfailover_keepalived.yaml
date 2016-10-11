@@ -25,6 +25,9 @@ parameters:
     constraints:
     - custom_constraint: neutron.network
 
+  loadbalancer_ip:
+    type: string
+
 resources:
   router_vip_port:
     type: OS::Neutron::Port
