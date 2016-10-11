@@ -52,6 +52,8 @@ parameters:
     constraints:
     - custom_constraint: glance.image
 
+  # once openshift-ansible supports containerized loadbalancer node setup
+  # this can be deleted
   loadbalancer_image:
     description: >
       Select a base image to use for the loadbalancer nodes, this is required
