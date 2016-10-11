@@ -2,7 +2,7 @@ mkdir -p /var/lib/os-apply-config/templates/var/lib/ansible/group_vars
 cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/group_vars/masters.yml
 num_infra: {{infra_count}}
 router_vip: {{router_vip}}
-openshift_schedulable: true
+openshift_schedulable: false
 openshift_master_api_port: 8443
 {{#deploy_router}}
 openshift_hosted_router_selector: region=infra
