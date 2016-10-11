@@ -81,13 +81,6 @@ cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/main
 - hosts: masters[0]
   sudo: yes
   tasks:
-  - name: Disable scheduling on master nodes
-    shell: oadm manage-node {{ item }} --schedulable=false
-    with_items: "{{groups['masters']}}"
-
-- hosts: masters[0]
-  sudo: yes
-  tasks:
   - name: Clean pods in DeadlineExceeded status
     shell: oc get pod | grep DeadlineExceeded | cut -f 1 -d " " | xargs -r oc delete pod
 
