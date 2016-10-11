@@ -502,6 +502,25 @@ The virtual IP of the router can be retrieved with
 heat output-show --format=raw my-openshift router_ip
 ```
 
+== Scaling Up or Down
+
+You can manually scale up or down OpenShift nodes by updating `node_count` heat
+stack parameter to the desired new count:
+
+```
+heat stack-update -P node_count=5 <other parameters>
+```
+
+If the stack has 2 nodes, 3 new nodes are added. If the stack has 7 nodes, 2
+are removed. Any running pods are evacuated from the node being removed.
+
+== Autoscaling
+
+Scaling of OpenShift nodes can be automated by using Ceilometer metrics.
+By default `cpu_util` metering is used. You can enable autoscaling by `autoscaling`
+heat parameter and tweaking properties of `cpu_alarm_high` and `cpu_alarm_low` in
+`openshift.yaml`.
+
 == Removing or Replacing Specific Nodes
 
 Sometimes it's necessary to remove or replace specific nodes from the stack.
