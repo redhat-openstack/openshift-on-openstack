@@ -201,10 +201,11 @@ resources:
     properties:
       name:
         str_replace:
-          template: "%stackname%-%hostname%"
+          template: "%stackname%-%hostname%.%domainname%"
           params:
             '%stackname%': {get_param: stack_name}
             '%hostname%': {get_param: hostname}
+            '%domainname%': {get_param: domain_name}
       admin_user: {get_param: ssh_user}
       image: {get_param: image}
       flavor: {get_param: flavor}
