@@ -1,5 +1,5 @@
 Name: openshift-on-openstack
-Version: 0.9.1
+Version: 0.9.2
 Release: 1%{?dist}
 Summary: Set of Openstack Heat templates to deploy OpenShift
 Group: System Environment/Base
@@ -33,6 +33,17 @@ cp -aR tests/ %{buildroot}%{_datadir}/%{name}
 %{_bindir}/customize-disk-image
 
 %changelog
+* Wed Oct 12 2016 Sylvain Baubeau <sbaubeau@redhat.com> - 0.9.2-1
+- Bug fixes:
+  - Set default value for rhn_pool
+  - Add default loadbalancer neutron env file
+  - Ignore "oadm ipfailover" error state
+  - Install missing package python-oslo-log for OSP 9
+  - Set load balancer image to rhel when using AOP
+  - Fixed schduling on master nodes
+  - Return non empty router_ip when using dedicated loadbalancer
+- Lots of documentation improvements
+
 * Thu Oct 6 2016 Sylvain Baubeau <sbaubeau@redhat.com> - 0.9.1-1
 - Allow specifying different flavors for every node type
 - Bug fixes:
