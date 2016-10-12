@@ -1,6 +1,9 @@
 #!/bin/bash
 set -eux
 
+# this file should be included in write_files section for the node
+source /usr/local/share/openshift-on-openstack/common_functions.sh
+
 # on Atomic host os-collect-config runs inside a container which is
 # fetched&started in another step
 [ -e /run/ostree-booted ] && exit 0
@@ -99,5 +102,13 @@ ln -s /usr/share/openstack-heat-templates/software-config/heat-container-agent/s
 ln -s /usr/share/openstack-heat-templates/software-config/elements/heat-config/bin/heat-config-notify /usr/bin/heat-config-notify
 
 # run once to write out /etc/os-collect-config.conf
-os-collect-config --one-time --debug
+# use notify_failure from common_functions.sh to
+# make sure cloud-init reports failure
+os-collect-config --one-time --debug ||
+    notify_failure "failed to run os-collect-config"
+
+# check that a valid metadata_url was set
+curl "$(grep metadata_url /etc/os-collect-config.conf |sed 's/metadata_url = //')" ||
+    notify_failure "failed to connect to os-collect-config metadata_url"
+
 cat /etc/os-collect-config.conf
