@@ -47,7 +47,7 @@ function create_metadata_json() {
     "deploy_registry": $([ "$deploy_registry" == "True" ] && echo true || echo false),
     "registry_volume_fs": "$registry_volume_fs",
     "registry_volume_id": "$registry_volume_id",
-    "prepare_registry": "$prepare_registry",
+    "prepare_registry": $([ "$prepare_registry" == "True" ] && echo true || echo false),
     "heat_outputs_path": "$heat_outputs_path",
     "ssh_user": "$ssh_user",
     "deployment_type": "$deployment_type",
