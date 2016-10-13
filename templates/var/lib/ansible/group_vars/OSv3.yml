@@ -60,7 +60,7 @@ openshift_registry_selector: region=infra
 openshift_hosted_registry_storage_create_pv: true
 openshift_hosted_registry_storage_kind: openstack
 openshift_hosted_registry_storage_volume_name: registry
-openshift_hosted_registry_storage_volume_size: 5Gi
+openshift_hosted_registry_storage_volume_size: {{registry_volume_size}}Gi
 openshift_hosted_registry_storage_access_modes:
   - ReadWriteOnce
 openshift_hosted_registry_storage_openstack_volumeID: {{registry_volume_id}}

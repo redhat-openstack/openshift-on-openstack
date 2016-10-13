@@ -661,6 +661,7 @@ resources:
           deploy_registry: {get_param: deploy_registry}
           registry_volume_id: {get_attr: [registry_volume, volume_id]}
           registry_volume_fs: {get_param: registry_volume_fs}
+          registry_volume_size: {get_param: registry_volume_size}
           prepare_registry: {get_param: prepare_registry}
           deploy_router: {get_param: deploy_router}
           os_auth_url: {get_param: os_auth_url}
