@@ -190,9 +190,8 @@ outputs:
     description: URL of the OpenShift web console
     value:
       str_replace:
-        template: "https://%stackname%-%hostname%.%domainname%:8443/console/"
+        template: "https://%hostname%.%domainname%:8443/console/"
         params:
-          '%stackname%': {get_param: stack_name}
           '%hostname%': {get_param: hostname}
           '%domainname%': {get_param: domain_name}
 
@@ -200,8 +199,7 @@ outputs:
     description: URL entrypoint to the OpenShift API
     value:
       str_replace:
-        template: "https://%stackname%-%hostname%.%domainname%:8443/"
+        template: "https://%hostname%.%domainname%:8443/"
         params:
-          '%stackname%': {get_param: stack_name}
           '%hostname%': {get_param: hostname}
           '%domainname%': {get_param: domain_name}

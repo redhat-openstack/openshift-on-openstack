@@ -912,7 +912,12 @@ resources:
       sat6_activationkey: {get_param: sat6_activationkey}
       rhn_pool: {get_param: rhn_pool}
       extra_rhn_pools: {get_param: extra_rhn_pools}
-      hostname: {get_param: lb_hostname}
+      hostname:
+        str_replace:
+          template: "%stackname%-%hostname%"
+          params:
+            '%stackname%': {get_param: 'OS::stack_name'}
+            '%hostname%': {get_param: lb_hostname}
       domain_name: {get_param: domain_name}
       ansible_public_key: {get_attr: [ansible_keys, public_key]}
       dns_ip: {get_attr: [bastion_floating_ip, floating_ip_address]}
