@@ -2,17 +2,26 @@ mkdir -p /var/lib/os-apply-config/templates/var/lib/ansible/roles/reboot/tasks/
 cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/roles/reboot/tasks/main.yml
 {{=<% %>=}}
 ---
+- name: check if grpquota mount options are already set
+  shell: /usr/bin/findmnt / | grep grpquota
+  register: proc_line
+  changed_when: False
+  ignore_errors: yes
+
 - name: Reboot server
   command: /usr/bin/systemd-run --on-active=5 /usr/bin/systemctl reboot
   async: 0
   poll: 0
+  when: proc_line.rc == 1
 
 - name: Wait for the server to reboot
   sudo: no
   local_action: wait_for host="{{ inventory_hostname }}" search_regex=OpenSSH port=22 timeout=300 state=stopped
+  when: proc_line.rc == 1
 
 - name: Wait for the server to finish rebooting
   sudo: no
   local_action: wait_for host="{{ inventory_hostname }}" search_regex=OpenSSH port=22 timeout=300 state=started
+  when: proc_line.rc == 1
 <%={{ }}=%>
 EOF
