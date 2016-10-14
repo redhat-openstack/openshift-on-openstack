@@ -1,5 +1,5 @@
 Name: openshift-on-openstack
-Version: 0.9.2
+Version: 0.9.3
 Release: 1%{?dist}
 Summary: Set of Openstack Heat templates to deploy OpenShift
 Group: System Environment/Base
@@ -33,6 +33,15 @@ cp -aR tests/ %{buildroot}%{_datadir}/%{name}
 %{_bindir}/customize-disk-image
 
 %changelog
+* Fri Oct 14 2016 Sylvain Baubeau <sbaubeau@redhat.com> - 0.9.3-1
+- Bug fixes:
+  - Improve checking of os-collect-config setup
+  - Add missing domain to dedicated loadbalancer instance
+  - Unify loadbalancer stackname prefix
+  - Make sure prepare_registry is a bool value
+  - Make use of parameter registry_volume_size
+  - Fix scaleup when using volume_quota parameter
+
 * Wed Oct 12 2016 Sylvain Baubeau <sbaubeau@redhat.com> - 0.9.2-1
 - Bug fixes:
   - Set default value for rhn_pool
