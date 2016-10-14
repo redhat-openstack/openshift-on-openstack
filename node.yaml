@@ -259,6 +259,12 @@ parameters:
       True = Enable automatic provisioning of the Docker registry
     type: boolean
 
+  registry_volume_size:
+    description: >
+      Size of the Openshift registry persistent volume
+    type: number
+    default: 5
+
   registry_volume_id:
     description: >
       Volume to use by the Openshift registry
@@ -642,6 +648,8 @@ resources:
           default: {get_param: openshift_sdn}
         - name: deploy_registry
           default: {get_param: deploy_registry}
+        - name: registry_volume_size
+          default: {get_param: registry_volume_size}
         - name: registry_volume_id
           default: {get_param: registry_volume_id}
         - name: registry_volume_fs
