@@ -118,20 +118,30 @@ parameters:
 
   dns_nameserver:
     type: comma_delimited_list
-    description: address of a dns nameserver reachable in your environment
+    description: Addresses of a dns nameserver reachable in your environment
     default: 8.8.8.8
 
   skip_dns:
     type: boolean
+    description: >
+      If set to true DNS server is not set on bastion node for resolving
+      OpenShift cluster hostnames (this DNS server is used by OpenShift nodes
+      only, not by users). Instead dnsmasq is configured on each node by
+      openshift-ansible (see openshift-ansible openshift_use_dnsmasq option
+      for details).
     default: false
 
   system_update:
     type: boolean
+    description: Run "yum update" on each node on first boot.
     default: true
 
   loadbalancer_type:
     type: string
     default: neutron
+    description: >
+      Loadbalancer type used for loadbalancing console/API/router requests.
+      See 'Select Loadbalancer Type' section in README for more details.
     constraints:
       - allowed_values:
         - neutron
@@ -142,13 +152,17 @@ parameters:
   master_count:
     type: number
     description: >
-      Number of non-master nodes to create.
+      Number of master nodes to create.
     default: 1
 
   master_server_group_policies:
     type: comma_delimited_list
     description: >
-      List of policies applied on master nodes ServerGroup.
+      List of policies applied on master nodes ServerGroup. By default
+      'anti-affinity' policy is used to make sure that each master node
+      is deployed on a different host. If you use a small/all-in-one openstack
+      environment, you may need to disable this e.g. by passing
+      '-P master_server_group_policies=affinity'.
     default: ['anti-affinity']
 
   infra_count:
@@ -160,7 +174,11 @@ parameters:
   infra_server_group_policies:
     type: comma_delimited_list
     description: >
-      List of policies applied on master nodes ServerGroup.
+      List of policies applied on infra nodes ServerGroup. By default
+      'anti-affinity' policy is used to make sure that each infra node
+      is deployed on a different host. If you use a small/all-in-one openstack
+      environment, you may need to disable this e.g. by passing
+      '-P infra_server_group_policies=affinity'.
     default: ['anti-affinity']
 
   node_count:
@@ -259,38 +277,43 @@ parameters:
   deploy_registry:
     type: boolean
     description: >
-      Specify if a Docker registry should be deployed.
+      Specify if a Docker registry should be deployed. If set to true, make
+      sure Openstack parameters (os_*) are set too.
     default: false
 
   registry_volume_size:
     description: >
-      Size of the Openshift registry persistent volume
+      Size of the Openshift registry persistent volume. Used only if
+      deploy_registry=true.
     type: number
     default: 10
 
   registry_volume_fs:
     description: >
-      Filesystem to use for Openshift registry persistent volume
+      Filesystem to use for Openshift registry persistent volume. Used only if
+      deploy_registry=true.
     type: string
     default: ext4
 
   registry_volume_id:
     description: >
-      An existing cinder volume to use for Openshift registry persistent volume
+      An existing cinder volume to use for Openshift registry persistent volume.
+      See 'Using Persistent Cinder Volume for Docker Registry' section in
+      README for more details.
     type: string
     default: ''
 
   deploy_router:
     type: boolean
     description: >
-      Specify if a router should be deployed.
+      Specify if an OpenShift router should be deployed.
     default: false
 
   # OpenShift configuration: ansible controls
   skip_ansible:
     type: boolean
     description: >
-      Do not install Openshift using Ansible
+      Do not install Openshift using Ansible.
     default: false
 
   openshift_ansible_git_url:
@@ -363,7 +386,7 @@ parameters:
   extra_rhn_pools:
     type: comma_delimited_list
     description: >
-      The extra pools to attach. 
+      The extra pools to attach.
     default: ''
 
   os_auth_url:
@@ -399,17 +422,21 @@ parameters:
 
   extra_repository_urls:
     type: comma_delimited_list
-    description: List of repository URLs which will be installed on each node.
+    description: A list of repository URLs which will be installed on each node.
     default: ''
 
   extra_docker_repository_urls:
     type: comma_delimited_list
-    description: List of docker repository URLs which will be installed on each node, if a repo is insecure use '#insecure' suffix.
+    description: >
+      A list of docker repository URLs which will be installed on each node,
+      if a repo is insecure use '#insecure' suffix.
     default: ''
 
   prepare_registry:
     type: boolean
-    description: If the registry volume should be formatted during deployment.
+    description: >
+      If the registry volume should be formatted during deployment. Used
+      only if deploy_registry=true.
     default: false
 
   volume_quota:
