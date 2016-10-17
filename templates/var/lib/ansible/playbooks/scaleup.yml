@@ -9,14 +9,14 @@ cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/scal
   vars:
     openshift_infra_nodes: "{{ groups.infra | default([]) }}"
 
-- hosts: nodes
+- hosts: new_nodes
   sudo: yes
   tasks:
   - name: Allow docker traffic
     shell: iptables -A DOCKER -p tcp -j ACCEPT
     when: openshift_use_flannel
 
-- hosts: nodes
+- hosts: new_nodes
   sudo: yes
   tasks:
   - name: Restart node service

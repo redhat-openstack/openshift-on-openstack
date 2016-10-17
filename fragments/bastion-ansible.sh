@@ -5,8 +5,20 @@ set -eu
 set -x
 set -o pipefail
 
-INVENTORY=/var/lib/ansible/inventory
-NODESFILE=/var/lib/ansible/node_list
+ANSDIR=/var/lib/ansible
+INVENTORY=$ANSDIR/inventory
+NODESFILE=$ANSDIR/node_list
+
+function get_new_nodes() {
+    # compare old and new list of nodes and return all newly added nodes
+    # separated by comma instead of newline
+    if [ -e ${ANSDIR}.deployed ]; then
+        str=$(comm -13 <(sort ${ANSDIR}.deployed/node_list) <(sort ${ANSDIR}/node_list) | sed ':a;N;$!ba;s/\n/","/g')
+        [ -z "$str" ] && echo '' || echo "\"$str\""
+    else
+        echo ''
+    fi
+}
 
 function create_metadata_json() {
     # $1 - metadata filename
@@ -14,6 +26,7 @@ function create_metadata_json() {
     infra_count=${#infra_arr[@]}
     master_arr=($all_master_nodes)
     master_count=${#master_arr[@]}
+    new_nodes=$(get_new_nodes)
     if [ -n "$os_username" ] && [ -n "$os_password" ] && \
             [ -n "$os_auth_url" ] && [ -n "$os_tenant_name" ]; then
         openstack_cloud_provider=true
@@ -40,6 +53,7 @@ function create_metadata_json() {
     "infra_nodes": ["$(echo "$all_infra_nodes" | sed 's/ /","/g')"],
     "infra_count": $infra_count,
     "nodes": ["$(sed ':a;N;$!ba;s/\n/","/g' $NODESFILE)"],
+    "new_nodes": [$new_nodes],
     "deploy_router_or_registry": $deploy_router_or_registry,
     "domainname": "$domainname",
     "lb_hostname": "$lb_hostname",
@@ -64,7 +78,7 @@ function create_metadata_json() {
     "ldap_url": "$ldap_url",
     "ldap_preferred_username": "$ldap_preferred_username",
     "bastion_instance_id": "$bastion_instance_id",
-    "ansible_first_run": $([ -e ${INVENTORY}.deployed ] && echo false || echo true),
+    "ansible_first_run": $([ -e ${ANSDIR}.deployed ] && echo false || echo true),
     "router_vip": "$router_vip",
     "volume_quota": $volume_quota
 }
@@ -107,11 +121,15 @@ EOF
 }
 
 function is_scaleup() {
-# check if there are only new openshift nodes added - then we can play the
-# scaleup playbook, otherwise we run the main playbook
-    [ -e ${INVENTORY}.deployed ] || return 1
-    (diff $INVENTORY ${INVENTORY}.deployed |
-        grep '^[<>]' | grep -v '^< .*-node') && return 1 || return 0
+    # check if there are only new openshift nodes added - then we can play the
+    # scaleup playbook, otherwise we run the main playbook
+    [ -e ${ANSDIR}.deployed ] || return 1
+    # check if diff between old and new inventory file contains only
+    # node changes (ignore 'new_nodes' changes because nodes
+    # are removed from [new_nodes] on the next stack-update run
+    (diff $ANSDIR/inventory ${ANSDIR}.deployed/inventory | grep '^[<>]' |
+        grep -v new_nodes | grep -v '[<>] $' |
+        grep -v '.*-node') && return 1 || return 0
 }
 
 function update_etc_hosts() {
@@ -154,13 +172,14 @@ while pidof -x /bin/ansible-playbook /usr/bin/ansible-playbook; do
   sleep 10
 done
 
-if [ -e ${INVENTORY}.deployed ] &&
-        diff $INVENTORY ${INVENTORY}.deployed; then
+if [ -e ${ANSDIR}.deployed ] &&
+        diff $ANSDIR/inventory ${ANSDIR}.deployed/inventory; then
     echo "inventory file has not changed since last ansible run, no need to re-run"
     exit 0
 fi
 
-cp ${INVENTORY} ${INVENTORY}.started
+[ -e ${ANSDIR}.started ] && rm -rf ${ANSDIR}.started
+cp -a ${ANSDIR} ${ANSDIR}.started
 
 # crond was stopped in cloud-init before yum update, make sure it's running
 systemctl status crond && systemctl restart crond
@@ -183,5 +202,6 @@ if ! $cmd > $logfile 2>&1; then
     echo "Failed to run '$cmd', full log is in $(hostname):$logfile" >&2
     exit 1
 else
-    mv ${INVENTORY}.started ${INVENTORY}.deployed
+    [ -e ${ANSDIR}.deployed ] && rm -rf ${ANSDIR}.deployed
+    mv ${ANSDIR}.started ${ANSDIR}.deployed
 fi
