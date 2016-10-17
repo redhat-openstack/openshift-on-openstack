@@ -126,6 +126,9 @@ parameters:
       A string to identify node hostnames.  Each node will also have a
       unique random substring attached
     type: string
+    constraints:
+    - allowed_pattern: '[a-z0-9\-]*'
+      description: Hostname must contain only characters [a-z0-9\-].
 
   domain_name:
     description: >

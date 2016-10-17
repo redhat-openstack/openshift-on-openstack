@@ -37,6 +37,9 @@ parameters:
     description: >
       The load balancer hostname portion of the FQDN
     type: string
+    constraints:
+    - allowed_pattern: '[a-z0-9\-]*'
+      description: Hostname must contain only characters [a-z0-9\-].
 
   domain_name:
     description: >
