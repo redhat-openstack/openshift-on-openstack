@@ -25,9 +25,9 @@ localhost
 {{/masters}}
 
 [etcd]
-{{#masters}}
+{{#etcds}}
 {{.}}.{{domainname}}
-{{/masters}}
+{{/etcds}}
 
 # FIXME: this is used only in playbooks/haproxy.yml for
 # setting up dedicated loadbalancer

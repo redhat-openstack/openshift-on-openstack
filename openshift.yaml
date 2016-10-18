@@ -34,6 +34,12 @@ parameters:
     constraints:
     - custom_constraint: glance.image
 
+  etcd_image:
+    type: string
+    description: Name or ID of the host image registered with Glance
+    constraints:
+    - custom_constraint: glance.image
+
   master_image:
     type: string
     description: Name or ID of the host image registered with Glance
@@ -78,6 +84,13 @@ parameters:
   infra_flavor:
     type: string
     description: The Nova flavor to use for the OpenShift infra nodes
+    default: m1.medium
+    constraints:
+    - custom_constraint: nova.flavor
+
+  etcd_flavor:
+    type: string
+    description: The Nova flavor to use for the OpenShift etcd nodes
     default: m1.medium
     constraints:
     - custom_constraint: nova.flavor
@@ -165,6 +178,18 @@ parameters:
       '-P master_server_group_policies=affinity'.
     default: ['anti-affinity']
 
+  etcd_count:
+    type: number
+    description: >
+      Number of non-master nodes to create.
+    default: 1
+
+  etcd_server_group_policies:
+    type: comma_delimited_list
+    description: >
+      List of policies applied on etcd nodes ServerGroup.
+    default: ['anti-affinity']
+
   infra_count:
     type: number
     description: >
@@ -210,6 +235,12 @@ parameters:
     description: >
       The hostname that is going to be set for master nodes.
     default: "master"
+
+  etcd_hostname:
+    type: string
+    description: >
+      The hostname that is going to be set for etcd nodes.
+    default: "etcd"
 
   infra_hostname:
     type: string
@@ -543,6 +574,44 @@ resources:
       extra_repository_urls: {get_param: extra_repository_urls}
       extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
 
+  openshift_etcds:
+    depends_on: [external_router_interface, fixed_network, fixed_subnet]
+    type: OS::Heat::ResourceGroup
+    properties:
+      count: {get_param: etcd_count}
+      resource_def:
+        type: etcd.yaml
+        properties:
+          ose_version: {get_param: ose_version}
+          image: {get_param: etcd_image}
+          flavor: {get_param: etcd_flavor}
+          key_name: {get_param: ssh_key_name}
+          ssh_user: {get_param: ssh_user}
+          dns_ip: {get_attr: [bastion_host, instance_ip]}
+          rhn_username: {get_param: rhn_username}
+          rhn_password: {get_param: rhn_password}
+          sat6_hostname: {get_param: sat6_hostname}
+          sat6_organization: {get_param: sat6_organization}
+          sat6_activationkey: {get_param: sat6_activationkey}
+          rhn_pool: {get_param: rhn_pool}
+          extra_rhn_pools: {get_param: extra_rhn_pools}
+          hostname:
+            str_replace:
+              template: "%stackname%-%hostname%-%index%"
+              params:
+                '%stackname%': {get_param: 'OS::stack_name'}
+                '%hostname%': {get_param: etcd_hostname}
+          domain_name: {get_param: domain_name}
+          ansible_public_key: {get_attr: [ansible_keys, public_key]}
+          bastion_node: {get_attr: [bastion_host, resource.host]}
+          fixed_network: {get_resource: fixed_network}
+          fixed_subnet: {get_resource: fixed_subnet}
+          etcd_server_group: {get_resource: etcd_server_group}
+          etcd_security_group: {get_resource: etcd_security_group}
+          skip_dns: {get_param: skip_dns}
+          system_update: {get_param: system_update}
+          extra_repository_urls: {get_param: extra_repository_urls}
+
   openshift_masters:
     depends_on: [external_router_interface, fixed_network, fixed_subnet]
     type: OS::Heat::ResourceGroup
@@ -673,6 +742,10 @@ resources:
           metadata: {"metering.stack": {get_param: "OS::stack_id"}}
           extra_repository_urls: {get_param: extra_repository_urls}
           extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
+          all_etcd_nodes:
+            list_join:
+              - " "
+              - {get_attr: [openshift_etcds, hostname]}
           all_master_nodes:
             list_join:
               - " "
@@ -870,7 +943,22 @@ resources:
         protocol: udp
         port_range_min: 24224
         port_range_max: 24224
-      # etcd services
+
+  etcd_server_group:
+    type: OS::Nova::ServerGroup
+    properties:
+      name: etcd_server_group
+      policies: {get_param: etcd_server_group_policies}
+
+  etcd_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+      - protocol: icmp
+      - direction: ingress
+        protocol: tcp
+        port_range_min: 22
+        port_range_max: 22
       - direction: ingress
         protocol: tcp
         port_range_min: 2379

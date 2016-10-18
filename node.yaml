@@ -89,7 +89,7 @@ parameters:
       The password for the RHN user
     type: string
     hidden: true
-  
+
   # Red Hat satellite subscription parameters
   sat6_hostname:
     type: string
@@ -145,6 +145,12 @@ parameters:
     description: >
       The user for SSH access to the VM hosts
     type: string
+
+  all_etcd_nodes:
+    description: >
+      A list of all the etcd hosts
+    type: string
+    default: ''
 
   all_master_nodes:
     description: >
@@ -621,6 +627,7 @@ resources:
       group: script
       inputs:
         - name: node_hostname
+        - name: all_etcd_nodes
         - name: all_master_nodes
         - name: all_infra_nodes
         - name: domainname
@@ -713,6 +720,7 @@ resources:
               HOST: {get_param: hostname}
               SUFFIX: {get_attr: [random_hostname_suffix, value]}
               DOMAIN: {get_param: domain_name}
+        all_etcd_nodes: {get_param: all_etcd_nodes}
         all_master_nodes: {get_param: all_master_nodes}
         all_infra_nodes: {get_param: all_infra_nodes}
 

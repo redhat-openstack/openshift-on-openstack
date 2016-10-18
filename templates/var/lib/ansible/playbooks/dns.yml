@@ -2,7 +2,7 @@ mkdir -p /var/lib/os-apply-config/templates/var/lib/ansible/playbooks
 cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/dns.yml
 {{=<% %>=}}
 <%#skip_dns%>
-- hosts: nodes
+- hosts: nodes:etcd
   sudo: yes
   tasks:
   - name: Copy /etc/hosts
@@ -19,7 +19,7 @@ cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/dns.
 
 <%^skip_dns%>
 - name: Gather facts
-  hosts: nodes
+  hosts: nodes:etcd
   gather_facts: False
   tasks:
     - setup:
@@ -44,10 +44,10 @@ cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/dns.
         base_docker_image: 'centos:centos7',
         dns_forwarders: [<%dns_forwarders%>],
         dns_zones: [ <%domainname%> ],
-        dns_all_hosts: "{{ groups.nodes | union(groups['extradnsitems'] | default([])) }}" }
+        dns_all_hosts: "{{ groups.nodes | union(groups.etcd) | union(groups['extradnsitems'] | default([])) }}" }
 
 - name: Update resolv.conf on all nodes
-  hosts: nodes
+  hosts: nodes:etcd
   tasks:
     - copy:
         src: "/var/lib/ansible/templates/etc/resolv.conf"

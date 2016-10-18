@@ -22,6 +22,9 @@ function get_new_nodes() {
 
 function create_metadata_json() {
     # $1 - metadata filename
+    if [ -z "$all_etcd_nodes" ]; then
+      all_etcd_nodes=$all_master_nodes
+    fi
     infra_arr=($all_infra_nodes)
     infra_count=${#infra_arr[@]}
     master_arr=($all_master_nodes)
@@ -49,6 +52,7 @@ function create_metadata_json() {
     "os_region_name":"$os_region_name",
     "dedicated_lb": $([ "$lb_type" == "dedicated" ] && echo true || echo false),
     "no_lb": $([ "$lb_type" == "none" -o "$lb_type" == "external" ] && echo true || echo false),
+    "etcds": ["$(echo "$all_etcd_nodes" | sed 's/ /","/g')"],
     "masters": ["$(echo "$all_master_nodes" | sed 's/ /","/g')"],
     "infra_nodes": ["$(echo "$all_infra_nodes" | sed 's/ /","/g')"],
     "infra_count": $infra_count,
@@ -155,6 +159,10 @@ os-apply-config -m /var/lib/ansible/metadata.json -t /var/lib/os-apply-config/te
 
 for node in $all_master_nodes; do
     create_master_node_vars $node
+done
+
+for node in $all_etcd_nodes; do
+    create_openshift_node_vars $node.$domainname
 done
 
 for node in $all_infra_nodes; do
