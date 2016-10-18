@@ -12,8 +12,8 @@ function create_metadata_json() {
     # $1 - metadata filename
     infra_arr=($all_infra_nodes)
     infra_count=${#infra_arr[@]}
-    master_arr=($all_infra_nodes)
-    master_count=${#infra_arr[@]}
+    master_arr=($all_master_nodes)
+    master_count=${#master_arr[@]}
     if [ -n "$os_username" ] && [ -n "$os_password" ] && \
             [ -n "$os_auth_url" ] && [ -n "$os_tenant_name" ]; then
         openstack_cloud_provider=true
