@@ -6,6 +6,9 @@ bastion
 masters
 nodes
 etcd
+{{^ansible_first_run}}
+new_nodes
+{{/ansible_first_run}}
 {{#dedicated_lb}}
 lb
 
@@ -43,6 +46,13 @@ localhost
 {{#nodes}}
 {{.}} openshift_node_labels="{'region': 'primary', 'zone': 'default'}"
 {{/nodes}}
+
+{{^ansible_first_run}}
+[new_nodes]
+{{#new_nodes}}
+{{.}} openshift_node_labels="{'region': 'primary', 'zone': 'default'}"
+{{/new_nodes}}
+{{/ansible_first_run}}
 
 [dns]
 localhost
