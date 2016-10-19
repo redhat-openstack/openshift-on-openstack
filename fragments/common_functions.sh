@@ -25,6 +25,7 @@ function add_nameserver() {
 
 # All hosts must have an external disk device (cinder?) for docker storage
 function docker_set_storage_device() {
+    return 0
     # By default the cinder volume is mapped to virtio-first_20_chars of cinder
     # volume ID under /dev/disk/by-id/
     devlink=/dev/disk/by-id/virtio-${1:0:20}

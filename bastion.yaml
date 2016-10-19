@@ -184,6 +184,11 @@ parameters:
     description: List of docker repository URLs which will be installed on each node, if a repo is insecure use '#insecure' suffix.
     default: ''
 
+  volume_size:
+    type: number
+    description: Size of cinder volume use for node boot volume.
+    default: 20
+
 resources:
 
   # A VM to provide host based orchestration and other sub-services
@@ -197,13 +202,20 @@ resources:
             HOST: {get_param: hostname}
             DOMAIN: {get_param: domain_name}
       admin_user: {get_param: ssh_user}
-      image: {get_param: image}
+      #image: {get_param: image}
       flavor: {get_param: flavor}
       key_name: {get_param: key_name}
       networks:
       - port: {get_param: port}
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
+      block_device_mapping: [{device_name: "vda", volume_id: {get_resource: cinder_volume}, delete_on_termination : "true" }]
+
+  cinder_volume:
+    type: OS::Cinder::Volume
+    properties:
+      size: {get_param: volume_size}
+      image: {get_param: image}
 
   # Install, configure and enable the Heat configuration agent
   config_agent:
@@ -235,7 +247,7 @@ resources:
             $SKIP_DNS: {get_param: skip_dns}
             $OPENSHIFT_ANSIBLE_GIT_URL: {get_param: openshift_ansible_git_url}
             $OPENSHIFT_ANSIBLE_GIT_REV: {get_param: openshift_ansible_git_rev}
-            $DOCKER_VOLUME_ID: {get_resource: docker_volume}
+            $DOCKER_VOLUME_ID: {get_attr: [docker_volume, volume_id]}
           template: {get_file: fragments/bastion-boot.sh}
 
   # Compose the FQDN for cloud-init
@@ -411,18 +423,17 @@ resources:
       server:
         get_resource: host
 
-  # Additional space for Docker container and image storage
+  # Create an external volume to contain the Docker containers and images
   docker_volume:
-    type: OS::Cinder::Volume
+    type: OOShift::DockerVolume
     properties:
       size: {get_param: docker_volume_size}
 
-  # Bind docker file space to the host filesystem
-  docker_volume_attach:
-    type: OS::Cinder::VolumeAttachment
+  docker_volume_attachment:
+    type: OOShift::DockerVolumeAttachment
     properties:
+      volume_uuid: {get_attr: [docker_volume, volume_id]}
       instance_uuid: {get_resource: host}
-      volume_id: {get_resource: docker_volume}
 
   # Wait until the cloud-init process ends and reports or times out
   wait_condition:

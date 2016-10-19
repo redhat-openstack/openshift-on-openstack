@@ -347,6 +347,11 @@ parameters:
     type: string
     description: Extra parameters for openshift-ansible
 
+  volume_size:
+    type: number
+    description: Size of cinder volume use for node boot volume.
+    default: 20
+
 resources:
 
   # Generate a string to distinguish one node from the others
@@ -368,7 +373,7 @@ resources:
             SUFFIX: {get_attr: [random_hostname_suffix, value]}
             DOMAIN: {get_param: domain_name}
       admin_user: {get_param: ssh_user}
-      image: {get_param: image}
+      #image: {get_param: image}
       flavor: {get_param: flavor}
       key_name: {get_param: key_name}
       networks:
@@ -377,6 +382,13 @@ resources:
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
       metadata: {get_param: metadata}
+      block_device_mapping: [{device_name: "vda", volume_id: {get_resource: cinder_volume}, delete_on_termination : "true" }]
+
+  cinder_volume:
+    type: OS::Cinder::Volume
+    properties:
+      size: {get_param: volume_size}
+      image: {get_param: image}
 
   # Create an external volume to contain the Docker containers and images
   docker_volume:

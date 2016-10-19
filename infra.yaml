@@ -227,6 +227,11 @@ parameters:
     description: List of docker repository URLs which will be installed on each node, if a repo is insecure use '#insecure' suffix.
     default: ''
 
+  volume_size:
+    type: number
+    description: Size of cinder volume use for node boot volume.
+    default: 20
+
 resources:
 
   # Create a network connection on the internal communications network
@@ -267,7 +272,7 @@ resources:
             HOST: {get_param: hostname}
             DOMAIN: {get_param: domain_name}
       admin_user: {get_param: ssh_user}
-      image: {get_param: image}
+      #image: {get_param: image}
       flavor: {get_param: flavor}
       key_name: {get_param: key_name}
       networks:
@@ -277,19 +282,25 @@ resources:
       user_data: {get_resource: init}
       scheduler_hints:
         group: {get_param: infra_server_group}
+      block_device_mapping: [{device_name: "vda", volume_id: {get_resource: cinder_volume}, delete_on_termination : "true" }]
 
-  # Create space for Docker containers and images
-  docker_volume:
+  cinder_volume:
     type: OS::Cinder::Volume
+    properties:
+      size: {get_param: volume_size}
+      image: {get_param: image}
+
+  # Create an external volume to contain the Docker containers and images
+  docker_volume:
+    type: OOShift::DockerVolume
     properties:
       size: {get_param: docker_volume_size}
 
-  # Bind the docker storage to the VM
-  docker_volume_attach:
-    type: OS::Cinder::VolumeAttachment
+  docker_volume_attachment:
+    type: OOShift::DockerVolumeAttachment
     properties:
+      volume_uuid: {get_attr: [docker_volume, volume_id]}
       instance_uuid: {get_resource: host}
-      volume_id: {get_resource: docker_volume}
 
   # Compose configuration data into a single structure
   init:
@@ -410,7 +421,7 @@ resources:
           params:
             $DNS_IP: {get_param: dns_ip}
             $SKIP_DNS: {get_param: skip_dns}
-            $DOCKER_VOLUME_ID: {get_resource: docker_volume}
+            $DOCKER_VOLUME_ID: {get_attr: [docker_volume, volume_id]}
           template: {get_file: fragments/infra-boot.sh}
 
   # Add a node's IP/Name mapping to DNS

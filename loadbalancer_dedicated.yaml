@@ -161,6 +161,11 @@ parameters:
   skip_dns:
     type: boolean
 
+  volume_size:
+    type: number
+    description: Size of cinder volume use for node boot volume.
+    default: 20
+
 resources:
   floating_ip_assoc:
     type: OS::Neutron::FloatingIPAssociation
@@ -209,13 +214,20 @@ resources:
             '%hostname%': {get_param: hostname}
             '%domainname%': {get_param: domain_name}
       admin_user: {get_param: ssh_user}
-      image: {get_param: image}
+      #image: {get_param: image}
       flavor: {get_param: flavor}
       key_name: {get_param: key_name}
       networks:
       - port: {get_resource: port}
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
+      block_device_mapping: [{device_name: "vda", volume_id: {get_resource: cinder_volume}, delete_on_termination : "true" }]
+
+  cinder_volume:
+    type: OS::Cinder::Volume
+    properties:
+      size: {get_param: volume_size}
+      image: {get_param: image}
 
   # Collect a set of host configuration information in a single structure
   init:

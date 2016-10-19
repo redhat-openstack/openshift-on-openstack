@@ -485,6 +485,26 @@ parameters:
     description: Extra parameters for openshift-ansible as a JSON string
     default: ""
 
+  bastion_volume_size:
+    type: number
+    description: Size of cinder volume use for bastion boot volume.
+    default: 20
+
+  master_volume_size:
+    type: number
+    description: Size of cinder volume use for master boot volume.
+    default: 20
+
+  infra_volume_size:
+    type: number
+    description: Size of cinder volume use for infra boot volume.
+    default: 20
+
+  node_volume_size:
+    type: number
+    description: Size of cinder volume use for node boot volume.
+    default: 20
+
 resources:
 
   # Network Components
@@ -573,6 +593,7 @@ resources:
       system_update: {get_param: system_update}
       extra_repository_urls: {get_param: extra_repository_urls}
       extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
+      volume_size: {get_param: bastion_volume_size}
 
   openshift_etcds:
     depends_on: [external_router_interface, fixed_network, fixed_subnet]
@@ -654,6 +675,7 @@ resources:
           system_update: {get_param: system_update}
           extra_repository_urls: {get_param: extra_repository_urls}
           extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
+          volume_size: {get_param: master_volume_size}
 
   openshift_infra_nodes:
     depends_on: [external_router_interface, fixed_network, fixed_subnet]
@@ -698,6 +720,7 @@ resources:
           system_update: {get_param: system_update}
           extra_repository_urls: {get_param: extra_repository_urls}
           extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
+          volume_size: {get_param: infra_volume_size}
 
   openshift_nodes:
     depends_on: [external_router_interface, fixed_network, fixed_subnet]
@@ -781,6 +804,7 @@ resources:
           router_vip: {get_attr: [ipfailover, router_vip]}
           skip_ansible: {get_param: skip_ansible}
           extra_openshift_ansible_params: {get_param: extra_openshift_ansible_params}
+          volume_size: {get_param: node_volume_size}
 
   # Define the network access policy for openshift nodes
   node_security_group:
