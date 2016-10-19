@@ -132,12 +132,24 @@ nova keypair-add --pub-key ~/.ssh/id_rsa.pub default
 
 == Deployment
 
-You can pass all environment variables to heat on command line.  However, two example environment files have been given.
+You can pass all environment variables to heat on command line.  However,
+two environment files are provided as examples.
 
-* ``env_origin.yaml`` is an example of the variables to deploy an OpenShift Origin 3 environment.
-* ``env_aop.yaml`` is an example of the variables to deploy an Atomic Enterprise or OpenShift Enterprise 3 environment.  Note deployment type should be *openshift-enterprise* for OpenShift or *atomic-enterprise* for Atomic Enterprise.  Also, a valid RHN subscription is required for deployment.
+* ``env_origin.yaml`` is an example of the variables to deploy an OpenShift
+  Origin 3 environment.
+* ``env_aop.yaml`` is an example of the variables to deploy an Atomic
+  Enterprise or OpenShift Enterprise 3 environment.  Note deployment type
+  should be *openshift-enterprise* for OpenShift or *atomic-enterprise*
+  for Atomic Enterprise.  Also, a valid RHN subscription is required
+  for deployment.
 
-Assuming your external network is called ``public``, your SSH key is ``default`` and your CentOS 7.2 image is ``centos72`` and your domain name is ``example.com``, this is how you deploy OpenShift Origin:
+Here is a sample of environment file which uses a subset of parameters which
+can be set by the user to configure OpenShift deployment. All configurable
+parameters including description can be found in the `parameters` section in
+the link:openshift.yaml[main template]. Assuming your external
+network is called ``public``, your SSH key is `default`, your
+CentOS 7.2 image is ``centos72`` and your domain name is ``example.com``,
+this is how you deploy OpenShift Origin:
 
 ```yaml
 cat << EOF > openshift_parameters.yaml
@@ -288,7 +300,8 @@ openshift-on-openstack provides multiple options for setting up loadbalancing:
   when creating the stack.
 
 * Dedicated loadbalancer node - a dedicated node is created during stack
-  creation and HAProxy loadbalancer is configured on it.
+  creation and HAProxy loadbalancer is configured on it. Both console/API and
+  OpenSHift router requests are load balanced by this dedicated node.
   This type is useful for demo/testing purposes only because HA is not assured for
   the single loadbalancer. To select this type include
   `-e openshift-on-openstack/env_loadbalancer_dedicated.yaml` when creating the stack.
