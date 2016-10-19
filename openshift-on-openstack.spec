@@ -1,5 +1,5 @@
 Name: openshift-on-openstack
-Version: 0.9.3
+Version: 0.9.4
 Release: 1%{?dist}
 Summary: Set of Openstack Heat templates to deploy OpenShift
 Group: System Environment/Base
@@ -33,6 +33,12 @@ cp -aR tests/ %{buildroot}%{_datadir}/%{name}
 %{_bindir}/customize-disk-image
 
 %changelog
+* Wed Oct 19 2016 Sylvain Baubeau <sbaubeau@redhat.com> - 0.9.4-1
+- Use openshift-ansible recommanded way for scaleup
+- Add constraints on hostnames
+- Documentation improvements
+- Fixed master_count evaluation
+
 * Fri Oct 14 2016 Sylvain Baubeau <sbaubeau@redhat.com> - 0.9.3-1
 - Bug fixes:
   - Improve checking of os-collect-config setup
