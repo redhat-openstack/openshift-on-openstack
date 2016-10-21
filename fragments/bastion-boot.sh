@@ -153,11 +153,11 @@ then
 else
     verify_os_collect_config_is_installed
 
-    yum -y install git httpd-tools ||
+    retry yum -y install git httpd-tools ||
         notify_failure "could not install httpd-tools"
 
     # ensure openssl is installed on CentOS
-    yum -y install pyOpenSSL ||
+    retry yum -y install pyOpenSSL ||
         notify_failure "could not install pyOpenSSL"
 
     extra_opts=""
@@ -175,7 +175,7 @@ else
             $OPENSHIFT_ANSIBLE_GIT_URL \
             $OPENSHIFT_ANSIBLE_GIT_REV
     else
-        yum -y install openshift-ansible-roles openshift-ansible-playbooks \
+        retry yum -y install openshift-ansible-roles openshift-ansible-playbooks \
             || notify_failure "could not install openshift-ansible"
     fi
 fi

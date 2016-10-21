@@ -17,7 +17,7 @@ function sudo_set_secure_path() {
 function docker_install_and_enable() {
     if ! rpm -q docker
     then
-        yum -y install docker || notify_failure "could not install docker"
+        retry yum -y install docker || notify_failure "could not install docker"
     fi
     systemctl enable docker
 }
