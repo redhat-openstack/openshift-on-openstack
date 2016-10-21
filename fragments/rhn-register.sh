@@ -41,7 +41,7 @@ function install_sat6_ca_certs() {
     local SAT6_KEY_RPM_URL="https://${1}/pub/katello-ca-consumer-latest.noarch.rpm"
 
     if ! rpm -q --quiet $SAT6_KEY_RPM ; then
-        yum -y install $SAT6_KEY_RPM_URL
+        retry yum -y install $SAT6_KEY_RPM_URL
     fi
 }
 
@@ -67,18 +67,18 @@ fi
 
 # Attach to an entitlement pool
 if [ -n "$POOL_ID" ]; then
-    subscription-manager attach --pool $POOL_ID
+    retry subscription-manager attach --pool $POOL_ID
 else
-    subscription-manager attach --auto
+    retry subscription-manager attach --auto
 fi
 
 if [ -n "$EXTRA_POOL_IDS" ]; then
-    subscription-manager attach --pool $EXTRA_POOL_IDS
+    retry subscription-manager attach --pool $EXTRA_POOL_IDS
 fi
 
 # Select the YUM repositories to use
-subscription-manager repos --disable="*"
-subscription-manager repos \
+retry subscription-manager repos --disable="*"
+retry subscription-manager repos \
                      --enable="rhel-7-server-rpms" \
                      --enable="rhel-7-server-extras-rpms" \
                      --enable="rhel-7-server-optional-rpms" \

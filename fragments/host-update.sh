@@ -28,6 +28,6 @@ then
     atomic host upgrade || notify_failure "failed to run 'atomic host upgrade'"
 else
     # Update using traditional RPMs
-    yum install -y deltarpm || notify_failure "could not install deltarpm"
-    [ "$SYSTEM_UPDATE" = "True" ] && (yum -y update || notify_failure "could not update RPMs")
+    retry yum install -y deltarpm || notify_failure "could not install deltarpm"
+    [ "$SYSTEM_UPDATE" = "True" ] && (retry yum -y update || notify_failure "could not update RPMs")
 fi
