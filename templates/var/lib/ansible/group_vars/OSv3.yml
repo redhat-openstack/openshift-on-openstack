@@ -19,8 +19,8 @@ openshift_master_cluster_password: openshift_cluster
 openshift_master_cluster_method: native
 {{/master_ha}}
 {{^no_lb}}
-openshift_master_cluster_hostname: {{lb_hostname}}.{{domainname}}
-openshift_master_cluster_public_hostname: {{lb_hostname}}.{{domainname}}
+openshift_master_cluster_hostname: {{lb_hostname}}
+openshift_master_cluster_public_hostname: {{lb_hostname}}
 {{/no_lb}}
 {{#ldap_url}}
 openshift_master_identity_providers:

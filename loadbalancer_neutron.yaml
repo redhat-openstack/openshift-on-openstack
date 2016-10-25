@@ -35,8 +35,12 @@ parameters:
       The load balancer hostname portion of the FQDN
     type: string
     constraints:
-    - allowed_pattern: '[a-z0-9\-]*'
-      description: Hostname must contain only characters [a-z0-9\-].
+    - allowed_pattern: '[a-z0-9\-\.]*'
+      description: Hostname must contain only characters [a-z0-9\-\.].
+
+  stack_name:
+    description: Top level stack name.
+    type: string
 
   domain_name:
     description: >
@@ -193,8 +197,9 @@ outputs:
     description: URL of the OpenShift web console
     value:
       str_replace:
-        template: "https://%hostname%.%domainname%:8443/console/"
+        template: "https://%stack_name%-%hostname%.%domainname%:8443/console/"
         params:
+          '%stack_name%': {get_param: stack_name}
           '%hostname%': {get_param: hostname}
           '%domainname%': {get_param: domain_name}
 
@@ -202,7 +207,18 @@ outputs:
     description: URL entrypoint to the OpenShift API
     value:
       str_replace:
-        template: "https://%hostname%.%domainname%:8443/"
+        template: "https://%stack_name%-%hostname%.%domainname%:8443/"
         params:
+          '%stack_name%': {get_param: stack_name}
+          '%hostname%': {get_param: hostname}
+          '%domainname%': {get_param: domain_name}
+
+  hostname:
+    description: Loadbalancer hostname
+    value:
+      str_replace:
+        template: "%stack_name%-%hostname%.%domainname%"
+        params:
+          '%stack_name%': {get_param: stack_name}
           '%hostname%': {get_param: hostname}
           '%domainname%': {get_param: domain_name}

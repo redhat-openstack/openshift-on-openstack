@@ -35,6 +35,10 @@ parameters:
       The load balancer hostname portion of the FQDN
     type: string
 
+  stack_name:
+    description: Top level stack name.
+    type: string
+
   domain_name:
     description: >
       All VMs will be placed in this domain
@@ -142,6 +146,14 @@ parameters:
     type: number
     default: 4000
 
+  hostname:
+    description: >
+      The load balancer hostname portion of the FQDN
+    type: string
+    constraints:
+    - allowed_pattern: '[a-z0-9\-\.]*'
+      description: Hostname must contain only characters [a-z0-9\-\.].
+
   stack_name:
     type: string
     default: ''
@@ -172,4 +184,14 @@ outputs:
         template: "https://%hostname%.%domainname%:8443/"
         params:
           '%hostname%': {get_param: master_hostname}
+          '%domainname%': {get_param: domain_name}
+
+  hostname:
+    description: Loadbalancer hostname
+    value:
+      str_replace:
+        template: "%stack_name%-%hostname%.%domainname%"
+        params:
+          '%stack_name%': {get_param: stack_name}
+          '%hostname%': {get_param: hostname}
           '%domainname%': {get_param: domain_name}

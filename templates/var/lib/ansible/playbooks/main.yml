@@ -4,6 +4,18 @@ cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/main
 - include: /var/lib/ansible/playbooks/dns.yml
 
 <%#ansible_first_run%>
+<%#external_lb%>
+# an external LB can not be pre-set with master IPs because both creation
+# of master nodes and openshift-ansible are part of the same stack-create
+# process. Temporarily override external LB's IP to point to the first
+# master node. This IP is removed at the end of the first successful
+# setup.
+- hosts: all
+  tasks:
+  - name: Override external LB hostname's IP
+    lineinfile: dest=/etc/hosts regexp='.* <%lb_hostname%>' line="<%master_ip%> <%lb_hostname%>" state=present
+<%/external_lb%>
+
 <%#deploy_registry%>
 <%#prepare_registry%>
 - include: /var/lib/ansible/playbooks/registry.yml
@@ -89,6 +101,15 @@ cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/main
 - include: /var/lib/ansible/playbooks/haproxy.yml
 <%/dedicated_lb%>
 <%/deploy_router%>
+
+<%#ansible_first_run%>
+<%#external_lb%>
+- hosts: all
+  tasks:
+  - name: Remove external LB hostname's IP
+    lineinfile: dest=/etc/hosts regexp='.* <%lb_hostname%>' state=absent
+<%/external_lb%>
+<%/ansible_first_run%>
 
 <%={{ }}=%>
 EOF

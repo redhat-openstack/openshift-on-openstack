@@ -57,8 +57,10 @@ localhost
 [dns]
 localhost
 {{^no_lb}}
+{{^external_lb}}
 
 [extradnsitems]
 loadbalancer
+{{/external_lb}}
 {{/no_lb}}
 EOF

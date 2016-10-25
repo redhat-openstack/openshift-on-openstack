@@ -699,12 +699,8 @@ resources:
           loadbalancer_type: {get_param: loadbalancer_type}
           dns_forwarders: {get_param: dns_nameserver}
           lb_ip: {get_attr: [lb_floating_ip, floating_ip_address]}
-          lb_hostname:
-            str_replace:
-              template: "%stackname%-%hostname%"
-              params:
-                '%stackname%': {get_param: 'OS::stack_name'}
-                '%hostname%': {get_param: lb_hostname}
+          master_ip: {get_attr: [openshift_masters, resource.0.ip_address]}
+          lb_hostname: {get_attr: [loadbalancer, hostname]}
           router_vip: {get_attr: [ipfailover, router_vip]}
           skip_ansible: {get_param: skip_ansible}
           extra_openshift_ansible_params: {get_param: extra_openshift_ansible_params}
@@ -940,13 +936,9 @@ resources:
       sat6_activationkey: {get_param: sat6_activationkey}
       rhn_pool: {get_param: rhn_pool}
       extra_rhn_pools: {get_param: extra_rhn_pools}
-      hostname:
-        str_replace:
-          template: "%stackname%-%hostname%"
-          params:
-            '%stackname%': {get_param: 'OS::stack_name'}
-            '%hostname%': {get_param: lb_hostname}
+      hostname: {get_param: lb_hostname}
       domain_name: {get_param: domain_name}
+      stack_name: {get_param: 'OS::stack_name'}
       ansible_public_key: {get_attr: [ansible_keys, public_key]}
       dns_ip: {get_attr: [bastion_floating_ip, floating_ip_address]}
       fixed_subnet: {get_resource: fixed_subnet}
