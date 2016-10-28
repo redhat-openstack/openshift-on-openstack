@@ -128,7 +128,7 @@ parameters:
     type: string
     constraints:
     - allowed_pattern: '[a-z0-9\-]*'
-      description: Hostname must contain only characters [a-z0-9\-].
+      description: Hostname must contain only characters [a-z0-9\-\.].
 
   domain_name:
     description: >
@@ -204,6 +204,12 @@ parameters:
   lb_ip:
     description: >
       The IP address of the load balancer feeding the OpenShift master traffic
+    type: string
+    default: ''
+
+  master_ip:
+    description: >
+      The IP address of the first master node (used instead of external LB during setup)
     type: string
     default: ''
 
@@ -633,6 +639,8 @@ resources:
           default: {get_param: skip_dns}
         - name: lb_ip
           default: {get_param: lb_ip}
+        - name: master_ip
+          default: {get_param: master_ip}
         - name: lb_hostname
           default: {get_param: lb_hostname}
         - name: ldap_url

@@ -297,7 +297,9 @@ openshift-on-openstack provides multiple options for setting up loadbalancing:
   for master nodes and OpenShift routers.
   This is suggested type for production.
   To select this type include `-e openshift-on-openstack/env_loadbalancer_external.yaml`
-  when creating the stack.
+  when creating the stack and also set `lb_hostname` parameter to point to the
+  loadbalancer's fully qualified domain name. Once stack creation is finished
+  you can set your external loadbalancer with the list of created master nodes.
 
 * Dedicated loadbalancer node - a dedicated node is created during stack
   creation and HAProxy loadbalancer is configured on it. Both console/API and

@@ -41,6 +41,7 @@ function create_metadata_json() {
     "openshift_use_openshift_sdn": $([ "$openshift_sdn" == "openshift-sdn" ] && echo true || echo false),
     "openshift_use_flannel": $([ "$openshift_sdn" == "flannel" ] && echo true || echo false),
     "master_ha": $([ "$lb_type" != "none" -a $master_count -gt 1 ] && echo true || echo false),
+    "master_ip": "$master_ip",
     "openstack_cloud_provider": $openstack_cloud_provider,
     "os_username":"$os_username",
     "os_password":"$os_password",
@@ -48,7 +49,8 @@ function create_metadata_json() {
     "os_tenant_name":"$os_tenant_name",
     "os_region_name":"$os_region_name",
     "dedicated_lb": $([ "$lb_type" == "dedicated" ] && echo true || echo false),
-    "no_lb": $([ "$lb_type" == "none" -o "$lb_type" == "external" ] && echo true || echo false),
+    "no_lb": $([ "$lb_type" == "none" ] && echo true || echo false),
+    "external_lb": $([ "$lb_type" == "external" ] && echo true || echo false),
     "masters": ["$(echo "$all_master_nodes" | sed 's/ /","/g')"],
     "infra_nodes": ["$(echo "$all_infra_nodes" | sed 's/ /","/g')"],
     "infra_count": $infra_count,
@@ -57,6 +59,7 @@ function create_metadata_json() {
     "deploy_router_or_registry": $deploy_router_or_registry,
     "domainname": "$domainname",
     "lb_hostname": "$lb_hostname",
+    "short_lb_hostname": "${lb_hostname%%.$domainname}",
     "deploy_router": $([ "$deploy_router" == "True" ] && echo true || echo false),
     "deploy_registry": $([ "$deploy_registry" == "True" ] && echo true || echo false),
     "registry_volume_fs": "$registry_volume_fs",
@@ -101,7 +104,7 @@ function create_master_node_vars() {
     if [ "$lb_type" == "none" ]; then
         public_name="$1.$domainname"
     else
-        public_name="$lb_hostname.$domainname"
+        public_name="$lb_hostname"
     fi
 
     cat << EOF > /var/lib/ansible/host_vars/$1.$domainname.yml
@@ -138,7 +141,15 @@ function update_etc_hosts() {
     grep -q "$2" /etc/hosts || echo "$1 $2" >> /etc/hosts
 }
 
-update_etc_hosts "$lb_ip" "$lb_hostname.$domainname"
+if [ "$lb_type" == "external" ]; then
+    # for external loadbalancer override LB's IP to point to the first master
+    # node (because the LB can not be pre-set and working). This is done
+    # only for the initial run, for next scale up/down it's expected
+    # that the LB is already set.
+    [ -e ${ANSDIR}.deployed ] || update_etc_hosts "$master_ip" "$lb_hostname"
+else
+    update_etc_hosts "$lb_ip" "$lb_hostname"
+fi
 
 [ "$skip_ansible" == "True" ] && exit 0
 

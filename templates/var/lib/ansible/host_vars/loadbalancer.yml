@@ -1,7 +1,7 @@
 mkdir -p /var/lib/os-apply-config/templates/var/lib/ansible/host_vars
 cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/host_vars/loadbalancer.yml
 ansible_ssh_host: {{lb_ip}}
-ansible_hostname: {{lb_hostname}}
+ansible_hostname: {{short_lb_hostname}}
 ansible_default_ipv4:
     address: {{lb_ip}}
 EOF

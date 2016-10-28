@@ -38,8 +38,8 @@ parameters:
       The load balancer hostname portion of the FQDN
     type: string
     constraints:
-    - allowed_pattern: '[a-z0-9\-]*'
-      description: Hostname must contain only characters [a-z0-9\-].
+    - allowed_pattern: '[a-z0-9\-\.]*'
+      description: Hostname must contain only characters [a-z0-9\-\.].
 
   domain_name:
     description: >
@@ -161,6 +161,10 @@ parameters:
   skip_dns:
     type: boolean
 
+  stack_name:
+    description: Top level stack name.
+    type: string
+
 resources:
   floating_ip_assoc:
     type: OS::Neutron::FloatingIPAssociation
@@ -204,8 +208,9 @@ resources:
     properties:
       name:
         str_replace:
-          template: "%hostname%.%domainname%"
+          template: "%stack_name%-%hostname%.%domainname%"
           params:
+            '%stack_name%': {get_param: stack_name}
             '%hostname%': {get_param: hostname}
             '%domainname%': {get_param: domain_name}
       admin_user: {get_param: ssh_user}
@@ -235,13 +240,19 @@ resources:
     type: OS::Heat::CloudConfig
     properties:
       cloud_config:
-        hostname: {get_param: hostname}
+        hostname:
+          str_replace:
+            template: "%stack_name%-%hostname%"
+            params:
+              '%stack_name%': {get_param: stack_name}
+              '%hostname%': {get_param: hostname}
         fqdn:
           str_replace:
-            template: "HOST.DOMAIN"
+            template: "%stack_name%-%hostname%.%domainname%"
             params:
-              HOST: {get_param: hostname}
-              DOMAIN: {get_param: domain_name}
+              '%stack_name%': {get_param: stack_name}
+              '%hostname%': {get_param: hostname}
+              '%domainname%': {get_param: domain_name}
 
   # Compile a set of standard configuration files to provide identity and access
   included_files:
@@ -352,10 +363,11 @@ resources:
         node_type: loadbalancer
         node_name:
           str_replace:
-            template: "HOST.DOMAIN"
+            template: "%stack_name%-%hostname%.%domainname%"
             params:
-              HOST: {get_param: hostname}
-              DOMAIN: {get_param: domain_name}
+              '%stack_name%': {get_param: stack_name}
+              '%hostname%': {get_param: hostname}
+              '%domainname%': {get_param: domain_name}
       config:
         get_resource: node_cleanup
       server:
@@ -377,8 +389,9 @@ outputs:
     description: URL of the OpenShift web console
     value:
       str_replace:
-        template: "https://%hostname%.%domainname%:8443/console/"
+        template: "https://%stack_name%-%hostname%.%domainname%:8443/console/"
         params:
+          '%stack_name%': {get_param: stack_name}
           '%hostname%': {get_param: hostname}
           '%domainname%': {get_param: domain_name}
 
@@ -386,7 +399,18 @@ outputs:
     description: URL entrypoint to the OpenShift API
     value:
       str_replace:
-        template: "https://%hostname%.%domainname%:8443/"
+        template: "https://%stack_name%-%hostname%.%domainname%:8443/"
         params:
+          '%stack_name%': {get_param: stack_name}
+          '%hostname%': {get_param: hostname}
+          '%domainname%': {get_param: domain_name}
+
+  hostname:
+    description: Loadbalancer hostname
+    value:
+      str_replace:
+        template: "%stack_name%-%hostname%.%domainname%"
+        params:
+          '%stack_name%': {get_param: stack_name}
           '%hostname%': {get_param: hostname}
           '%domainname%': {get_param: domain_name}
