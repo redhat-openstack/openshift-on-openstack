@@ -1,5 +1,5 @@
 Name: openshift-on-openstack
-Version: 0.9.4
+Version: 0.9.5
 Release: 1%{?dist}
 Summary: Set of Openstack Heat templates to deploy OpenShift
 Group: System Environment/Base
@@ -33,6 +33,13 @@ cp -aR tests/ %{buildroot}%{_datadir}/%{name}
 %{_bindir}/customize-disk-image
 
 %changelog
+* Fri Oct 28 2016 Sylvain Baubeau <sbaubeau@redhat.com> - 0.9.5-1
+- Make app_subdomain customizable
+- External loadbalancer hostname now can (and should) be fully qualified domain name
+- Bug fixes:
+  - Adding retry when installing packages for mitigating random networking issues
+  - Add dependent package python-psutil for os-collect-config
+
 * Wed Oct 19 2016 Sylvain Baubeau <sbaubeau@redhat.com> - 0.9.4-1
 - Use openshift-ansible recommanded way for scaleup
 - Add constraints on hostnames
