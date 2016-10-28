@@ -16,5 +16,5 @@ if ! yum info os-collect-config; then
         yum -y install centos-release-openstack-liberty
     fi
 fi
-yum -y install os-collect-config python-zaqarclient os-refresh-config os-apply-config openstack-heat-templates python-oslo-log
+yum -y install os-collect-config python-zaqarclient os-refresh-config os-apply-config openstack-heat-templates python-oslo-log python-psutil
 #yum-config-manager --disable 'epel*'
