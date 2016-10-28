@@ -58,6 +58,7 @@ function create_metadata_json() {
     "new_nodes": [$new_nodes],
     "deploy_router_or_registry": $deploy_router_or_registry,
     "domainname": "$domainname",
+    "app_subdomain": "${app_subdomain:-"cloudapps.$domainname"}",
     "lb_hostname": "$lb_hostname",
     "short_lb_hostname": "${lb_hostname%%.$domainname}",
     "deploy_router": $([ "$deploy_router" == "True" ] && echo true || echo false),

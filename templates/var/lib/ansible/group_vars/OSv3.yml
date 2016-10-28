@@ -6,7 +6,7 @@ ansible_ssh_user: {{ssh_user}}
 ansible_sudo: true
 ansible_become: true
 deployment_type: {{deployment_type}} # deployment type valid values are origin, online and openshif-enterprise
-osm_default_subdomain: cloudapps.{{domainname}} # default subdomain to use for exposed routes
+openshift_master_default_subdomain: {{app_subdomain}} # default subdomain to use for exposed routes
 openshift_override_hostname_check: true
 openshift_use_openshift_sdn: {{openshift_use_openshift_sdn}}
 openshift_use_flannel: {{openshift_use_flannel}}

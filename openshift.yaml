@@ -193,6 +193,12 @@ parameters:
     description: >
       The domain name that is going to be used as the base for all hostnames.
 
+  app_subdomain:
+    type: string
+    description: >
+      Default subdomain to use for exposed routes.
+    default: ''
+
   lb_hostname:
     type: string
     description: >
@@ -666,6 +672,7 @@ resources:
                 '%stackname%': {get_param: 'OS::stack_name'}
                 '%hostname%': {get_param: node_hostname}
           domain_name: {get_param: domain_name}
+          app_subdomain: {get_param: app_subdomain}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
           bastion_node: {get_attr: [bastion_host, resource.host]}
           skip_dns: {get_param: skip_dns}
