@@ -26,19 +26,19 @@ cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/regi
     shell: nova --os-auth-url {{ openshift_cloudprovider_openstack_auth_url }} --os-username {{ openshift_cloudprovider_openstack_username }} --os-password {{ openshift_cloudprovider_openstack_password }} --os-tenant-name {{ openshift_cloudprovider_openstack_tenant_name }} volume-attach {{ bastion_instance_id }} {{ openshift_hosted_registry_storage_openstack_volumeID }}
 
   - name: Wait for the device to appear
-    wait_for: path=/dev/vdc
+    wait_for: path=/dev/vdb
 
   - name: Format the device
-    filesystem: fstype={{ openshift_hosted_registry_storage_openstack_filesystem }} dev=/dev/vdc
+    filesystem: fstype={{ openshift_hosted_registry_storage_openstack_filesystem }} dev=/dev/vdb
 
   - name: Mount the device
-    mount: name={{ mktemp.stdout }} src=/dev/vdc state=mounted fstype={{ openshift_hosted_registry_storage_openstack_filesystem }}
+    mount: name={{ mktemp.stdout }} src=/dev/vdb state=mounted fstype={{ openshift_hosted_registry_storage_openstack_filesystem }}
 
   - name: Change mode on the filesystem
     file: path={{ mktemp.stdout }} state=directory recurse=true mode=0777
 
   - name: Unmount the device
-    mount: name={{ mktemp.stdout }} src=/dev/vdc state=absent fstype={{ openshift_hosted_registry_storage_openstack_filesystem }}
+    mount: name={{ mktemp.stdout }} src=/dev/vdb state=absent fstype={{ openshift_hosted_registry_storage_openstack_filesystem }}
 
   - name: Delete temp directory
     file:
