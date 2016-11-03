@@ -23,8 +23,6 @@ parameters:
     description: >
       Select a base image to use for the bastion server
     type: string
-    constraints:
-    - custom_constraint: glance.image
 
   flavor:
     description: >
@@ -164,7 +162,7 @@ parameters:
   volume_size:
     type: number
     description: Size of cinder volume use for node boot volume.
-    default: 20
+    default: 30
 
 resources:
   floating_ip_assoc:
@@ -227,7 +225,7 @@ resources:
     type: OS::Cinder::Volume
     properties:
       size: {get_param: volume_size}
-      image: {get_param: image}
+      snapshot_id: {get_param: image}
 
   # Collect a set of host configuration information in a single structure
   init:

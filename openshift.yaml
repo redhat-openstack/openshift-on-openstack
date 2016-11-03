@@ -31,32 +31,22 @@ parameters:
   bastion_image:
     type: string
     description: Name or ID of the bastion image registered with Glance
-    constraints:
-    - custom_constraint: glance.image
 
   etcd_image:
     type: string
     description: Name or ID of the host image registered with Glance
-    constraints:
-    - custom_constraint: glance.image
 
   master_image:
     type: string
     description: Name or ID of the host image registered with Glance
-    constraints:
-    - custom_constraint: glance.image
 
   infra_image:
     type: string
     description: Name or ID of the host image registered with Glance
-    constraints:
-    - custom_constraint: glance.image
 
   node_image:
     type: string
     description: Name or ID of the openshift node image registered with Glance
-    constraints:
-    - custom_constraint: glance.image
 
   # once openshift-ansible supports containerized loadbalancer node setup
   # this can be deleted
@@ -500,6 +490,11 @@ parameters:
     description: Size of cinder volume use for infra boot volume.
     default: 20
 
+  etcd_volume_size:
+    type: number
+    description: Size of cinder volume use for infra boot volume.
+    default: 20
+
   node_volume_size:
     type: number
     description: Size of cinder volume use for node boot volume.
@@ -632,6 +627,7 @@ resources:
           skip_dns: {get_param: skip_dns}
           system_update: {get_param: system_update}
           extra_repository_urls: {get_param: extra_repository_urls}
+          volume_size: {get_param: etcd_volume_size}
 
   openshift_masters:
     depends_on: [external_router_interface, fixed_network, fixed_subnet]

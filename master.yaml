@@ -25,8 +25,6 @@ parameters:
     description: >
       Select a base image to use for the master servers
     type: string
-    constraints:
-    - custom_constraint: glance.image
 
   flavor:
     description: >
@@ -273,7 +271,7 @@ resources:
     type: OS::Cinder::Volume
     properties:
       size: {get_param: volume_size}
-      image: {get_param: image}
+      snapshot_id: {get_param: image}
 
   # Create an external volume to contain the Docker containers and images
   docker_volume:

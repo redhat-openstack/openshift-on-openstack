@@ -5,6 +5,11 @@ description: >
 
 parameters:
 
+  volume_size:
+    type: number
+    description: Size of cinder volume use for node boot volume.
+    default: 20
+
   # What version of OpenShift Enterprise to install
   # This value is used to select the RPM repo for the OSE release to install
   ose_version:
@@ -23,8 +28,6 @@ parameters:
     description: >
       Select a base image to use for the etcd servers
     type: string
-    constraints:
-    - custom_constraint: glance.image
 
   flavor:
     description: >
@@ -148,6 +151,12 @@ parameters:
 
 resources:
 
+  cinder_volume:
+    type: OS::Cinder::Volume
+    properties:
+      size: {get_param: volume_size}
+      snapshot_id: {get_param: image}
+
   # Create a network connection on the internal communications network
   port:
     type: OS::Neutron::Port
@@ -170,7 +179,7 @@ resources:
             HOST: {get_param: hostname}
             DOMAIN: {get_param: domain_name}
       admin_user: {get_param: ssh_user}
-      image: {get_param: image}
+      #image: {get_param: image}
       flavor: {get_param: flavor}
       key_name: {get_param: key_name}
       networks:
@@ -179,6 +188,7 @@ resources:
       user_data: {get_resource: init}
       scheduler_hints:
         group: {get_param: etcd_server_group}
+      block_device_mapping: [{device_name: "vda", volume_id: {get_resource: cinder_volume}, delete_on_termination : "true" }]
 
   # Compose configuration data into a single structure
   init:
