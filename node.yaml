@@ -18,50 +18,36 @@ parameters:
     description: >
       A pre-submitted SSH key to access the VM hosts
     type: string
-    constraints:
-    - custom_constraint: nova.keypair
 
   image:
     description: >
       Select a base image to use for the bastion server
     type: string
-    constraints:
-    - custom_constraint: glance.image
 
   flavor:
     description: >
       Define the hardware characteristics for the VMs: CPU, Memory, base disk
     type: string
-    constraints:
-    - custom_constraint: nova.flavor
 
   fixed_network:
     description: >
       The name or ID of the admin and public network
     type: string
-    constraints:
-    - custom_constraint: neutron.network
 
   fixed_subnet:
     description: >
       The name or ID of the admin and public IPv4 space
     type: string
-    constraints:
-    - custom_constraint: neutron.subnet
 
   internal_network:
     description: >
       The name or ID of the internal network
     type: string
-    constraints:
-    - custom_constraint: neutron.network
 
   internal_subnet:
     description: >
       The name or ID of the internal IPv4 space
     type: string
-    constraints:
-    - custom_constraint: neutron.subnet
 
   security_group:
     description: >
@@ -126,9 +112,6 @@ parameters:
       A string to identify node hostnames.  Each node will also have a
       unique random substring attached
     type: string
-    constraints:
-    - allowed_pattern: '[a-z0-9\-]*'
-      description: Hostname must contain only characters [a-z0-9\-].
 
   domain_name:
     description: >
