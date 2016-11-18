@@ -556,6 +556,7 @@ resources:
     depends_on: [external_router_interface, fixed_network, fixed_subnet, registry_volume]
     type: bastion.yaml
     properties:
+      node_count: {get_param: node_count}
       ose_version: {get_param: ose_version}
       image: {get_param: bastion_image}
       flavor: {get_param: bastion_flavor}
@@ -725,9 +726,11 @@ resources:
       desired_capacity: {get_param: node_count}
       min_size: {get_param: openshift_nodes_min}
       max_size: {get_param: openshift_nodes_max}
+      rolling_updates: {min_in_service: 0, pause_time: 0, max_batch_size: 50}
       resource:
         type: node.yaml
         properties:
+          autoscaling: {get_param: autoscaling}
           ose_version: {get_param: ose_version}
           image: {get_param: node_image}
           flavor: {get_param: node_flavor}
@@ -843,7 +846,7 @@ resources:
     properties:
       meter_name: cpu_util
       statistic: avg
-      period: 60
+      period: 1200
       evaluation_periods: 1
       threshold: 50
       enabled: {get_param: autoscaling}
@@ -857,7 +860,7 @@ resources:
     properties:
       meter_name: cpu_util
       statistic: avg
-      period: 600
+      period: 1200
       evaluation_periods: 1
       threshold: 15
       enabled: {get_param: autoscaling}

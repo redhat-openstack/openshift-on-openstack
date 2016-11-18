@@ -18,8 +18,8 @@ parameters:
     description: >
       A pre-submitted SSH key to access the VM hosts
     type: string
-    constraints:
-    - custom_constraint: nova.keypair
+    #constraints:
+    #- custom_constraint: nova.keypair
 
   image:
     description: >
@@ -30,36 +30,36 @@ parameters:
     description: >
       Define the hardware characteristics for the VMs: CPU, Memory, base disk
     type: string
-    constraints:
-    - custom_constraint: nova.flavor
+    #constraints:
+    #- custom_constraint: nova.flavor
 
   fixed_network:
     description: >
       The name or ID of the admin and public network
     type: string
-    constraints:
-    - custom_constraint: neutron.network
+    #constraints:
+    #- custom_constraint: neutron.network
 
   fixed_subnet:
     description: >
       The name or ID of the admin and public IPv4 space
     type: string
-    constraints:
-    - custom_constraint: neutron.subnet
+    #constraints:
+    #- custom_constraint: neutron.subnet
 
   internal_network:
     description: >
       The name or ID of the internal network
     type: string
-    constraints:
-    - custom_constraint: neutron.network
+    #constraints:
+    #- custom_constraint: neutron.network
 
   internal_subnet:
     description: >
       The name or ID of the internal IPv4 space
     type: string
-    constraints:
-    - custom_constraint: neutron.subnet
+    #constraints:
+    #- custom_constraint: neutron.subnet
 
   security_group:
     description: >
@@ -124,9 +124,9 @@ parameters:
       A string to identify node hostnames.  Each node will also have a
       unique random substring attached
     type: string
-    constraints:
-    - allowed_pattern: '[a-z0-9\-]*'
-      description: Hostname must contain only characters [a-z0-9\-].
+    #constraints:
+    #- allowed_pattern: '[a-z0-9\-]*'
+    #  description: Hostname must contain only characters [a-z0-9\-].
 
   domain_name:
     description: >
@@ -350,6 +350,12 @@ parameters:
     description: Size of cinder volume use for node boot volume.
     default: 20
 
+  autoscaling:
+    type: boolean
+    description: >
+      Automatically scale up/down openshift nodes.
+    default: false
+
 resources:
 
   # Generate a string to distinguish one node from the others
@@ -418,6 +424,7 @@ resources:
     type: OS::Heat::CloudConfig
     properties:
       cloud_config:
+        disable_root: false
         hostname:
           str_replace:
             template: "HOST-SUFFIX"
@@ -707,6 +714,8 @@ resources:
           default: {get_param: volume_quota}
         - name: extra_openshift_ansible_params
           default: {get_param: extra_openshift_ansible_params}
+        - name: autoscaling
+          default: {get_param: autoscaling}
       outputs:
         - name: ca_cert
         - name: ca_key

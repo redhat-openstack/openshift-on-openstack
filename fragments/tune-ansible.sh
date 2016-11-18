@@ -49,3 +49,8 @@ set_ansible_configuration defaults \
                           "/tmp/ansible/facts"
 set_ansible_configuration defaults "fact_caching_timeout" "600"
 set_ansible_configuration defaults "fact_caching" "jsonfile"
+
+#set_ansible_configuration defaults  "callback_plugins = /usr/lib/python2.7/site-packages/ara/plugins/callbacks:$VIRTUAL_ENV/lib/python2.7/site-packages/ara/plugins/callbacks:/usr/local/lib/python2.7/dist-packages/ara/plugins/callbacks"
+
+#yum install -y python-pip gcc python-devel libffi-devel openssl-devel redhat-rpm-config
+#pip install ara

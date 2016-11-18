@@ -310,6 +310,7 @@ resources:
     type: OS::Heat::CloudConfig
     properties:
       cloud_config:
+        disable_root: false
         hostname: {get_param: hostname}
         fqdn:
           str_replace:

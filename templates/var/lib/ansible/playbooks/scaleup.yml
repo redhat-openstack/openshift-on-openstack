@@ -1,7 +1,7 @@
 mkdir -p /var/lib/os-apply-config/templates/var/lib/ansible/playbooks
 cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/scaleup.yml
 {{=<% %>=}}
-- include: /var/lib/ansible/playbooks/quota.yml
+#- include: /var/lib/ansible/playbooks/quota.yml
 
 - include: /var/lib/ansible/playbooks/dns.yml
 

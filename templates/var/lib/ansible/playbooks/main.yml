@@ -9,9 +9,9 @@ cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/main
 - include: /var/lib/ansible/playbooks/registry.yml
 <%/prepare_registry%>
 <%/deploy_registry%>
-<%#volume_quota%>
-- include: /var/lib/ansible/playbooks/quota.yml
-<%/volume_quota%>
+#<%#volume_quota%>
+#- include: /var/lib/ansible/playbooks/quota.yml
+#<%/volume_quota%>
 <%/ansible_first_run%>
 
 - include: /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml

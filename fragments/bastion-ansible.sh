@@ -142,6 +142,11 @@ function update_etc_hosts() {
     grep -q "$2" /etc/hosts || echo "$1 $2" >> /etc/hosts
 }
 
+function backup_ansdir() {
+    [ -e ${ANSDIR}.deployed ] && rm -rf ${ANSDIR}.deployed
+    mv ${ANSDIR}.started ${ANSDIR}.deployed
+}
+
 update_etc_hosts "$lb_ip" "$lb_hostname.$domainname"
 
 [ "$skip_ansible" == "True" ] && exit 0
@@ -150,6 +155,15 @@ mkdir -p /var/lib/ansible/group_vars
 mkdir -p /var/lib/ansible/host_vars
 
 touch $NODESFILE
+
+existing=$(wc -l < $NODESFILE)
+if [ -e /var/lib/ansible/node_count ]; then
+    node_count=$(cat /var/lib/ansible/node_count)
+    if [ $existing -lt $node_count -a "$autoscaling" != "True" ]; then
+        echo "skipping ansible run - only $existing of $node_count is registered"
+        exit 0
+    fi
+fi
 
 create_metadata_json /var/lib/ansible/metadata.json
 
@@ -198,6 +212,11 @@ export ANSIBLE_HOST_KEY_CHECKING=False
 
 logfile=/var/log/ansible.$$
 if is_scaleup; then
+    if [ -z $(get_new_nodes) ]; then
+        echo "There are no new nodes, not running scalup playbook"
+        backup_ansdir
+        exit 0
+    fi
     cmd="ansible-playbook -vvvv --inventory /var/lib/ansible/inventory \
         /var/lib/ansible/playbooks/scaleup.yml"
 else
@@ -210,6 +229,5 @@ if ! $cmd > $logfile 2>&1; then
     echo "Failed to run '$cmd', full log is in $(hostname):$logfile" >&2
     exit 1
 else
-    [ -e ${ANSDIR}.deployed ] && rm -rf ${ANSDIR}.deployed
-    mv ${ANSDIR}.started ${ANSDIR}.deployed
+    backup_ansdir
 fi
