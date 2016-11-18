@@ -500,6 +500,17 @@ Example:
    container_quota: 20
 ```
 
+== Disabling Cinder volumes for Docker storage
+
+By default, the Heat templates create a Cinder volume per OpenShift node
+to host containers. This can be disabled by including both `volume_noop.yaml`
+and `volume_attachment_noop.yaml` in your environment file:
+
+resource_registry:
+  ...
+  OOShift::DockerVolume: volume_noop.yaml
+  OOShift::DockerVolumeAttachment: volume_attachment_noop.yaml
+
 [[IPFailover]]
 == IP failover
 
