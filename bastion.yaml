@@ -7,6 +7,11 @@ description: >
 
 parameters:
 
+  node_count:
+    type: number
+    description: >
+      Number of non-master nodes to create.
+
   # What version of OpenShift Container Platform to install
   # This value is used to select the RPM repo for the OCP release to install
   ocp_version:
@@ -375,6 +380,29 @@ resources:
           - get_file: templates/var/lib/ansible/roles/reboot/tasks/main.yml
           - get_file: templates/var/lib/ansible/roles/fstab_mount_options/tasks/main.yml
           - get_file: templates/var/lib/ansible/roles/xfs_grub_quota/tasks/main.yml
+
+  update_node_count:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      inputs:
+        - name: node_count
+      config: |
+        #!/bin/bash
+        set -eux
+        mkdir -p /var/lib/ansible
+        echo "$node_count" > /var/lib/ansible/node_count
+
+  deployment_update_node_count:
+    depends_on: wait_condition
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      config:
+        get_resource: update_node_count
+      server:
+        get_resource: host
+      input_values:
+        node_count: {get_param: node_count}
 
   deployment_write_templates:
     depends_on: wait_condition
