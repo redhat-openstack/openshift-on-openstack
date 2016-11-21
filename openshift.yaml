@@ -299,7 +299,7 @@ parameters:
       Filesystem to use for Openshift registry persistent volume. Used only if
       deploy_registry=true.
     type: string
-    default: ext4
+    default: xfs
 
   registry_volume_id:
     description: >

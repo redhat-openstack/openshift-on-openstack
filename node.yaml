@@ -273,7 +273,7 @@ parameters:
     description: >
       Filesystem to use for Openshift registry persistent volume
     type: string
-    default: ext4
+    default: xfs
 
   prepare_registry:
     type: boolean
