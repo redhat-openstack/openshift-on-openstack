@@ -170,6 +170,8 @@ parameters:
    infra_flavor: m1.medium
    node_image: centos72
    node_flavor: m1.medium
+   loadbalancer_image: centos72
+   loadbalancer_flavor: m1.medium
 
    # Set an existing network for inbound and outbound traffic
    external_network: public
@@ -219,11 +221,24 @@ EOF
 ```bash
 # retrieve the Heat template (if you haven't yet)
 git clone https://github.com/redhat-openstack/openshift-on-openstack.git
+```
 
+After this you can deploy using the heat command
+
+```bash
 # create a stack named 'my-openshift'
 heat stack-create my-openshift -t 180 \
   -e openshift_parameters.yaml \
   -f openshift-on-openstack/openshift.yaml
+```
+
+or using the generic OpenStack client
+
+```
+# create a stack named 'my-openshift'
+openstack stack create --timeout 180 \                                                       1 
+  -e openshift_parameters.yaml \
+  -t openshift-on-openstack/openshift.yaml my-openshift
 ```
 
 The ``node_count`` parameter specifies how many compute nodes you
