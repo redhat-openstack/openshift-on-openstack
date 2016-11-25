@@ -236,7 +236,7 @@ or using the generic OpenStack client
 
 ```
 # create a stack named 'my-openshift'
-openstack stack create --timeout 180 \                                                       1 
+openstack stack create --timeout 180 \
   -e openshift_parameters.yaml \
   -t openshift-on-openstack/openshift.yaml my-openshift
 ```
