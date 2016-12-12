@@ -27,7 +27,7 @@ source /usr/local/share/openshift-on-openstack/common_functions.sh
 if [ -e /run/ostree-booted ]
 then
     # Update the OS tree
-   atomic host upgrade || notify_failure "failed to run 'atomic host upgrade'"
+    atomic host upgrade || notify_failure "failed to run 'atomic host upgrade'"
 else
     # Update using traditional RPMs
     retry yum install -y deltarpm || notify_failure "could not install deltarpm"
