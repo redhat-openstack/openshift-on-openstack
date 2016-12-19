@@ -11,8 +11,8 @@
 #   SAT6_ORGANIZAION - An Organization string to aid grouping of hosts
 #   SAT6_ACTIVATIONKEY - A string used to authorize the registration
 #
-#   OSE_VERSION - the version of the OS repo to enable
-OSE_VERSION=${OSE_VERSION:-"3.2"}
+#   OCP_VERSION - the version of the OS repo to enable
+OCP_VERSION=${OCP_VERSION:-"3.2"}
 
 # Exit on command fail
 set -eu
@@ -82,7 +82,7 @@ retry subscription-manager repos \
                      --enable="rhel-7-server-rpms" \
                      --enable="rhel-7-server-extras-rpms" \
                      --enable="rhel-7-server-optional-rpms" \
-                     --enable="rhel-7-server-ose-$OSE_VERSION-rpms"
+                     --enable="rhel-7-server-ose-$OCP_VERSION-rpms"
 
 # Allow RPM integrity checking
 rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release

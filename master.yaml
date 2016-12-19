@@ -7,12 +7,12 @@ description: >
 
 parameters:
 
-  # What version of OpenShift Enterprise to install
-  # This value is used to select the RPM repo for the OSE release to install
-  ose_version:
+  # What version of OpenShift Container Platform to install
+  # This value is used to select the RPM repo for the OCP release to install
+  ocp_version:
     type: string
     description: >
-      The version of OpenShift Enterprise to deploy
+      The version of OpenShift Container Platform to deploy
 
   key_name:
     description: >
@@ -344,7 +344,7 @@ resources:
       config:
         str_replace:
           params:
-            $OSE_VERSION: {get_param: ose_version}
+            $OCP_VERSION: {get_param: ocp_version}
             $RHN_USERNAME: {get_param: rhn_username}
             $RHN_PASSWORD: {get_param: rhn_password}
             $SAT6_HOSTNAME: {get_param: sat6_hostname}
