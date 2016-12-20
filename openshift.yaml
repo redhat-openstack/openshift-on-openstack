@@ -7,13 +7,13 @@ description: >
 
 parameters:
 
-  # What version of OpenShift Enterprise to install
-  # This value is used to select the RPM repo for the OSE release to install
-  ose_version:
+  # What version of OpenShift Container Platform to install
+  # This value is used to select the RPM repo for the OCP release to install
+  ocp_version:
     type: string
     default: "3.2"
     description: >
-      The version of OpenShift Enterprise to deploy
+      The version of OpenShift Container Platform to deploy
 
   # Access to the VMs
   ssh_user:
@@ -516,7 +516,7 @@ resources:
     depends_on: [external_router_interface, fixed_network, fixed_subnet, registry_volume]
     type: bastion.yaml
     properties:
-      ose_version: {get_param: ose_version}
+      ocp_version: {get_param: ocp_version}
       image: {get_param: bastion_image}
       flavor: {get_param: bastion_flavor}
       key_name: {get_param: ssh_key_name}
@@ -557,7 +557,7 @@ resources:
       resource_def:
         type: master.yaml
         properties:
-          ose_version: {get_param: ose_version}
+          ocp_version: {get_param: ocp_version}
           image: {get_param: master_image}
           flavor: {get_param: master_flavor}
           key_name: {get_param: ssh_key_name}
@@ -600,7 +600,7 @@ resources:
       resource_def:
         type: infra.yaml
         properties:
-          ose_version: {get_param: ose_version}
+          ocp_version: {get_param: ocp_version}
           image: {get_param: infra_image}
           flavor: {get_param: infra_flavor}
           key_name: {get_param: ssh_key_name}
@@ -646,7 +646,7 @@ resources:
       resource:
         type: node.yaml
         properties:
-          ose_version: {get_param: ose_version}
+          ocp_version: {get_param: ocp_version}
           image: {get_param: node_image}
           flavor: {get_param: node_flavor}
           key_name: {get_param: ssh_key_name}
@@ -931,7 +931,7 @@ resources:
   loadbalancer:
     type:  OOShift::LoadBalancer
     properties:
-      ose_version: {get_param: ose_version}
+      ocp_version: {get_param: ocp_version}
       image: {get_param: loadbalancer_image}
       flavor: {get_param: loadbalancer_flavor}
       key_name: {get_param: ssh_key_name}

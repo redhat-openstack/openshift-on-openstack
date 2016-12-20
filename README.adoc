@@ -60,7 +60,7 @@ running:
 . http://www.centos.org/[CentOS] 7.2 cloud image (we leverage cloud-init)
 loaded in Glance for OpenShift Origin Deployments.
 https://access.redhat.com/downloads[RHEL]_ 7.2 cloud image if doing Atomic
-Enterprise or OpenShift Enterprise. Make sure to use official images to avoid
+Enterprise or OpenShift Container Platform. Make sure to use official images to avoid
 unexpected issues during deployment (e.g. a custom firewall may block OpenShift
 inter-node communication).
 . An SSH keypair loaded into Nova
@@ -70,7 +70,7 @@ CentOS and RHEL are the only tested distros for now.
 
 === Red Hat Software Repositories
 
-When installing OpenShift Enterprise on RHEL the OpenShift and
+When installing OpenShift Container Platform on RHEL the OpenShift and
 OpenStack repositories must be enabled, along with several common
 repositories. These repositories must be available under the
 subscription account used for installation.
@@ -138,7 +138,7 @@ two environment files are provided as examples.
 * ``env_origin.yaml`` is an example of the variables to deploy an OpenShift
   Origin 3 environment.
 * ``env_aop.yaml`` is an example of the variables to deploy an Atomic
-  Enterprise or OpenShift Enterprise 3 environment.  Note deployment type
+  Enterprise or OpenShift Container Platform 3 environment.  Note deployment type
   should be *openshift-enterprise* for OpenShift or *atomic-enterprise*
   for Atomic Enterprise.  Also, a valid RHN subscription is required
   for deployment.
@@ -154,7 +154,7 @@ this is how you deploy OpenShift Origin:
 ```yaml
 cat << EOF > openshift_parameters.yaml
 parameters:
-   # Use OpenShift Origin (vs OpenShift Enterprise)
+   # Use OpenShift Origin (vs OpenShift Container Platform)
    deployment_type: origin
 
    # set SSH access to VMs
