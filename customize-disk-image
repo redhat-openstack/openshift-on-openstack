@@ -18,20 +18,13 @@ parser.add_argument('--deployment-type', dest='deployment', default='origin',
 parser.add_argument('--memsize', dest='memsize', default='512',
                     help='memory size to be used by virt-customize')
 parser.add_argument('--package', dest="packages", action='append',
-                    default=['deltarpm',
-                             'git',
-                             'httpd-tools',
-                             'iptables',
-                             'iptables-services',
-                             'PyYAML',
-                             'ceph-common',
-                             'glusterfs-fuse',
-                             'nfs-utils',
-                             'libselinux-python',
-                             'firewalld',
-                             'logrotate',
-                             'pcs',
-                             'bash-completion'],
+                    default=['wget',
+			     'git',
+			     'net-tools',
+			     'bind-utils',
+			     'iptables-services',
+                             'bridge-utils', 
+		             'bash-completion'],
                     help='additional package to install')
 parser.add_argument('--sm-credentials', dest="sm_creds",
                     help='subscription-manager credentials (user:password)')
@@ -41,7 +34,7 @@ parser.add_argument('--sm-repo', dest="sm_repos", action='append',
                     default=['rhel-7-server-rpms',
                              'rhel-7-server-extras-rpms',
                              'rhel-7-server-optional-rpms',
-                             'rhel-7-server-ose-3.2-rpms'],
+                             'rhel-7-server-ose-3.3-rpms'],
                     help='subscription-manager repository to enable')
 parser.add_argument('--no-update', dest="update", action='store_false',
                     default=True, help='update packages')
@@ -63,8 +56,7 @@ if args.verbose:
 
 # Create set of packages to install
 if args.deployment == "enterprise":
-    args.packages += ["atomic-openshift-master", "atomic-openshift-node",
-                      "tuned-profiles-atomic-openshift-node"]
+    args.packages += ["atomic-openshift-utils"]
 elif args.deployment == "origin":
     args.packages += ["origin-master", "origin-node",
                       "tuned-profiles-origin-node"]
@@ -103,11 +95,11 @@ if args.update:
     cmd += ["--update"]
 
 # Set up EPEL
-cmd += ["--install", "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm",
-        "--run-command", "sed -i -e 's/^enabled=1/enabled=0/' /etc/yum.repos.d/epel.repo"]
+#cmd += ["--install", "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm",
+#        "--run-command", "sed -i -e 's/^enabled=1/enabled=0/' /etc/yum.repos.d/epel.repo"]
 
 # Install ansible
-cmd += ["--run-command", "yum -y --enablerepo=epel install ansible"]
+#cmd += ["--run-command", "yum -y --enablerepo=epel install ansible"]
 
 # Install required packages
 cmd += ["--install", ",".join(args.packages)]
