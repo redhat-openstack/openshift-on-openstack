@@ -15,6 +15,14 @@ parameters:
     description: >
       The version of OpenShift Container Platform to deploy
 
+  # What version of OpenStack Platform to install
+  # This value is used to select the RPM repo for the OSP release to install
+  osp_version:
+    type: string
+    default: "10"
+    description: >
+      The version of OpenStack Platform to use to collect data
+
   # Access to the VMs
   ssh_user:
     type: string
@@ -517,6 +525,7 @@ resources:
     type: bastion.yaml
     properties:
       ocp_version: {get_param: ocp_version}
+      osp_version: {get_param: osp_version}
       image: {get_param: bastion_image}
       flavor: {get_param: bastion_flavor}
       key_name: {get_param: ssh_key_name}
