@@ -14,6 +14,14 @@ parameters:
     description: >
       The version of OpenShift Container Platform to deploy
 
+      # What version of OpenStack Platform to install
+  # This value is used to select the RPM repo for the OSP release to install
+  osp_version:
+    type: string
+    default: "10"
+    description: >
+      The version of OpenStack Platform to use to collect data
+
   key_name:
     description: >
       A pre-submitted SSH key to access the VM hosts
@@ -208,6 +216,8 @@ resources:
   # Install, configure and enable the Heat configuration agent
   config_agent:
     type: collect-config-setup/install_config_agent_centos_yum.yaml
+    properties:
+      osp_version: {get_param: osp_version}
 
   # Collect the results from a set of resources
   init:
