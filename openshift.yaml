@@ -137,7 +137,11 @@ parameters:
       only, not by users). Instead dnsmasq is configured on each node by
       openshift-ansible (see openshift-ansible openshift_use_dnsmasq option
       for details).
-    default: false
+    default: False
+    constraints:
+      - allowed_values:
+          - True
+          - False
 
   system_update:
     type: boolean
