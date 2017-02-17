@@ -23,6 +23,7 @@ source /usr/local/share/openshift-on-openstack/common_functions.sh
 source /usr/local/share/openshift-on-openstack/common_openshift_functions.sh
 
 [ "$SKIP_DNS" != "True" ] && add_nameserver $DNS_IP
+disable_nm_resolver_updates
 
 disable_peerdns eth0
 ifup eth1
