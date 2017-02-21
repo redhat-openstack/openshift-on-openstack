@@ -285,11 +285,24 @@ parameters:
       True = Enable deployment of the OpenShift router
     type: boolean
 
-  # OpenShift installer (ansible) parameters
-  skip_ansible:
-    description: >
-      Disable host based installation/configuration
+  # OpenShift configuration: ansible controls
+  # These are for debugging.
+  #   Setting prepare_ansible=false will stop the stack before creating
+  #   installation config files
+  prepare_ansible:
     type: boolean
+    description: >
+      Create ansible configuration files for openshift-ansible playbooks
+    default: true
+
+  #   Setting execute_ansible=false will stop the stack before running
+  #   the ansible playbooks to install openshift, but *after* the configuration
+  #   files are generated
+  execute_ansible:
+    type: boolean
+    description: >
+      Run the ansible playbooks to install openshift
+    default: true
 
   # OpenStack access parameters
   # These allow the OpenShift service to view and use OpenStack resources
@@ -660,8 +673,10 @@ resources:
           default: {get_param: prepare_registry}
         - name: deploy_router
           default: {get_param: deploy_router}
-        - name: skip_ansible
-          default: {get_param: skip_ansible}
+        - name: prepare_ansible
+          default: {get_param: prepare_ansible}
+        - name: execute_ansible
+          default: {get_param: execute_ansible}
         - name: os_auth_url
           default: {get_param: os_auth_url}
         - name: os_username
