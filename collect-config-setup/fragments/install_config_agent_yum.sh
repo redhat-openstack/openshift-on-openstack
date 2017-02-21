@@ -12,10 +12,10 @@ if ! yum info os-collect-config; then
     # if os-collect-config package is not available, first check if
     # the repo is available but disabled, otherwise install the package
     # from epel
-    if yum repolist disabled|grep rhel-7-server-openstack-${OSP_VERSION}-rpms; then
-        subscription-manager repos --enable="rhel-7-server-openstack-${OSP_VERSION}-rpms"
+    if yum repolist disabled|grep rhel-7-server-openstack-$OSP_VERSION-rpms; then
+        subscription-manager repos --enable="rhel-7-server-openstack-$OSP_VERSION-rpms"
         if [ "$OSP_VERSION" -lt 10 ] ; then
-            subscription-manager repos --enable="rhel-7-server-openstack-${OSP_VERSION}-director-rpms"
+            subscription-manager repos --enable="rhel-7-server-openstack-$OSP_VERSION-director-rpms"
         fi
     else
         yum -y install centos-release-openstack-liberty
