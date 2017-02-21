@@ -1,9 +1,7 @@
 heat_template_version: 2014-10-16
 
-
 description: >
   Deploy Atomic/OpenShift 3 on OpenStack.
-
 
 parameters:
 
@@ -324,11 +322,23 @@ parameters:
     default: false
 
   # OpenShift configuration: ansible controls
-  skip_ansible:
+  # These are for debugging.
+  #   Setting prepare_ansible=false will stop the stack before creating
+  #   installation config files
+  prepare_ansible:
     type: boolean
     description: >
-      Do not install Openshift using Ansible.
-    default: false
+      Create ansible configuration files for openshift-ansible playbooks
+    default: true
+
+  #   Setting execute_ansible=false will stop the stack before running
+  #   the ansible playbooks to install openshift, but *after* the configuration
+  #   files are generated
+  execute_ansible:
+    type: boolean
+    description: >
+      Run the ansible playbooks to install openshift
+    default: true
 
   openshift_ansible_git_url:
     type: string
@@ -718,7 +728,8 @@ resources:
           master_ip: {get_attr: [openshift_masters, resource.0.ip_address]}
           lb_hostname: {get_attr: [loadbalancer, hostname]}
           router_vip: {get_attr: [ipfailover, router_vip]}
-          skip_ansible: {get_param: skip_ansible}
+          prepare_ansible: {get_param: prepare_ansible}
+          execute_ansible: {get_param: execute_ansible}
           extra_openshift_ansible_params: {get_param: extra_openshift_ansible_params}
 
   # Define the network access policy for openshift nodes

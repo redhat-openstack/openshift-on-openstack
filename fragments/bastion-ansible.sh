@@ -152,7 +152,7 @@ else
     update_etc_hosts "$lb_ip" "$lb_hostname"
 fi
 
-[ "$skip_ansible" == "True" ] && exit 0
+[ "$prepare_ansible" == "False" ] && exit 0
 
 mkdir -p /var/lib/ansible/group_vars
 mkdir -p /var/lib/ansible/host_vars
@@ -209,11 +209,16 @@ else
         /var/lib/ansible/playbooks/main.yml"
 fi
 
-if ! $cmd > $logfile 2>&1; then
-    tail -20 $logfile >&2
-    echo "Failed to run '$cmd', full log is in $(hostname):$logfile" >&2
-    exit 1
+if [ "$execute_ansible" == True ] ; then
+    if ! $cmd > $logfile 2>&1; then
+        tail -20 $logfile >&2
+        echo "Failed to run '$cmd', full log is in $(hostname):$logfile" >&2
+        exit 1
+    else
+        [ -e ${ANSDIR}.deployed ] && rm -rf ${ANSDIR}.deployed
+        mv ${ANSDIR}.started ${ANSDIR}.deployed
+    fi
 else
-    [ -e ${ANSDIR}.deployed ] && rm -rf ${ANSDIR}.deployed
-    mv ${ANSDIR}.started ${ANSDIR}.deployed
+    echo "INFO: ansible execution disabled"
+    echo "INFO: command = $cmd"
 fi
