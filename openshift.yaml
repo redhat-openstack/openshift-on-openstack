@@ -21,6 +21,14 @@ parameters:
     description: >
       The version of OpenStack Platform to use to collect data
 
+  # Allow the caller to specify the version of ansible
+  ansible_version:
+    type: string
+    default: ""
+    description: >
+      Set the RPM version of Ansible that will run on the bastion
+      If empty, use the current version
+
   # Access to the VMs
   ssh_user:
     type: string
@@ -536,6 +544,7 @@ resources:
     properties:
       ocp_version: {get_param: ocp_version}
       osp_version: {get_param: osp_version}
+      ansible_version: {get_param: ansible_version}
       image: {get_param: bastion_image}
       flavor: {get_param: bastion_flavor}
       key_name: {get_param: ssh_key_name}

@@ -11,6 +11,8 @@
 #                               openshift ansible playbooks and configs
 #   OPENSHIFT_ANSIBLE_GIT_REV - the release/revision of the playbooks to use
 #
+#   ANSIBLE_VERSION  - the version of of ansible to use for OCP installation
+#
 
 # Exit on first command failure or undefined var reference
 set -eu
@@ -167,7 +169,12 @@ else
         install_epel_repos_disabled $EPEL_RELEASE_VERSION
         extra_opts="--enablerepo=epel"
     fi
-    retry yum -y $extra_opts install ansible ||
+    if [ -z "$ANSIBLE_VERSION" ] ; then
+        ANSIBLE_RPM="ansible"
+    else
+        ANSIBLE_RPM="ansible-$ANSIBLE_VERSION"
+    fi
+    retry yum -y $extra_opts install ${ANSIBLE_RPM}  ||
         notify_failure "could not install ansible"
 
     if [ -n "$OPENSHIFT_ANSIBLE_GIT_URL" -a -n "$OPENSHIFT_ANSIBLE_GIT_REV" ]; then

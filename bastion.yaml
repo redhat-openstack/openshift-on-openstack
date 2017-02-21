@@ -14,13 +14,20 @@ parameters:
     description: >
       The version of OpenShift Container Platform to deploy
 
-      # What version of OpenStack Platform to install
+  # What version of OpenStack Platform to install
   # This value is used to select the RPM repo for the OSP release to install
   osp_version:
     type: string
     default: "10"
     description: >
       The version of OpenStack Platform to use to collect data
+
+  # Allow the caller to specify the version of ansible
+  ansible_version:
+    type: string
+    description: >
+      Set the RPM version of Ansible that will run on the bastion
+      If unset, use current version
 
   key_name:
     description: >
@@ -246,6 +253,7 @@ resources:
             $OPENSHIFT_ANSIBLE_GIT_URL: {get_param: openshift_ansible_git_url}
             $OPENSHIFT_ANSIBLE_GIT_REV: {get_param: openshift_ansible_git_rev}
             $DOCKER_VOLUME_ID: {get_resource: docker_volume}
+            $ANSIBLE_VERSION: {get_param: ansible_version}
           template: {get_file: fragments/bastion-boot.sh}
 
   # Compose the FQDN for cloud-init
