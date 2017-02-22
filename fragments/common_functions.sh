@@ -23,6 +23,17 @@ function add_nameserver() {
     sed -i "/search openstacklocal.*/anameserver $1" /etc/resolv.conf
 }
 
+# Inform NetworkManager to ignore DNS related files (/etc/resolv.conf)
+function disable_nm_resolver_updates() {
+    if grep -q dns= /etc/NetworkManager/NetworkManager.conf ; then
+        # update the existing value
+        sed -i -e '/dns=/s/=.*/=none/' /etc/NetworkManager/NetworkManager.conf
+    else
+        # Add the desired value
+        sed -i -e '/\[main\]/adns=none' /etc/NetworkManager/NetworkManager.conf
+    fi
+}
+
 # All hosts must have an external disk device (cinder?) for docker storage
 function docker_set_storage_device() {
     # By default the cinder volume is mapped to virtio-first_20_chars of cinder
