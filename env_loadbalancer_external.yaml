@@ -1,5 +1,6 @@
 parameters:
     loadbalancer_type: 'external'
+    skip_dns: False
 
 resource_registry:
     OOShift::LoadBalancer: loadbalancer_external.yaml

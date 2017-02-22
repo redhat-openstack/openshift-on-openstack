@@ -162,6 +162,7 @@ parameters:
 
   skip_dns:
     type: boolean
+    default: True
 
 outputs:
   console_url:
