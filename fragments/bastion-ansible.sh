@@ -70,10 +70,8 @@ function create_metadata_json() {
     "heat_outputs_path": "$heat_outputs_path",
     "ssh_user": "$ssh_user",
     "deployment_type": "$deployment_type",
-    "skip_dns": $([ "$skip_dns" == "True" ] && echo true || echo false),
     "lb_ip": "$lb_ip",
     "dns_forwarders": "$dns_forwarders",
-    "dns_ip": "$dns_ip",
     "ldap_url": "$ldap_url",
     "ldap_bind_dn": "$ldap_bind_dn",
     "ldap_bind_password": "$ldap_bind_password",
@@ -135,22 +133,6 @@ function is_scaleup() {
         grep -v new_nodes | grep -v '[<>] $' |
         grep -v '.*-node') && return 1 || return 0
 }
-
-function update_etc_hosts() {
-    # $1 - IP
-    # $2 - hostname
-    grep -q "$2" /etc/hosts || echo "$1 $2" >> /etc/hosts
-}
-
-if [ "$lb_type" == "external" ]; then
-    # for external loadbalancer override LB's IP to point to the first master
-    # node (because the LB can not be pre-set and working). This is done
-    # only for the initial run, for next scale up/down it's expected
-    # that the LB is already set.
-    [ -e ${ANSDIR}.deployed ] || update_etc_hosts "$master_ip" "$lb_hostname"
-else
-    update_etc_hosts "$lb_ip" "$lb_hostname"
-fi
 
 [ "$prepare_ansible" == "False" ] && exit 0
 

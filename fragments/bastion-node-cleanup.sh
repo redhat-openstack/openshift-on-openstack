@@ -1,6 +1,5 @@
 #!/bin/bash
 # ENVVARS
-#   SKIP_DNS = boolean: local DNS updates are disabled
 #   node_name = "<hostname>"
 
 # Exit on fail or bad VAR expansion
@@ -37,12 +36,5 @@ fi
 [ -e $INVENTORY ] && ansible $node_name -m shell \
         -u $ssh_user --sudo -i $INVENTORY \
         -a "subscription-manager unregister && subscription-manager clean" || true
-
-# Save a copy of the current host file
-cp /etc/hosts{,.bkp}
-
-# Remove the node IP entry from the hosts file (saving the backup)
-grep -v "$node_name" /etc/hosts.bkp > /etc/hosts
-[ -e /run/ostree-booted ] && cp /etc/hosts /host/etc/hosts
 
 echo "Deleted node $node_name"

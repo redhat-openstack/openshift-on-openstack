@@ -5,7 +5,6 @@
 # ENVVARS
 #   WC_NOTIFY - a curl URL fragment from an OpenStack WaitCondition
 #               used to signal OpenStack of completion status
-#   DNS_IP    - The IP address of the nearest resolver host
 #
 #   OPENSHIFT_ANSIBLE_GIT_URL - the URL of a git repository containing the
 #                               openshift ansible playbooks and configs
@@ -33,16 +32,6 @@ HEAT_AGENT_CONTAINER_IMAGE=jprovaznik/ooshift-heat-agent
 
 # Select the EPEL release to make it easier to update
 EPEL_RELEASE_VERSION=7-7
-
-# --- DNS functions ----------------------------------------------------------
-#
-# Disable automatic updates of resolv.conf when an interface comes up
-function disable_resolv_updates() {
-    # INTERFACE=$1
-    sed -i -e '/^PEERDNS=/s/=.*/="no"/' \
-        /etc/sysconfig/network-scripts/ifcfg-$1
-}
-
 
 # ----------------------------------------------------------------------------
 # Functions for Atomic Host systems
@@ -130,9 +119,6 @@ function clone_openshift_ansible() {
     git checkout "$2" ||
         notify_failure "could not check out openshift-ansible rev $2"
 }
-
-# Do not update resolv.conf from eth0 when the system boots
-disable_resolv_updates eth0
 
 sudo_enable_from_ssh
 

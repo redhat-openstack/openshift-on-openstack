@@ -89,10 +89,6 @@ parameters:
     description: List of rhn pools which will be installed on each node.
     default: ''
 
-  dns_ip:
-    description: IP address of the DNS server
-    type: string
-
   ssh_user:
     description: >
       The user for SSH access to the VM hosts
@@ -159,9 +155,6 @@ parameters:
     description: >
       The name or ID of the bastion instance.
     default: ''
-
-  skip_dns:
-    type: boolean
 
 outputs:
   console_url:
