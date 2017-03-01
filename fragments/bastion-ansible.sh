@@ -139,7 +139,7 @@ function is_scaleup() {
 function update_etc_hosts() {
     # $1 - IP
     # $2 - hostname
-    grep -q "$2" /etc/hosts || echo "$1 $2" >> /etc/hosts
+    grep -q "$2" /etc/hosts-todo || echo "$1 $2" >> /etc/hosts-todo
 }
 
 if [ "$lb_type" == "external" ]; then

@@ -19,5 +19,5 @@ mkdir -p /var/lib/ansible/
 touch $NODESFILE
 grep -q "$node_hostname" $NODESFILE || echo $node_hostname >> $NODESFILE
 
-echo "$node_etc_host" >> /etc/hosts
-[ -e /run/ostree-booted ] && cp /etc/hosts /host/etc/hosts || true
+echo "$node_etc_host" >> /etc/hosts-todo
+[ -e /run/ostree-booted ] && cp /etc/hosts-todo /host/etc/hosts || true

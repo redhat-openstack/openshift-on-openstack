@@ -42,7 +42,7 @@ fi
 cp /etc/hosts{,.bkp}
 
 # Remove the node IP entry from the hosts file (saving the backup)
-grep -v "$node_name" /etc/hosts.bkp > /etc/hosts
-[ -e /run/ostree-booted ] && cp /etc/hosts /host/etc/hosts
+grep -v "$node_name" /etc/hosts.bkp > /etc/hosts-todo
+[ -e /run/ostree-booted ] && cp /etc/hosts-todo /host/etc/hosts
 
 echo "Deleted node $node_name"

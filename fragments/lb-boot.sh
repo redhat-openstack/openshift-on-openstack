@@ -26,7 +26,7 @@ then
 fi
 
 # Disable updates to the /etc/resolv.conf file for DNS when starting eth0
-sed -i '/^PEERDNS=/s/=.*/=no/' /etc/sysconfig/network-scripts/ifcfg-eth0
+echo sed -i '/^PEERDNS=/s/=.*/=no/' /etc/sysconfig/network-scripts/ifcfg-eth0
 
 # workaround for openshift-ansible - Add /usr/local/bin to sudo PATH
 #   symlinks are created in /usr/local/bin but this path is not by
