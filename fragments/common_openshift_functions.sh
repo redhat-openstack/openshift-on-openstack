@@ -1,6 +1,6 @@
 function disable_peerdns() {
     # INTERFACE=$1
-    sed -i '/^PEERDNS=/s/=.*/="no"/' /etc/sysconfig/network-scripts/ifcfg-$1
+    echo sed -i '/^PEERDNS=/s/=.*/="no"/' /etc/sysconfig/network-scripts/ifcfg-$1
 }
 
 # workaround for openshift-ansible - symlinks are created in /usr/local/bin but
@@ -69,6 +69,3 @@ EOF
     # Force re-read of systemd configuration and apply
     systemctl daemon-reload
 }
-
-
-

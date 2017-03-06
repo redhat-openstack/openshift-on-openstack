@@ -39,8 +39,8 @@ EPEL_RELEASE_VERSION=7-7
 # Disable automatic updates of resolv.conf when an interface comes up
 function disable_resolv_updates() {
     # INTERFACE=$1
-    sed -i -e '/^PEERDNS=/s/=.*/="no"/' \
-        /etc/sysconfig/network-scripts/ifcfg-$1
+    echo sed -i -e '/^PEERDNS=/s/=.*/="no"/' \
+         /etc/sysconfig/network-scripts/ifcfg-$1
 }
 
 
