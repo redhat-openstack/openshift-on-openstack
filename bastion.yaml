@@ -173,9 +173,6 @@ parameters:
     type: number
     default: 4000
 
-  skip_dns:
-    type: boolean
-
   system_update:
     type: boolean
 
@@ -249,7 +246,6 @@ resources:
       config:
         str_replace:
           params:
-            $SKIP_DNS: {get_param: skip_dns}
             $OPENSHIFT_ANSIBLE_GIT_URL: {get_param: openshift_ansible_git_url}
             $OPENSHIFT_ANSIBLE_GIT_REV: {get_param: openshift_ansible_git_rev}
             $DOCKER_VOLUME_ID: {get_resource: docker_volume}
@@ -362,13 +358,11 @@ resources:
         - "\n"
         - - "#!/bin/bash"
           - "set -eux"
-          - get_file: templates/var/lib/ansible/templates/etc/resolv.conf
           - get_file: templates/var/lib/ansible/group_vars/masters.yml
           - get_file: templates/var/lib/ansible/group_vars/nodes.yml
           - get_file: templates/var/lib/ansible/host_vars/loadbalancer.yml
           - get_file: templates/var/lib/ansible/group_vars/OSv3.yml
           - get_file: templates/var/lib/ansible/playbooks/registry.yml
-          - get_file: templates/var/lib/ansible/playbooks/dns.yml
           - get_file: templates/var/lib/ansible/playbooks/main.yml
           - get_file: templates/var/lib/ansible/playbooks/scaleup.yml
           - get_file: templates/var/lib/ansible/playbooks/scaledown.yml

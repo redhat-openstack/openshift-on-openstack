@@ -35,10 +35,6 @@ parameters:
     constraints:
     - custom_constraint: nova.flavor
 
-  dns_ip:
-    description: IP address of the internal DNS server
-    type: string
-
   docker_volume_size:
     description: >
       size of a cinder volume in GB to allocate to docker for container/image
@@ -203,9 +199,6 @@ parameters:
     description: >
       ID of the network access policies for the OpenShift master hosts
     type: string
-
-  skip_dns:
-    type: boolean
 
   system_update:
     type: boolean
@@ -400,8 +393,6 @@ resources:
       config:
         str_replace:
           params:
-            $DNS_IP: {get_param: dns_ip}
-            $SKIP_DNS: {get_param: skip_dns}
             $DOCKER_VOLUME_ID: {get_resource: docker_volume}
           template: {get_file: fragments/master-boot.sh}
 
@@ -416,11 +407,7 @@ resources:
       - name: node_type
       outputs:
       - name: result
-      config:
-        str_replace:
-          params:
-            $SKIP_DNS: {get_param: skip_dns}
-          template: {get_file: fragments/bastion-node-add.sh}
+      config: {get_file: fragments/bastion-node-add.sh}
 
   # Add the hostname and address of the bastion host to the master host
   deployment_bastion_node_add:
@@ -458,11 +445,7 @@ resources:
         default: {get_param: ssh_user}
       outputs:
       - name: result
-      config:
-        str_replace:
-          params:
-            $SKIP_DNS: {get_param: skip_dns}
-          template: {get_file: fragments/bastion-node-cleanup.sh}
+      config: {get_file: fragments/bastion-node-cleanup.sh}
 
   # activation hook for removing the node from DNS and from the Kubernetes
   # cluster

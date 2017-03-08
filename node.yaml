@@ -54,10 +54,6 @@ parameters:
       ID of the network access policies for the OpenShift node hosts
     type: string
 
-  dns_ip:
-    description: IP address of the DNS server which serves this domain
-    type: string
-
   docker_volume_size:
     description: >
       size of a cinder volume in GB to allocate to docker for container/image
@@ -162,9 +158,6 @@ parameters:
     description: >
       A reference to the OpenStack stack id
     type: json
-
-  skip_dns:
-    type: boolean
 
   system_update:
     type: boolean
@@ -514,8 +507,6 @@ resources:
       config:
         str_replace:
           params:
-            $DNS_IP: {get_param: dns_ip}
-            $SKIP_DNS: {get_param: skip_dns}
             $DOCKER_VOLUME_ID: {get_attr: [docker_volume, volume_id]}
             $CONTAINER_QUOTA: {get_param: container_quota}
           template: {get_file: fragments/node-boot.sh}
@@ -550,11 +541,7 @@ resources:
         default: {get_param: ssh_user}
       outputs:
       - name: result
-      config:
-        str_replace:
-          params:
-            $SKIP_DNS: {get_param: skip_dns}
-          template: {get_file: fragments/bastion-node-cleanup.sh}
+      config: {get_file: fragments/bastion-node-cleanup.sh}
 
   # activation hook for removing the node from DNS and from the Kubernetes
   # cluster
@@ -588,11 +575,7 @@ resources:
       - name: node_type
       outputs:
       - name: result
-      config:
-        str_replace:
-          params:
-            $SKIP_DNS: {get_param: skip_dns}
-          template: {get_file: fragments/bastion-node-add.sh}
+      config: {get_file: fragments/bastion-node-add.sh}
 
   # activation hook to add the node to DNS and Kubernetes cluster
   deployment_bastion_node_add:
@@ -639,8 +622,6 @@ resources:
           default: {get_param: ssh_user}
         - name: deployment_type
           default: {get_param: deployment_type}
-        - name: skip_dns
-          default: {get_param: skip_dns}
         - name: lb_ip
           default: {get_param: lb_ip}
         - name: master_ip
@@ -689,8 +670,6 @@ resources:
           default: {get_param: os_region_name}
         - name: lb_type
           default: {get_param: loadbalancer_type}
-        - name: dns_ip
-          default: {get_param: dns_ip}
         - name: dns_forwarders
           default:
             list_join:

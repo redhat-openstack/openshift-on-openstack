@@ -3,8 +3,6 @@ cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/scal
 {{=<% %>=}}
 - include: /var/lib/ansible/playbooks/quota.yml
 
-- include: /var/lib/ansible/playbooks/dns.yml
-
 - include: /usr/share/ansible/openshift-ansible/playbooks/byo/openshift-node/scaleup.yml
   vars:
     openshift_infra_nodes: "{{ groups.infra | default([]) }}"

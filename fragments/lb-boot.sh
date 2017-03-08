@@ -3,7 +3,6 @@
 # Prepare the Load Balancer host to run ansible for host configuration
 #
 # ENVVARS
-#   DNS_IP:    The IP address of the closest DNS server for name resolution
 #   WC_NOTIFY: A curl query prefix to provide status to OpenStack WaitCondition
 
 # Exit immediately on error or on reference to an undefined variable
@@ -18,15 +17,6 @@ source /usr/local/share/openshift-on-openstack/common_functions.sh
 # ==============================================================================
 # MAIN
 # ==============================================================================
-
-# Add a nameserver line for the local DNS server
-if [ -n "$DNS_IP" ]
-then
-    sed -i '/search openstacklocal.*/a\nnameserver $DNS_IP' /etc/resolv.conf
-fi
-
-# Disable updates to the /etc/resolv.conf file for DNS when starting eth0
-sed -i '/^PEERDNS=/s/=.*/=no/' /etc/sysconfig/network-scripts/ifcfg-eth0
 
 # workaround for openshift-ansible - Add /usr/local/bin to sudo PATH
 #   symlinks are created in /usr/local/bin but this path is not by
