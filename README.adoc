@@ -25,9 +25,9 @@ connected by a private _software defined network_ (SDN) which can be
 implemented either with http://openvswitch.org/[OpenVSwitch] or https://github.com/coreos/flannel[Flannel].
 
 A _bastion server_ is used to control the host and service
-configuration.  It can also run local DNS services as
-needed. The host and service configuration is run using
-https://www.ansible.com/[Ansible] playbooks executed from the bastion host.
+configuration. The host and service configuration is run using
+https://www.ansible.com/[Ansible] playbooks executed from the bastion
+host.
 
 _Bastion server_, _master nodes_ and _infra nodes_ is also given a _floating IP_
 address on the public network. This provides direct access to the
@@ -67,6 +67,28 @@ inter-node communication).
 . A (Neutron) network with a pool of floating IP addresses available
 
 CentOS and RHEL are the only tested distros for now.
+
+=== DNS Server
+
+The OpenShift installer requires that all nodes be reachable via their
+hostnames. Since OpenStack does not currently provide an internal name
+resolution, this needs to be done with an external DNS service that
+all nodes use via the `dns_nameserver` parameter.
+
+In a production deployment this would be your existing DNS, but if you
+don't have the ability to update it to add new name records, you will
+have to deploy one yourself.
+
+We have provided a separate repository that can deploy a DNS server
+suitable for OpenShift:
+
+https://github.com/openshift/openshift-ansible-contrib/tree/master/reference-architecture/osp-dns
+
+NOTE: If your DNS supports dynamic updates via RFC 2136, you can pass
+the update key to the Heat stack and all nodes will register
+themselves as they come up. Otherwise, you will have to update your
+DNS records manually.
+
 
 === Red Hat Software Repositories
 
@@ -479,6 +501,17 @@ and `router_ip` is `172.24.4.168` there should be a DNS record for domain
 The above DNS records should be set on the DNS server authoritative for the
 domain used in OpenShift cluster (`example.com` in the example above).
 ====
+
+
+=== Dynamic DNS Updates
+
+If your DNS servers support dynamic updates (as defined in RFC 2136),
+you can pass the update key in the `dns_update_key` parameter and each
+node will register its internal IP address to all the DNS servers in
+the `dns_nameserver` list.
+
+You will still need to set the API and wildcard entries, though.
+
 
 == Retrieving the CA certificate
 

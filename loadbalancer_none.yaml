@@ -112,6 +112,9 @@ parameters:
   floatingip_id:
     type: string
 
+  floatingip:
+    type: string
+
   fixed_network:
     description: >
       The name or ID of the internal network
@@ -159,6 +162,14 @@ parameters:
     description: >
       The name or ID of the bastion instance.
     default: ''
+
+  dns_servers:
+    type: comma_delimited_list
+    description: address of dns nameservers reachable in your environment
+
+  dns_update_key:
+    type: string
+    hidden: true
 
 outputs:
   console_url:

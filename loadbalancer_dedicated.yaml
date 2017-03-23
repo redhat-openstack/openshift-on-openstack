@@ -114,6 +114,9 @@ parameters:
   floatingip_id:
     type: string
 
+  floatingip:
+    type: string
+
   fixed_network:
     description: >
       The name or ID of the internal network
@@ -157,6 +160,14 @@ parameters:
   stack_name:
     description: Top level stack name.
     type: string
+
+  dns_servers:
+    type: comma_delimited_list
+    description: address of dns nameservers reachable in your environment
+
+  dns_update_key:
+    type: string
+    hidden: true
 
 resources:
   floating_ip_assoc:
@@ -226,6 +237,7 @@ resources:
       - config: {get_resource: set_extra_repos}
       - config: {get_resource: set_extra_docker_repos}
       - config: {get_resource: host_update}
+      - config: {get_resource: add_dns_record}
       - config: {get_resource: lb_boot}
 
   # Compose the FQDN and set the hostname in the cloud-init data structure
@@ -256,6 +268,9 @@ resources:
         - path: /usr/bin/retry
           permissions: 0755
           content: {get_file: fragments/retry.sh}
+        - path: /usr/local/bin/update_dns
+          permissions: 0755
+          content: {get_file: fragments/update_dns.py}
         - path: /usr/local/share/openshift-on-openstack/common_functions.sh
           permissions: 0755
           content:
@@ -318,13 +333,25 @@ resources:
       config:
         get_file: fragments/host-update.sh
 
+  add_dns_record:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            '%DNS_SERVERS%': {list_join: [" ", {get_param: dns_servers}]}
+            '%DNS_UPDATE_KEY%': {get_param: dns_update_key}
+            '%IP_ADDRESS%': {get_param: floatingip}
+          template: {get_file: fragments/add_dns_record.sh}
+
+
   # Prepare the host for SSH access for ansible
   lb_boot:
     type: OS::Heat::SoftwareConfig
     properties:
       config:
         str_replace:
-          params:
+          params: {}
           template: {get_file: fragments/lb-boot.sh}
 
   node_cleanup:
