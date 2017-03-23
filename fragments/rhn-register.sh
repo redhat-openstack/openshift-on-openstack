@@ -38,10 +38,10 @@ function register_rhn() {
 function install_sat6_ca_certs() {
     # SAT6_HOSTNAME=$1
     local SAT6_KEY_RPM="katello-ca-consumer-$1"
-    local SAT6_KEY_RPM_URL="https://${1}/pub/katello-ca-consumer-latest.noarch.rpm"
+    local SAT6_KEY_RPM_URL="http://${1}/pub/katello-ca-consumer-latest.noarch.rpm"
 
     if ! rpm -q --quiet $SAT6_KEY_RPM ; then
-        retry yum -y install $SAT6_KEY_RPM_URL
+        retry yum -y localinstall $SAT6_KEY_RPM_URL
     fi
 }
 
