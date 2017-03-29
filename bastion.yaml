@@ -196,6 +196,10 @@ parameters:
     description: List of docker repository URLs which will be installed on each node, if a repo is insecure use '#insecure' suffix.
     default: ''
 
+  trusted_ca_cert:
+    type: string
+    description: Certificate Authority Certificate to be added to trust chain
+
 resources:
 
   # A VM to provide host based orchestration and other sub-services
@@ -230,6 +234,7 @@ resources:
       parts:
       - config: {get_resource: set_hostname}
       - config: {get_resource: included_files}
+      - config: {get_resource: ca_cert}
       - config: {get_resource: rhn_register}
       - config: {get_resource: set_extra_repos}
       - config: {get_resource: set_extra_docker_repos}
@@ -293,6 +298,15 @@ resources:
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
 
+  # Add CA Cert to trust chain
+  ca_cert:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            $CA_CERT: {get_param: trusted_ca_cert}
+          template: {get_file: fragments/ca_cert.sh}
 
   # Register the host with RHN for access to software packages
   rhn_register:
