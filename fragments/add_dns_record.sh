@@ -20,7 +20,7 @@ fi
 
 HOSTNAME="$(hostname --fqdn)"
 
-for DNS_SERVER in "%DNS_SERVERS%"; do
+for DNS_SERVER in %DNS_SERVERS%; do
     # NOTE: the dot after the hostname is necessary
     /usr/local/bin/update_dns  -s "$DNS_SERVER" -k "$DNS_UPDATE_KEY" "$HOSTNAME." "%IP_ADDRESS%"
 done
