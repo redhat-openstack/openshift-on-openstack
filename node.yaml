@@ -71,7 +71,7 @@ parameters:
       The password for the RHN user
     type: string
     hidden: true
-  
+
   # Red Hat satellite subscription parameters
   sat6_hostname:
     type: string
@@ -325,9 +325,13 @@ parameters:
       The name of the OpenStack "region" to use to create or find resources
     type: string
 
-  dns_forwarders:
+  dns_servers:
     type: comma_delimited_list
     description: address of dns nameservers reachable in your environment
+
+  dns_update_key:
+    type: string
+    hidden: true
 
   router_vip:
     description: >
@@ -396,6 +400,7 @@ resources:
       - config: {get_resource: set_extra_repos}
       - config: {get_resource: set_extra_docker_repos}
       - config: {get_resource: host_update}
+      - config: {get_resource: add_dns_record}
       - config: {get_resource: node_boot}
 
   # Compose the node identifiers: hostname and FQDN: provide them to cloud-init
@@ -436,6 +441,9 @@ resources:
         - path: /usr/local/bin/retry
           permissions: 0755
           content: {get_file: fragments/retry.sh}
+        - path: /usr/local/bin/update_dns
+          permissions: 0755
+          content: {get_file: fragments/update_dns.py}
         - path: /etc/sysconfig/network-scripts/ifcfg-eth1
           content:
             str_replace:
@@ -499,6 +507,19 @@ resources:
           params:
             $SYSTEM_UPDATE: {get_param: system_update}
           template: {get_file: fragments/host-update.sh}
+
+  add_dns_record:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            '%ZONE%': {get_param: domain_name}
+            '%DNS_SERVER%': {get_param: [dns_servers, 0]}
+            '%DNS_UPDATE_KEY%': {get_param: dns_update_key}
+            '%IP_ADDRESS%': {get_attr: [port, fixed_ips, 0, ip_address]}
+          template: {get_file: fragments/add_dns_record.sh}
+
 
   # Prepare the node to run Docker and Ansible on first boot
   node_boot:
@@ -674,7 +695,7 @@ resources:
           default:
             list_join:
               - ","
-              - {get_param: dns_forwarders}
+              - {get_param: dns_servers}
         - name: bastion_instance_id
           default: {get_param: bastion_node}
         - name: router_vip

@@ -137,6 +137,21 @@ parameters:
       These will be configured into the OpenStack networks. They are the
       namservers that new OpenShift instances will use.
 
+  dns_update_key:
+    type: string
+    description: >
+      A key for updating the DNS servers.
+
+      If specified, each node will update the `dns_nameserver` with
+      the A record of their hostname and internal IP address.
+
+      If left empty, no DNS updates will be performed. Note that the
+      OpenShift installation will fail if the nodes cannot resolve each
+      other. As such, this means you will have to update your DNS
+      servers manually.
+    hidden: true
+    default: ""
+
   system_update:
     type: boolean
     description: Run "yum update" on each node on first boot.
@@ -608,6 +623,8 @@ resources:
           system_update: {get_param: system_update}
           extra_repository_urls: {get_param: extra_repository_urls}
           extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
+          dns_servers: {get_param: dns_nameserver}
+          dns_update_key: {get_param: dns_update_key}
 
   openshift_infra_nodes:
     depends_on: [external_router_interface, fixed_network, fixed_subnet]
@@ -650,6 +667,8 @@ resources:
           system_update: {get_param: system_update}
           extra_repository_urls: {get_param: extra_repository_urls}
           extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
+          dns_servers: {get_param: dns_nameserver}
+          dns_update_key: {get_param: dns_update_key}
 
   openshift_nodes:
     depends_on: [external_router_interface, fixed_network, fixed_subnet]
@@ -717,7 +736,8 @@ resources:
           os_tenant_name: {get_param: os_tenant_name}
           os_region_name: {get_param: os_region_name}
           loadbalancer_type: {get_param: loadbalancer_type}
-          dns_forwarders: {get_param: dns_nameserver}
+          dns_servers: {get_param: dns_nameserver}
+          dns_update_key: {get_param: dns_update_key}
           lb_ip: {get_attr: [lb_floating_ip, floating_ip_address]}
           master_ip: {get_attr: [openshift_masters, resource.0.ip_address]}
           lb_hostname: {get_attr: [loadbalancer, hostname]}
@@ -965,12 +985,15 @@ resources:
       members: {get_attr: [openshift_masters, host]}
       master_hostname: {get_attr: [openshift_masters, resource.0.hostname]}
       floatingip_id: {get_resource: lb_floating_ip}
+      floatingip: {get_attr: [lb_floating_ip, floating_ip_address]}
       fixed_network: {get_resource: fixed_network}
       fixed_subnet: {get_resource: fixed_subnet}
       extra_repository_urls: {get_param: extra_repository_urls}
       extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
       stack_name: {get_param: 'OS::stack_name'}
       bastion_node: {get_attr: [bastion_host, resource.host]}
+      dns_servers: {get_param: dns_nameserver}
+      dns_update_key: {get_param: dns_update_key}
 
 outputs:
 

@@ -213,6 +213,14 @@ parameters:
     description: List of docker repository URLs which will be installed on each node, if a repo is insecure use '#insecure' suffix.
     default: ''
 
+  dns_servers:
+    type: comma_delimited_list
+    description: address of dns nameservers reachable in your environment
+
+  dns_update_key:
+    type: string
+    hidden: true
+
 resources:
 
   # Create a network connection on the internal communications network
@@ -287,6 +295,7 @@ resources:
       - config: {get_resource: set_extra_repos}
       - config: {get_resource: set_extra_docker_repos}
       - config: {get_resource: host_update}
+      - config: {get_resource: add_dns_record}
       - config: {get_resource: master_boot}
 
   # Compose the short hostname and fully qualified domain name for the new host
@@ -321,6 +330,9 @@ resources:
         - path: /usr/local/bin/retry
           permissions: 0755
           content: {get_file: fragments/retry.sh}
+        - path: /usr/local/bin/update_dns
+          permissions: 0755
+          content: {get_file: fragments/update_dns.py}
         - path: /etc/sysconfig/network-scripts/ifcfg-eth1
           content:
             str_replace:
@@ -384,6 +396,18 @@ resources:
           params:
             $SYSTEM_UPDATE: {get_param: system_update}
           template: {get_file: fragments/host-update.sh}
+
+  add_dns_record:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            '%ZONE%': {get_param: domain_name}
+            '%DNS_SERVER%': {get_param: [dns_servers, 0]}
+            '%DNS_UPDATE_KEY%': {get_param: dns_update_key}
+            '%IP_ADDRESS%': {get_attr: [port, fixed_ips, 0, ip_address]}
+          template: {get_file: fragments/add_dns_record.sh}
 
   # Prepare the host to run Docker and Ansible for OpenShift install and config
   master_boot:
