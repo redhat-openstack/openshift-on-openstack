@@ -16,12 +16,9 @@ set -o pipefail
 # MAIN
 # =============================================================================
 
-if [ -n "$CA_CERT" ] ; then
-    update-ca-trust enable
-    cat >/etc/pki/ca-trust/source/anchors/ca.crt <<EOF
-$CA_CERT
-EOF
-    update-ca-trust extract
+if [ -f /etc/pki/ca-trust/source/anchors/ca.crt ] ; then
+  update-ca-trust enable
+  update-ca-trust extract
 else
     exit 0
 fi
