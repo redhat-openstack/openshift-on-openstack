@@ -46,6 +46,9 @@ parameters:
       All VMs will be placed in this domain
     type: string
 
+  app_subdomain:
+    type: string
+
   rhn_username:
     description: >
       A valid user with entitlements to RHEL and OpenShift software repos
@@ -238,6 +241,7 @@ resources:
       - config: {get_resource: set_extra_docker_repos}
       - config: {get_resource: host_update}
       - config: {get_resource: add_dns_record}
+      - config: {get_resource: add_wildcard_record}
       - config: {get_resource: lb_boot}
 
   # Compose the FQDN and set the hostname in the cloud-init data structure
@@ -339,6 +343,19 @@ resources:
       config:
         str_replace:
           params:
+            '%ZONE%': {get_param: domain_name}
+            '%DNS_SERVER%': {get_param: [dns_servers, 0]}
+            '%DNS_UPDATE_KEY%': {get_param: dns_update_key}
+            '%IP_ADDRESS%': {get_param: floatingip}
+          template: {get_file: fragments/add_dns_record.sh}
+
+  add_wildcard_record:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            '%DNS_ENTRY%': {list_join: ["", ["*.", {get_param: app_subdomain}]]}
             '%ZONE%': {get_param: domain_name}
             '%DNS_SERVER%': {get_param: [dns_servers, 0]}
             '%DNS_UPDATE_KEY%': {get_param: dns_update_key}

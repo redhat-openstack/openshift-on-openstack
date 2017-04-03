@@ -979,6 +979,7 @@ resources:
       extra_rhn_pools: {get_param: extra_rhn_pools}
       hostname: {get_param: lb_hostname}
       domain_name: {get_param: domain_name}
+      app_subdomain: {get_param: app_subdomain}
       stack_name: {get_param: 'OS::stack_name'}
       ansible_public_key: {get_attr: [ansible_keys, public_key]}
       fixed_subnet: {get_resource: fixed_subnet}
