@@ -510,7 +510,9 @@ you can pass the update key in the `dns_update_key` parameter and each
 node will register its internal IP address to all the DNS servers in
 the `dns_nameserver` list.
 
-You will still need to set the API and wildcard entries, though.
+In addition, if you use the *dedicated load balancer*, the API and
+wildcard entries will be created as well. Otherwise, you will need to
+set them manually.
 
 
 == Retrieving the CA certificate
