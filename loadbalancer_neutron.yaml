@@ -160,6 +160,10 @@ parameters:
     type: string
     hidden: true
 
+  ca_cert:
+    type: string
+    description: Certificate Authority Certificate to be added to trust chain
+
 resources:
   lb:
     type: OS::Neutron::LoadBalancer

@@ -493,6 +493,11 @@ parameters:
     description: Extra parameters for openshift-ansible as a JSON string
     default: ""
 
+  ca_cert:
+    type: string
+    description: Certificate Authority Certificate to be added to trust chain
+    default: ''
+
 resources:
 
   # Network Components
@@ -583,6 +588,7 @@ resources:
       system_update: {get_param: system_update}
       extra_repository_urls: {get_param: extra_repository_urls}
       extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
+      ca_cert: {get_param: ca_cert}
 
   openshift_masters:
     depends_on: [external_router_interface, fixed_network, fixed_subnet]
@@ -626,6 +632,7 @@ resources:
           extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
           dns_servers: {get_param: dns_nameserver}
           dns_update_key: {get_param: dns_update_key}
+          ca_cert: {get_param: ca_cert}
 
   openshift_infra_nodes:
     depends_on: [external_router_interface, fixed_network, fixed_subnet]
@@ -670,6 +677,7 @@ resources:
           extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
           dns_servers: {get_param: dns_nameserver}
           dns_update_key: {get_param: dns_update_key}
+          ca_cert: {get_param: ca_cert}
 
   openshift_nodes:
     depends_on: [external_router_interface, fixed_network, fixed_subnet]
@@ -747,6 +755,7 @@ resources:
           prepare_ansible: {get_param: prepare_ansible}
           execute_ansible: {get_param: execute_ansible}
           extra_openshift_ansible_params: {get_param: extra_openshift_ansible_params}
+          ca_cert: {get_param: ca_cert}
 
   # Define the network access policy for openshift nodes
   node_security_group:
@@ -996,6 +1005,7 @@ resources:
       bastion_node: {get_attr: [bastion_host, resource.host]}
       dns_servers: {get_param: dns_nameserver}
       dns_update_key: {get_param: dns_update_key}
+      ca_cert: {get_param: ca_cert}
 
 outputs:
 

@@ -352,6 +352,10 @@ parameters:
       Automatically scale up/down openshift nodes.
     default: false
 
+  ca_cert:
+    type: string
+    description: Certificate Authority Certificate to be added to trust chain
+
 resources:
 
   # Generate a string to distinguish one node from the others
@@ -402,6 +406,7 @@ resources:
       parts:
       - config: {get_resource: set_hostname}
       - config: {get_resource: included_files}
+      - config: {get_resource: update_ca_cert}
       - config: {get_resource: rhn_register}
       - config: {get_resource: set_extra_repos}
       - config: {get_resource: set_extra_docker_repos}
@@ -456,8 +461,21 @@ resources:
               params:
                 $IFNAME: eth1
               template: {get_file: fragments/ifcfg-eth}
+        - path: /etc/pki/ca-trust/source/anchors/ca.crt
+          permissions: 0600
+          content: {get_param: ca_cert}
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
+
+  # Add CA Cert to trust chain
+  update_ca_cert:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            $CA_CERT: {get_param: ca_cert}
+          template: {get_file: fragments/ca_cert.sh}
 
   # Connect to software update source for RHEL
   rhn_register:
