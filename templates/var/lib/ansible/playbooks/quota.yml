@@ -2,7 +2,7 @@ mkdir -p /var/lib/os-apply-config/templates/var/lib/ansible/playbooks
 cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/quota.yml
 ---
 - name: Apply gquota options to XFS mount points
-  hosts: masters, nodes
+  hosts: nodes,new_nodes
   roles:
     - role: fstab_mount_options
       fmo_mount_point: "/"
