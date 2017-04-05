@@ -346,6 +346,10 @@ parameters:
     type: string
     description: Extra parameters for openshift-ansible
 
+  osp_ca_cert:
+    type: string
+    description: Certificate Authority Certificate to be added to trust chain
+
 resources:
 
   # Generate a string to distinguish one node from the others
@@ -396,6 +400,7 @@ resources:
       parts:
       - config: {get_resource: set_hostname}
       - config: {get_resource: included_files}
+      - config: {get_resource: ca_cert}
       - config: {get_resource: rhn_register}
       - config: {get_resource: set_extra_repos}
       - config: {get_resource: set_extra_docker_repos}
@@ -452,6 +457,16 @@ resources:
               template: {get_file: fragments/ifcfg-eth}
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
+
+  # Add CA Cert to trust chain
+  ca_cert:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            $CA_CERT: {get_param: osp_ca_cert}
+          template: {get_file: fragments/ca_cert.sh}
 
   # Connect to software update source for RHEL
   rhn_register:
