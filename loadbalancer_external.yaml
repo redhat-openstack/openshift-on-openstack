@@ -48,6 +48,9 @@ parameters:
       All VMs will be placed in this domain
     type: string
 
+  app_subdomain:
+    type: string
+
   rhn_username:
     description: >
       A valid user with entitlements to RHEL and OpenShift software repos
