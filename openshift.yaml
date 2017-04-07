@@ -554,6 +554,7 @@ resources:
     depends_on: [external_router_interface, fixed_network, fixed_subnet, registry_volume]
     type: bastion.yaml
     properties:
+      node_count: {get_param: node_count}
       ocp_version: {get_param: ocp_version}
       osp_version: {get_param: osp_version}
       ansible_version: {get_param: ansible_version}
@@ -688,6 +689,7 @@ resources:
       resource:
         type: node.yaml
         properties:
+          autoscaling: {get_param: autoscaling}
           ocp_version: {get_param: ocp_version}
           image: {get_param: node_image}
           flavor: {get_param: node_flavor}

@@ -346,6 +346,12 @@ parameters:
     type: string
     description: Extra parameters for openshift-ansible
 
+  autoscaling:
+    type: boolean
+    description: >
+      Automatically scale up/down openshift nodes.
+    default: false
+
   ca_cert:
     type: string
     description: Certificate Authority Certificate to be added to trust chain
@@ -722,6 +728,8 @@ resources:
           default: {get_param: volume_quota}
         - name: extra_openshift_ansible_params
           default: {get_param: extra_openshift_ansible_params}
+        - name: autoscaling
+          default: {get_param: autoscaling}
       outputs:
         - name: ca_cert
         - name: ca_key
