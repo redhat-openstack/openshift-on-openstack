@@ -84,5 +84,10 @@ retry subscription-manager repos \
                      --enable="rhel-7-server-optional-rpms" \
                      --enable="rhel-7-server-ose-$OCP_VERSION-rpms"
 
+# version 3.5+ require fast-datapath
+if [ $(expr "$OCP_VERSION" \> 3.4) -eq 1 ] ; then
+    retry subscription-manager repos --enable rhel-7-fast-datapath-rpms
+fi
+
 # Allow RPM integrity checking
 rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release

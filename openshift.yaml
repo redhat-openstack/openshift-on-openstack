@@ -9,7 +9,7 @@ parameters:
   # This value is used to select the RPM repo for the OCP release to install
   ocp_version:
     type: string
-    default: "3.4"
+    default: "3.5"
     description: >
       The version of OpenShift Container Platform to deploy
 
