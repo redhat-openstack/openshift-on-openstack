@@ -52,6 +52,9 @@ openshift_cloudprovider_openstack_username: {{os_username}}
 openshift_cloudprovider_openstack_password: {{os_password}}
 openshift_cloudprovider_openstack_tenant_name: {{os_tenant_name}}
 openshift_cloudprovider_openstack_region: {{os_region_name}}
+{{#os_domain_name}}
+openshift_cloudprovider_openstack_domain_name: {{os_domain_name}}
+{{/os_domain_name}}
 {{#deploy_registry}}
 openshift_hosted_registry_replicas: 1
 openshift_registry_selector: region=infra

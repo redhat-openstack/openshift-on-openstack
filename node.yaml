@@ -320,6 +320,13 @@ parameters:
       The name of the OpenStack project or "tenant" for OpenShift to use
     type: string
 
+  os_domain_name:
+    description: >
+      The name of the OpenStack domain for OpenShift to use. Leave it
+      empty for v2 authentication.
+    type: string
+    default: ''
+
   os_region_name:
     description: >
       The name of the OpenStack "region" to use to create or find resources
@@ -711,6 +718,8 @@ resources:
           default: {get_param: os_password}
         - name: os_tenant_name
           default: {get_param: os_tenant_name}
+        - name: os_domain_name
+          default: {get_param: os_domain_name}
         - name: os_region_name
           default: {get_param: os_region_name}
         - name: lb_type
