@@ -1,19 +1,32 @@
 heat_template_version: 2014-10-16
 
+parameters:
+
+  # What version of OpenStack Platform to install
+  # This value is used to select the RPM repo for the OSP release to install
+  osp_version:
+    type: string
+    default: "10"
+    description: >
+      The version of OpenStack Platform to use to collect data
+
 resources:
 
   install_config_agent_yum:
     type: "OS::Heat::SoftwareConfig"
     properties:
       group: ungrouped
-      config: {get_file: fragments/install_config_agent_yum.sh}
+      config:
+        str_replace:
+          params:
+            $OSP_VERSION: {get_param: osp_version}
+          template: {get_file: fragments/install_config_agent_yum.sh}
 
   configure_config_agent:
     type: "OS::Heat::SoftwareConfig"
     properties:
       group: ungrouped
-      config:
-        get_file: fragments/configure_config_agent.sh
+      config: {get_file: fragments/configure_config_agent.sh}
 
   start_config_agent:
     type: "OS::Heat::SoftwareConfig"

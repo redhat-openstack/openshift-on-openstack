@@ -70,10 +70,8 @@ function create_metadata_json() {
     "heat_outputs_path": "$heat_outputs_path",
     "ssh_user": "$ssh_user",
     "deployment_type": "$deployment_type",
-    "skip_dns": $([ "$skip_dns" == "True" ] && echo true || echo false),
     "lb_ip": "$lb_ip",
     "dns_forwarders": "$dns_forwarders",
-    "dns_ip": "$dns_ip",
     "ldap_url": "$ldap_url",
     "ldap_bind_dn": "$ldap_bind_dn",
     "ldap_bind_password": "$ldap_bind_password",
@@ -136,28 +134,26 @@ function is_scaleup() {
         grep -v '.*-node') && return 1 || return 0
 }
 
-function update_etc_hosts() {
-    # $1 - IP
-    # $2 - hostname
-    grep -q "$2" /etc/hosts || echo "$1 $2" >> /etc/hosts
+function backup_ansdir() {
+    [ -e ${ANSDIR}.deployed ] && rm -rf ${ANSDIR}.deployed
+    mv ${ANSDIR}.started ${ANSDIR}.deployed
 }
 
-if [ "$lb_type" == "external" ]; then
-    # for external loadbalancer override LB's IP to point to the first master
-    # node (because the LB can not be pre-set and working). This is done
-    # only for the initial run, for next scale up/down it's expected
-    # that the LB is already set.
-    [ -e ${ANSDIR}.deployed ] || update_etc_hosts "$master_ip" "$lb_hostname"
-else
-    update_etc_hosts "$lb_ip" "$lb_hostname"
-fi
-
-[ "$skip_ansible" == "True" ] && exit 0
+[ "$prepare_ansible" == "False" ] && exit 0
 
 mkdir -p /var/lib/ansible/group_vars
 mkdir -p /var/lib/ansible/host_vars
 
 touch $NODESFILE
+
+existing=$(wc -l < $NODESFILE)
+if [ -e /var/lib/ansible/node_count ]; then
+    node_count=$(cat /var/lib/ansible/node_count)
+    if [ $existing -lt $node_count -a "$autoscaling" != "True" ]; then
+        echo "skipping ansible run - only $existing of $node_count is registered"
+        exit 0
+    fi
+fi
 
 create_metadata_json /var/lib/ansible/metadata.json
 
@@ -202,6 +198,11 @@ export ANSIBLE_HOST_KEY_CHECKING=False
 
 logfile=/var/log/ansible.$$
 if is_scaleup; then
+    if [ -z $(get_new_nodes) ]; then
+        echo "There are no new nodes, not running scalup playbook"
+        backup_ansdir
+        exit 0
+    fi
     cmd="ansible-playbook -vvvv --inventory /var/lib/ansible/inventory \
         /var/lib/ansible/playbooks/scaleup.yml"
 else
@@ -209,11 +210,15 @@ else
         /var/lib/ansible/playbooks/main.yml"
 fi
 
-if ! $cmd > $logfile 2>&1; then
-    tail -20 $logfile >&2
-    echo "Failed to run '$cmd', full log is in $(hostname):$logfile" >&2
-    exit 1
+if [ "$execute_ansible" == True ] ; then
+    if ! $cmd > $logfile 2>&1; then
+        tail -20 $logfile >&2
+        echo "Failed to run '$cmd', full log is in $(hostname):$logfile" >&2
+        exit 1
+    else
+        backup_ansdir
+    fi
 else
-    [ -e ${ANSDIR}.deployed ] && rm -rf ${ANSDIR}.deployed
-    mv ${ANSDIR}.started ${ANSDIR}.deployed
+    echo "INFO: ansible execution disabled"
+    echo "INFO: command = $cmd"
 fi

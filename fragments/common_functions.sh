@@ -17,12 +17,6 @@ function sudo_enable_from_ssh() {
     sed -i "/requiretty/s/^/#/" /etc/sudoers
 }
 
-# add the local nameserver to the beginning of the local resolver list
-function add_nameserver() {
-    # NAMESERVER_IP=$1
-    sed -i "/search openstacklocal.*/anameserver $1" /etc/resolv.conf
-}
-
 # All hosts must have an external disk device (cinder?) for docker storage
 function docker_set_storage_device() {
     # By default the cinder volume is mapped to virtio-first_20_chars of cinder

@@ -74,8 +74,7 @@ mkdir -p $oac_templates/var/run/heat-config
 echo "{{deployments}}" > $oac_templates/var/run/heat-config/heat-config
 
 # os-refresh-config scripts directory
-# This moves to /usr/libexec/os-refresh-config in later releases
-orc_scripts=/opt/stack/os-config-refresh
+orc_scripts=/usr/libexec/os-refresh-config
 for d in pre-configure.d configure.d migration.d post-configure.d; do
     install -m 0755 -o root -g root -d $orc_scripts/$d
 done

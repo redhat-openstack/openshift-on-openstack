@@ -1,19 +1,33 @@
 heat_template_version: 2014-10-16
 
-
 description: >
   Deploy Atomic/OpenShift 3 on OpenStack.
 
-
 parameters:
 
-  # What version of OpenShift Enterprise to install
-  # This value is used to select the RPM repo for the OSE release to install
-  ose_version:
+  # What version of OpenShift Container Platform to install
+  # This value is used to select the RPM repo for the OCP release to install
+  ocp_version:
     type: string
-    default: "3.2"
+    default: "3.4"
     description: >
-      The version of OpenShift Enterprise to deploy
+      The version of OpenShift Container Platform to deploy
+
+  # What version of OpenStack Platform to install
+  # This value is used to select the RPM repo for the OSP release to install
+  osp_version:
+    type: string
+    default: "10"
+    description: >
+      The version of OpenStack Platform to use to collect data
+
+  # Allow the caller to specify the version of ansible
+  ansible_version:
+    type: string
+    default: ""
+    description: >
+      Set the RPM version of Ansible that will run on the bastion
+      If empty, use the current version
 
   # Access to the VMs
   ssh_user:
@@ -118,18 +132,25 @@ parameters:
 
   dns_nameserver:
     type: comma_delimited_list
-    description: Addresses of a dns nameserver reachable in your environment
-    default: 8.8.8.8
-
-  skip_dns:
-    type: boolean
     description: >
-      If set to true DNS server is not set on bastion node for resolving
-      OpenShift cluster hostnames (this DNS server is used by OpenShift nodes
-      only, not by users). Instead dnsmasq is configured on each node by
-      openshift-ansible (see openshift-ansible openshift_use_dnsmasq option
-      for details).
-    default: false
+      A comma separated list of DNS nameserver IP addresses in your environment
+      These will be configured into the OpenStack networks. They are the
+      namservers that new OpenShift instances will use.
+
+  dns_update_key:
+    type: string
+    description: >
+      A key for updating the DNS servers.
+
+      If specified, each node will update the `dns_nameserver` with
+      the A record of their hostname and internal IP address.
+
+      If left empty, no DNS updates will be performed. Note that the
+      OpenShift installation will fail if the nodes cannot resolve each
+      other. As such, this means you will have to update your DNS
+      servers manually.
+    hidden: true
+    default: ""
 
   system_update:
     type: boolean
@@ -316,11 +337,23 @@ parameters:
     default: false
 
   # OpenShift configuration: ansible controls
-  skip_ansible:
+  # These are for debugging.
+  #   Setting prepare_ansible=false will stop the stack before creating
+  #   installation config files
+  prepare_ansible:
     type: boolean
     description: >
-      Do not install Openshift using Ansible.
-    default: false
+      Create ansible configuration files for openshift-ansible playbooks
+    default: true
+
+  #   Setting execute_ansible=false will stop the stack before running
+  #   the ansible playbooks to install openshift, but *after* the configuration
+  #   files are generated
+  execute_ansible:
+    type: boolean
+    description: >
+      Run the ansible playbooks to install openshift
+    default: true
 
   openshift_ansible_git_url:
     type: string
@@ -460,6 +493,11 @@ parameters:
     description: Extra parameters for openshift-ansible as a JSON string
     default: ""
 
+  ca_cert:
+    type: string
+    description: Certificate Authority Certificate to be added to trust chain
+    default: ''
+
 resources:
 
   # Network Components
@@ -516,7 +554,10 @@ resources:
     depends_on: [external_router_interface, fixed_network, fixed_subnet, registry_volume]
     type: bastion.yaml
     properties:
-      ose_version: {get_param: ose_version}
+      node_count: {get_param: node_count}
+      ocp_version: {get_param: ocp_version}
+      osp_version: {get_param: osp_version}
+      ansible_version: {get_param: ansible_version}
       image: {get_param: bastion_image}
       flavor: {get_param: bastion_flavor}
       key_name: {get_param: ssh_key_name}
@@ -544,10 +585,10 @@ resources:
       docker_volume_size: {get_param: master_docker_volume_size_gb}
       openshift_ansible_git_url: {get_param: openshift_ansible_git_url}
       openshift_ansible_git_rev: {get_param: openshift_ansible_git_rev}
-      skip_dns: {get_param: skip_dns}
       system_update: {get_param: system_update}
       extra_repository_urls: {get_param: extra_repository_urls}
       extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
+      ca_cert: {get_param: ca_cert}
 
   openshift_masters:
     depends_on: [external_router_interface, fixed_network, fixed_subnet]
@@ -557,12 +598,11 @@ resources:
       resource_def:
         type: master.yaml
         properties:
-          ose_version: {get_param: ose_version}
+          ocp_version: {get_param: ocp_version}
           image: {get_param: master_image}
           flavor: {get_param: master_flavor}
           key_name: {get_param: ssh_key_name}
           ssh_user: {get_param: ssh_user}
-          dns_ip: {get_attr: [bastion_host, instance_ip]}
           rhn_username: {get_param: rhn_username}
           rhn_password: {get_param: rhn_password}
           sat6_hostname: {get_param: sat6_hostname}
@@ -587,10 +627,12 @@ resources:
           external_network: {get_param: external_network}
           master_server_group: {get_resource: master_server_group}
           master_security_group: {get_resource: master_security_group}
-          skip_dns: {get_param: skip_dns}
           system_update: {get_param: system_update}
           extra_repository_urls: {get_param: extra_repository_urls}
           extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
+          dns_servers: {get_param: dns_nameserver}
+          dns_update_key: {get_param: dns_update_key}
+          ca_cert: {get_param: ca_cert}
 
   openshift_infra_nodes:
     depends_on: [external_router_interface, fixed_network, fixed_subnet]
@@ -600,12 +642,11 @@ resources:
       resource_def:
         type: infra.yaml
         properties:
-          ose_version: {get_param: ose_version}
+          ocp_version: {get_param: ocp_version}
           image: {get_param: infra_image}
           flavor: {get_param: infra_flavor}
           key_name: {get_param: ssh_key_name}
           ssh_user: {get_param: ssh_user}
-          dns_ip: {get_attr: [bastion_host, instance_ip]}
           rhn_username: {get_param: rhn_username}
           rhn_password: {get_param: rhn_password}
           sat6_hostname: {get_param: sat6_hostname}
@@ -631,10 +672,12 @@ resources:
           allowed_address_pairs: {get_attr: [ipfailover, allowed_address_pairs]}
           infra_server_group: {get_resource: infra_server_group}
           infra_security_group: {get_resource: infra_security_group}
-          skip_dns: {get_param: skip_dns}
           system_update: {get_param: system_update}
           extra_repository_urls: {get_param: extra_repository_urls}
           extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
+          dns_servers: {get_param: dns_nameserver}
+          dns_update_key: {get_param: dns_update_key}
+          ca_cert: {get_param: ca_cert}
 
   openshift_nodes:
     depends_on: [external_router_interface, fixed_network, fixed_subnet]
@@ -646,12 +689,12 @@ resources:
       resource:
         type: node.yaml
         properties:
-          ose_version: {get_param: ose_version}
+          autoscaling: {get_param: autoscaling}
+          ocp_version: {get_param: ocp_version}
           image: {get_param: node_image}
           flavor: {get_param: node_flavor}
           key_name: {get_param: ssh_key_name}
           ssh_user: {get_param: ssh_user}
-          dns_ip: {get_attr: [bastion_host, instance_ip]}
           fixed_network: {get_resource: fixed_network}
           fixed_subnet: {get_resource: fixed_subnet}
           internal_network: {get_resource: cluster_network}
@@ -675,7 +718,6 @@ resources:
           app_subdomain: {get_param: app_subdomain}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
           bastion_node: {get_attr: [bastion_host, resource.host]}
-          skip_dns: {get_param: skip_dns}
           system_update: {get_param: system_update}
           metadata: {"metering.stack": {get_param: "OS::stack_id"}}
           extra_repository_urls: {get_param: extra_repository_urls}
@@ -704,13 +746,16 @@ resources:
           os_tenant_name: {get_param: os_tenant_name}
           os_region_name: {get_param: os_region_name}
           loadbalancer_type: {get_param: loadbalancer_type}
-          dns_forwarders: {get_param: dns_nameserver}
+          dns_servers: {get_param: dns_nameserver}
+          dns_update_key: {get_param: dns_update_key}
           lb_ip: {get_attr: [lb_floating_ip, floating_ip_address]}
           master_ip: {get_attr: [openshift_masters, resource.0.ip_address]}
           lb_hostname: {get_attr: [loadbalancer, hostname]}
           router_vip: {get_attr: [ipfailover, router_vip]}
-          skip_ansible: {get_param: skip_ansible}
+          prepare_ansible: {get_param: prepare_ansible}
+          execute_ansible: {get_param: execute_ansible}
           extra_openshift_ansible_params: {get_param: extra_openshift_ansible_params}
+          ca_cert: {get_param: ca_cert}
 
   # Define the network access policy for openshift nodes
   node_security_group:
@@ -931,7 +976,7 @@ resources:
   loadbalancer:
     type:  OOShift::LoadBalancer
     properties:
-      ose_version: {get_param: ose_version}
+      ocp_version: {get_param: ocp_version}
       image: {get_param: loadbalancer_image}
       flavor: {get_param: loadbalancer_flavor}
       key_name: {get_param: ssh_key_name}
@@ -945,25 +990,25 @@ resources:
       extra_rhn_pools: {get_param: extra_rhn_pools}
       hostname: {get_param: lb_hostname}
       domain_name: {get_param: domain_name}
+      app_subdomain: {get_param: app_subdomain}
       stack_name: {get_param: 'OS::stack_name'}
       ansible_public_key: {get_attr: [ansible_keys, public_key]}
-      dns_ip: {get_attr: [bastion_floating_ip, floating_ip_address]}
       fixed_subnet: {get_resource: fixed_subnet}
       members: {get_attr: [openshift_masters, host]}
       master_hostname: {get_attr: [openshift_masters, resource.0.hostname]}
       floatingip_id: {get_resource: lb_floating_ip}
+      floatingip: {get_attr: [lb_floating_ip, floating_ip_address]}
       fixed_network: {get_resource: fixed_network}
       fixed_subnet: {get_resource: fixed_subnet}
       extra_repository_urls: {get_param: extra_repository_urls}
       extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
       stack_name: {get_param: 'OS::stack_name'}
       bastion_node: {get_attr: [bastion_host, resource.host]}
-      skip_dns: {get_param: skip_dns}
+      dns_servers: {get_param: dns_nameserver}
+      dns_update_key: {get_param: dns_update_key}
+      ca_cert: {get_param: ca_cert}
 
 outputs:
-  dns_ip:
-    description: IP address of the DNS server OpenShift relies on
-    value: {get_attr: [bastion_floating_ip, floating_ip_address]}
 
   loadbalancer_ip:
     description: External IP address of the loadbalancer for master nodes.

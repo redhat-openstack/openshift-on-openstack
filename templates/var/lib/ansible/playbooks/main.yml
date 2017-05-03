@@ -1,7 +1,6 @@
 mkdir -p /var/lib/os-apply-config/templates/var/lib/ansible/playbooks
 cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/main.yml
 {{=<% %>=}}
-- include: /var/lib/ansible/playbooks/dns.yml
 
 <%#ansible_first_run%>
 <%#external_lb%>

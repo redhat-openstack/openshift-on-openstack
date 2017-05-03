@@ -11,8 +11,8 @@
 #   SAT6_ORGANIZAION - An Organization string to aid grouping of hosts
 #   SAT6_ACTIVATIONKEY - A string used to authorize the registration
 #
-#   OSE_VERSION - the version of the OS repo to enable
-OSE_VERSION=${OSE_VERSION:-"3.2"}
+#   OCP_VERSION - the version of the OS repo to enable
+OCP_VERSION=${OCP_VERSION:-"3.2"}
 
 # Exit on command fail
 set -eu
@@ -38,10 +38,10 @@ function register_rhn() {
 function install_sat6_ca_certs() {
     # SAT6_HOSTNAME=$1
     local SAT6_KEY_RPM="katello-ca-consumer-$1"
-    local SAT6_KEY_RPM_URL="https://${1}/pub/katello-ca-consumer-latest.noarch.rpm"
+    local SAT6_KEY_RPM_URL="http://${1}/pub/katello-ca-consumer-latest.noarch.rpm"
 
     if ! rpm -q --quiet $SAT6_KEY_RPM ; then
-        retry yum -y install $SAT6_KEY_RPM_URL
+        retry yum -y localinstall $SAT6_KEY_RPM_URL
     fi
 }
 
@@ -82,7 +82,7 @@ retry subscription-manager repos \
                      --enable="rhel-7-server-rpms" \
                      --enable="rhel-7-server-extras-rpms" \
                      --enable="rhel-7-server-optional-rpms" \
-                     --enable="rhel-7-server-ose-$OSE_VERSION-rpms"
+                     --enable="rhel-7-server-ose-$OCP_VERSION-rpms"
 
 # Allow RPM integrity checking
 rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release

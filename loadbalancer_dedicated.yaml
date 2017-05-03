@@ -5,12 +5,12 @@ description: >
 
 parameters:
 
-  # What version of OpenShift Enterprise to install
-  # This value is used to select the RPM repo for the OSE release to install
-  ose_version:
+  # What version of OpenShift Container Platform to install
+  # This value is used to select the RPM repo for the OCP release to install
+  ocp_version:
     type: string
     description: >
-      The version of OpenShift Enterprise to deploy
+      The version of OpenShift Container Platform to deploy
 
   key_name:
     description: >
@@ -44,6 +44,9 @@ parameters:
   domain_name:
     description: >
       All VMs will be placed in this domain
+    type: string
+
+  app_subdomain:
     type: string
 
   rhn_username:
@@ -87,10 +90,6 @@ parameters:
     description: List of rhn pools which will be installed on each node.
     default: ''
 
-  dns_ip:
-    description: IP address of the DNS server
-    type: string
-
   ssh_user:
     description: >
       The user for SSH access to the VM hosts
@@ -116,6 +115,9 @@ parameters:
     type: string
 
   floatingip_id:
+    type: string
+
+  floatingip:
     type: string
 
   fixed_network:
@@ -158,12 +160,21 @@ parameters:
       The name or ID of an bastion instance.
     default: ''
 
-  skip_dns:
-    type: boolean
-
   stack_name:
     description: Top level stack name.
     type: string
+
+  dns_servers:
+    type: comma_delimited_list
+    description: address of dns nameservers reachable in your environment
+
+  dns_update_key:
+    type: string
+    hidden: true
+
+  ca_cert:
+    type: string
+    description: Certificate Authority Certificate to be added to trust chain
 
 resources:
   floating_ip_assoc:
@@ -229,10 +240,13 @@ resources:
       parts:
       - config: {get_resource: set_hostname}
       - config: {get_resource: included_files}
+      - config: {get_resource: update_ca_cert}
       - config: {get_resource: rhn_register}
       - config: {get_resource: set_extra_repos}
       - config: {get_resource: set_extra_docker_repos}
       - config: {get_resource: host_update}
+      - config: {get_resource: add_dns_record}
+      - config: {get_resource: add_wildcard_record}
       - config: {get_resource: lb_boot}
 
   # Compose the FQDN and set the hostname in the cloud-init data structure
@@ -263,6 +277,9 @@ resources:
         - path: /usr/bin/retry
           permissions: 0755
           content: {get_file: fragments/retry.sh}
+        - path: /usr/local/bin/update_dns
+          permissions: 0755
+          content: {get_file: fragments/update_dns.py}
         - path: /usr/local/share/openshift-on-openstack/common_functions.sh
           permissions: 0755
           content:
@@ -270,8 +287,21 @@ resources:
               params:
                 $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
               template: {get_file: fragments/common_functions.sh}
+        - path: /etc/pki/ca-trust/source/anchors/ca.crt
+          permissions: 0600
+          content: {get_param: ca_cert}
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
+
+  # Add CA Cert to trust chain
+  update_ca_cert:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            $CA_CERT: {get_param: ca_cert}
+          template: {get_file: fragments/ca_cert.sh}
 
   # Connect to a software source for updates on RHEL
   rhn_register:
@@ -280,7 +310,7 @@ resources:
       config:
         str_replace:
           params:
-            $OSE_VERSION: {get_param: ose_version}
+            $OCP_VERSION: {get_param: ocp_version}
             $RHN_USERNAME: {get_param: rhn_username}
             $RHN_PASSWORD: {get_param: rhn_password}
             $SAT6_HOSTNAME: {get_param: sat6_hostname}
@@ -325,14 +355,39 @@ resources:
       config:
         get_file: fragments/host-update.sh
 
+  add_dns_record:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            '%ZONE%': {get_param: domain_name}
+            '%DNS_SERVER%': {get_param: [dns_servers, 0]}
+            '%DNS_UPDATE_KEY%': {get_param: dns_update_key}
+            '%IP_ADDRESS%': {get_param: floatingip}
+          template: {get_file: fragments/add_dns_record.sh}
+
+  add_wildcard_record:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            '%DNS_ENTRY%': {list_join: ["", ["*.", {get_param: app_subdomain}]]}
+            '%ZONE%': {get_param: domain_name}
+            '%DNS_SERVER%': {get_param: [dns_servers, 0]}
+            '%DNS_UPDATE_KEY%': {get_param: dns_update_key}
+            '%IP_ADDRESS%': {get_param: floatingip}
+          template: {get_file: fragments/add_dns_record.sh}
+
+
   # Prepare the host for SSH access for ansible
   lb_boot:
     type: OS::Heat::SoftwareConfig
     properties:
       config:
         str_replace:
-          params:
-            $DNS_IP: {get_param: dns_ip}
+          params: {}
           template: {get_file: fragments/lb-boot.sh}
 
   node_cleanup:
@@ -346,11 +401,7 @@ resources:
         default: {get_param: ssh_user}
       outputs:
       - name: result
-      config:
-        str_replace:
-          params:
-            $SKIP_DNS: {get_param: skip_dns}
-          template: {get_file: fragments/bastion-node-cleanup.sh}
+      config: {get_file: fragments/bastion-node-cleanup.sh}
 
   # activation hook for removing the node from DNS and from the Kubernetes
   # cluster

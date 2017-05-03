@@ -7,12 +7,12 @@ description: >
 
 parameters:
 
-  # What version of OpenShift Enterprise to install
-  # This value is used to select the RPM repo for the OSE release to install
-  ose_version:
+  # What version of OpenShift Container Platform to install
+  # This value is used to select the RPM repo for the OCP release to install
+  ocp_version:
     type: string
     description: >
-      The version of OpenShift Enterprise to deploy
+      The version of OpenShift Container Platform to deploy
 
   key_name:
     description: >
@@ -54,10 +54,6 @@ parameters:
       ID of the network access policies for the OpenShift node hosts
     type: string
 
-  dns_ip:
-    description: IP address of the DNS server which serves this domain
-    type: string
-
   docker_volume_size:
     description: >
       size of a cinder volume in GB to allocate to docker for container/image
@@ -75,7 +71,7 @@ parameters:
       The password for the RHN user
     type: string
     hidden: true
-  
+
   # Red Hat satellite subscription parameters
   sat6_hostname:
     type: string
@@ -162,9 +158,6 @@ parameters:
     description: >
       A reference to the OpenStack stack id
     type: json
-
-  skip_dns:
-    type: boolean
 
   system_update:
     type: boolean
@@ -285,11 +278,24 @@ parameters:
       True = Enable deployment of the OpenShift router
     type: boolean
 
-  # OpenShift installer (ansible) parameters
-  skip_ansible:
-    description: >
-      Disable host based installation/configuration
+  # OpenShift configuration: ansible controls
+  # These are for debugging.
+  #   Setting prepare_ansible=false will stop the stack before creating
+  #   installation config files
+  prepare_ansible:
     type: boolean
+    description: >
+      Create ansible configuration files for openshift-ansible playbooks
+    default: true
+
+  #   Setting execute_ansible=false will stop the stack before running
+  #   the ansible playbooks to install openshift, but *after* the configuration
+  #   files are generated
+  execute_ansible:
+    type: boolean
+    description: >
+      Run the ansible playbooks to install openshift
+    default: true
 
   # OpenStack access parameters
   # These allow the OpenShift service to view and use OpenStack resources
@@ -319,9 +325,13 @@ parameters:
       The name of the OpenStack "region" to use to create or find resources
     type: string
 
-  dns_forwarders:
+  dns_servers:
     type: comma_delimited_list
     description: address of dns nameservers reachable in your environment
+
+  dns_update_key:
+    type: string
+    hidden: true
 
   router_vip:
     description: >
@@ -335,6 +345,16 @@ parameters:
   extra_openshift_ansible_params:
     type: string
     description: Extra parameters for openshift-ansible
+
+  autoscaling:
+    type: boolean
+    description: >
+      Automatically scale up/down openshift nodes.
+    default: false
+
+  ca_cert:
+    type: string
+    description: Certificate Authority Certificate to be added to trust chain
 
 resources:
 
@@ -386,10 +406,12 @@ resources:
       parts:
       - config: {get_resource: set_hostname}
       - config: {get_resource: included_files}
+      - config: {get_resource: update_ca_cert}
       - config: {get_resource: rhn_register}
       - config: {get_resource: set_extra_repos}
       - config: {get_resource: set_extra_docker_repos}
       - config: {get_resource: host_update}
+      - config: {get_resource: add_dns_record}
       - config: {get_resource: node_boot}
 
   # Compose the node identifiers: hostname and FQDN: provide them to cloud-init
@@ -430,14 +452,30 @@ resources:
         - path: /usr/local/bin/retry
           permissions: 0755
           content: {get_file: fragments/retry.sh}
+        - path: /usr/local/bin/update_dns
+          permissions: 0755
+          content: {get_file: fragments/update_dns.py}
         - path: /etc/sysconfig/network-scripts/ifcfg-eth1
           content:
             str_replace:
               params:
                 $IFNAME: eth1
               template: {get_file: fragments/ifcfg-eth}
+        - path: /etc/pki/ca-trust/source/anchors/ca.crt
+          permissions: 0600
+          content: {get_param: ca_cert}
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
+
+  # Add CA Cert to trust chain
+  update_ca_cert:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            $CA_CERT: {get_param: ca_cert}
+          template: {get_file: fragments/ca_cert.sh}
 
   # Connect to software update source for RHEL
   rhn_register:
@@ -446,7 +484,7 @@ resources:
       config:
         str_replace:
           params:
-            $OSE_VERSION: {get_param: ose_version}
+            $OCP_VERSION: {get_param: ocp_version}
             $RHN_USERNAME: {get_param: rhn_username}
             $RHN_PASSWORD: {get_param: rhn_password}
             $SAT6_HOSTNAME: {get_param: sat6_hostname}
@@ -494,6 +532,19 @@ resources:
             $SYSTEM_UPDATE: {get_param: system_update}
           template: {get_file: fragments/host-update.sh}
 
+  add_dns_record:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          params:
+            '%ZONE%': {get_param: domain_name}
+            '%DNS_SERVER%': {get_param: [dns_servers, 0]}
+            '%DNS_UPDATE_KEY%': {get_param: dns_update_key}
+            '%IP_ADDRESS%': {get_attr: [port, fixed_ips, 0, ip_address]}
+          template: {get_file: fragments/add_dns_record.sh}
+
+
   # Prepare the node to run Docker and Ansible on first boot
   node_boot:
     type: OS::Heat::SoftwareConfig
@@ -501,8 +552,6 @@ resources:
       config:
         str_replace:
           params:
-            $DNS_IP: {get_param: dns_ip}
-            $SKIP_DNS: {get_param: skip_dns}
             $DOCKER_VOLUME_ID: {get_attr: [docker_volume, volume_id]}
             $CONTAINER_QUOTA: {get_param: container_quota}
           template: {get_file: fragments/node-boot.sh}
@@ -537,11 +586,7 @@ resources:
         default: {get_param: ssh_user}
       outputs:
       - name: result
-      config:
-        str_replace:
-          params:
-            $SKIP_DNS: {get_param: skip_dns}
-          template: {get_file: fragments/bastion-node-cleanup.sh}
+      config: {get_file: fragments/bastion-node-cleanup.sh}
 
   # activation hook for removing the node from DNS and from the Kubernetes
   # cluster
@@ -575,11 +620,7 @@ resources:
       - name: node_type
       outputs:
       - name: result
-      config:
-        str_replace:
-          params:
-            $SKIP_DNS: {get_param: skip_dns}
-          template: {get_file: fragments/bastion-node-add.sh}
+      config: {get_file: fragments/bastion-node-add.sh}
 
   # activation hook to add the node to DNS and Kubernetes cluster
   deployment_bastion_node_add:
@@ -626,8 +667,6 @@ resources:
           default: {get_param: ssh_user}
         - name: deployment_type
           default: {get_param: deployment_type}
-        - name: skip_dns
-          default: {get_param: skip_dns}
         - name: lb_ip
           default: {get_param: lb_ip}
         - name: master_ip
@@ -660,8 +699,10 @@ resources:
           default: {get_param: prepare_registry}
         - name: deploy_router
           default: {get_param: deploy_router}
-        - name: skip_ansible
-          default: {get_param: skip_ansible}
+        - name: prepare_ansible
+          default: {get_param: prepare_ansible}
+        - name: execute_ansible
+          default: {get_param: execute_ansible}
         - name: os_auth_url
           default: {get_param: os_auth_url}
         - name: os_username
@@ -674,13 +715,11 @@ resources:
           default: {get_param: os_region_name}
         - name: lb_type
           default: {get_param: loadbalancer_type}
-        - name: dns_ip
-          default: {get_param: dns_ip}
         - name: dns_forwarders
           default:
             list_join:
               - ","
-              - {get_param: dns_forwarders}
+              - {get_param: dns_servers}
         - name: bastion_instance_id
           default: {get_param: bastion_node}
         - name: router_vip
@@ -689,6 +728,8 @@ resources:
           default: {get_param: volume_quota}
         - name: extra_openshift_ansible_params
           default: {get_param: extra_openshift_ansible_params}
+        - name: autoscaling
+          default: {get_param: autoscaling}
       outputs:
         - name: ca_cert
         - name: ca_key

@@ -7,12 +7,32 @@ description: >
 
 parameters:
 
-  # What version of OpenShift Enterprise to install
-  # This value is used to select the RPM repo for the OSE release to install
-  ose_version:
+  node_count:
+    type: number
+    description: >
+      Number of non-master nodes to create.
+
+  # What version of OpenShift Container Platform to install
+  # This value is used to select the RPM repo for the OCP release to install
+  ocp_version:
     type: string
     description: >
-      The version of OpenShift Enterprise to deploy
+      The version of OpenShift Container Platform to deploy
+
+  # What version of OpenStack Platform to install
+  # This value is used to select the RPM repo for the OSP release to install
+  osp_version:
+    type: string
+    default: "10"
+    description: >
+      The version of OpenStack Platform to use to collect data
+
+  # Allow the caller to specify the version of ansible
+  ansible_version:
+    type: string
+    description: >
+      Set the RPM version of Ansible that will run on the bastion
+      If unset, use current version
 
   key_name:
     description: >
@@ -158,9 +178,6 @@ parameters:
     type: number
     default: 4000
 
-  skip_dns:
-    type: boolean
-
   system_update:
     type: boolean
 
@@ -183,6 +200,10 @@ parameters:
     type: comma_delimited_list
     description: List of docker repository URLs which will be installed on each node, if a repo is insecure use '#insecure' suffix.
     default: ''
+
+  ca_cert:
+    type: string
+    description: Certificate Authority Certificate to be added to trust chain
 
 resources:
 
@@ -208,6 +229,8 @@ resources:
   # Install, configure and enable the Heat configuration agent
   config_agent:
     type: collect-config-setup/install_config_agent_centos_yum.yaml
+    properties:
+      osp_version: {get_param: osp_version}
 
   # Collect the results from a set of resources
   init:
@@ -216,6 +239,7 @@ resources:
       parts:
       - config: {get_resource: set_hostname}
       - config: {get_resource: included_files}
+      - config: {get_resource: update_ca_cert}
       - config: {get_resource: rhn_register}
       - config: {get_resource: set_extra_repos}
       - config: {get_resource: set_extra_docker_repos}
@@ -232,10 +256,10 @@ resources:
       config:
         str_replace:
           params:
-            $SKIP_DNS: {get_param: skip_dns}
             $OPENSHIFT_ANSIBLE_GIT_URL: {get_param: openshift_ansible_git_url}
             $OPENSHIFT_ANSIBLE_GIT_REV: {get_param: openshift_ansible_git_rev}
             $DOCKER_VOLUME_ID: {get_resource: docker_volume}
+            $ANSIBLE_VERSION: {get_param: ansible_version}
           template: {get_file: fragments/bastion-boot.sh}
 
   # Compose the FQDN for cloud-init
@@ -276,9 +300,17 @@ resources:
         - path: /root/.ssh/id_rsa.pub
           permissions: 0600
           content: {get_param: ansible_public_key}
+        - path: /etc/pki/ca-trust/source/anchors/ca.crt
+          permissions: 0600
+          content: {get_param: ca_cert}
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
 
+  # Add CA Cert to trust chain
+  update_ca_cert:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config: {get_file: fragments/ca_cert.sh}
 
   # Register the host with RHN for access to software packages
   rhn_register:
@@ -287,7 +319,7 @@ resources:
       config:
         str_replace:
           params:
-            $OSE_VERSION: {get_param: ose_version}
+            $OCP_VERSION: {get_param: ocp_version}
             $RHN_USERNAME: {get_param: rhn_username}
             $RHN_PASSWORD: {get_param: rhn_password}
             $SAT6_HOSTNAME: {get_param: sat6_hostname}
@@ -344,13 +376,11 @@ resources:
         - "\n"
         - - "#!/bin/bash"
           - "set -eux"
-          - get_file: templates/var/lib/ansible/templates/etc/resolv.conf
           - get_file: templates/var/lib/ansible/group_vars/masters.yml
           - get_file: templates/var/lib/ansible/group_vars/nodes.yml
           - get_file: templates/var/lib/ansible/host_vars/loadbalancer.yml
           - get_file: templates/var/lib/ansible/group_vars/OSv3.yml
           - get_file: templates/var/lib/ansible/playbooks/registry.yml
-          - get_file: templates/var/lib/ansible/playbooks/dns.yml
           - get_file: templates/var/lib/ansible/playbooks/main.yml
           - get_file: templates/var/lib/ansible/playbooks/scaleup.yml
           - get_file: templates/var/lib/ansible/playbooks/scaledown.yml
@@ -363,6 +393,29 @@ resources:
           - get_file: templates/var/lib/ansible/roles/reboot/tasks/main.yml
           - get_file: templates/var/lib/ansible/roles/fstab_mount_options/tasks/main.yml
           - get_file: templates/var/lib/ansible/roles/xfs_grub_quota/tasks/main.yml
+
+  update_node_count:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      inputs:
+        - name: node_count
+      config: |
+        #!/bin/bash
+        set -eux
+        mkdir -p /var/lib/ansible
+        echo "$node_count" > /var/lib/ansible/node_count
+
+  deployment_update_node_count:
+    depends_on: wait_condition
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      config:
+        get_resource: update_node_count
+      server:
+        get_resource: host
+      input_values:
+        node_count: {get_param: node_count}
 
   deployment_write_templates:
     depends_on: wait_condition

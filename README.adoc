@@ -25,9 +25,9 @@ connected by a private _software defined network_ (SDN) which can be
 implemented either with http://openvswitch.org/[OpenVSwitch] or https://github.com/coreos/flannel[Flannel].
 
 A _bastion server_ is used to control the host and service
-configuration.  It can also run local DNS services as
-needed. The host and service configuration is run using
-https://www.ansible.com/[Ansible] playbooks executed from the bastion host.
+configuration. The host and service configuration is run using
+https://www.ansible.com/[Ansible] playbooks executed from the bastion
+host.
 
 _Bastion server_, _master nodes_ and _infra nodes_ is also given a _floating IP_
 address on the public network. This provides direct access to the
@@ -60,7 +60,7 @@ running:
 . http://www.centos.org/[CentOS] 7.2 cloud image (we leverage cloud-init)
 loaded in Glance for OpenShift Origin Deployments.
 https://access.redhat.com/downloads[RHEL]_ 7.2 cloud image if doing Atomic
-Enterprise or OpenShift Enterprise. Make sure to use official images to avoid
+Enterprise or OpenShift Container Platform. Make sure to use official images to avoid
 unexpected issues during deployment (e.g. a custom firewall may block OpenShift
 inter-node communication).
 . An SSH keypair loaded into Nova
@@ -68,9 +68,31 @@ inter-node communication).
 
 CentOS and RHEL are the only tested distros for now.
 
+=== DNS Server
+
+The OpenShift installer requires that all nodes be reachable via their
+hostnames. Since OpenStack does not currently provide an internal name
+resolution, this needs to be done with an external DNS service that
+all nodes use via the `dns_nameserver` parameter.
+
+In a production deployment this would be your existing DNS, but if you
+don't have the ability to update it to add new name records, you will
+have to deploy one yourself.
+
+We have provided a separate repository that can deploy a DNS server
+suitable for OpenShift:
+
+https://github.com/openshift/openshift-ansible-contrib/tree/master/reference-architecture/osp-dns
+
+NOTE: If your DNS supports dynamic updates via RFC 2136, you can pass
+the update key to the Heat stack and all nodes will register
+themselves as they come up. Otherwise, you will have to update your
+DNS records manually.
+
+
 === Red Hat Software Repositories
 
-When installing OpenShift Enterprise on RHEL the OpenShift and
+When installing OpenShift Container Platform on RHEL the OpenShift and
 OpenStack repositories must be enabled, along with several common
 repositories. These repositories must be available under the
 subscription account used for installation.
@@ -138,7 +160,7 @@ two environment files are provided as examples.
 * ``env_origin.yaml`` is an example of the variables to deploy an OpenShift
   Origin 3 environment.
 * ``env_aop.yaml`` is an example of the variables to deploy an Atomic
-  Enterprise or OpenShift Enterprise 3 environment.  Note deployment type
+  Enterprise or OpenShift Container Platform 3 environment.  Note deployment type
   should be *openshift-enterprise* for OpenShift or *atomic-enterprise*
   for Atomic Enterprise.  Also, a valid RHN subscription is required
   for deployment.
@@ -154,7 +176,7 @@ this is how you deploy OpenShift Origin:
 ```yaml
 cat << EOF > openshift_parameters.yaml
 parameters:
-   # Use OpenShift Origin (vs OpenShift Enterprise)
+   # Use OpenShift Origin (vs OpenShift Container Platform)
    deployment_type: origin
 
    # set SSH access to VMs
@@ -253,6 +275,57 @@ OpenShift setup is finished.
 Sometimes it's necessary to find out why a stack was not deployed as expected.
 link:README_debugging.adoc[Debugging] helps you find the root cause of the
 issue.
+
+== OpenStack Integration
+
+OpenShift on OpenStack takes advantage of the cloud provider to offer
+features such as dymaic storage to the OpenShift users. Auto scaling
+also requires communication with the OpenStack service.  You must
+provide a set of OpenStack credentials so that OpenShift and the heat
+scaling mechanism can work correctly.
+
+These are the same values used to create the Heat stack.
+
+.Sample OSP Credentials - `osp_credentials.yaml`
+----
+---
+parameters:
+  os_auth_url: http://10.0.x.x:5000/v2.0
+  os_username: <username>
+  os_password: <password>
+  os_region_name: regionOne
+  os_tenant_name: <tenant name>
+----
+
+When invoking the stack creation, include this by adding `-e
+osp_credentials.yaml` to the command.
+
+== [[ca-certificates]]OpenStack with SSL/TLS
+
+If your OpenStack service is encrypted with SSL/TLS, you will need to
+provide the CA certificate so that the communication channel can be
+validated.
+
+The CA certificate is provided as a literal string copy of contents of
+the CA certificate file, and can be included in an additional
+environment file:
+
+.CA Certificate Parameter File `ca_certificates.yaml`
+----
+---
+parameters:
+  ca_cert: |
+    -----BEGIN CERTIFICATE-----
+   ...
+   -----END CERTIFICATE-----
+----
+
+When invoking the stack creation, includ this by adding `-e
+ca_certificates.yaml`.
+
+You can include multiple CA certificate strings and all will be imported
+into the CA list on all instances.
+
 
 == Multiple Master Nodes
 
@@ -363,15 +436,15 @@ when you create the stack.
 
 Example of `env_ldap.yaml` using an Active Directory server:
 
-```yaml
+.LDAP parameter file `env_ldap.yaml
+----
 parameter_defaults:
    ldap_hostname: <ldap hostname>
    ldap_ip: <ip of ldap server>
    ldap_url: ldap://<ldap hostname>:389/CN=Users,DC=example,DC=openshift,DC=com?sAMAccountName
    ldap_bind_dn: CN=Administrator,CN=Users,DC=example,DC=openshift,DC=com?sAMAccountName
    ldap_bind_password: <admin password>
-```
-
+----
 
 ```bash
 heat stack-create my-openshift \
@@ -379,6 +452,8 @@ heat stack-create my-openshift \
   -e openshift-on-openstack/env_ldap.yaml \
   -f openshift-on-openstack/openshift.yaml
 ```
+
+If your LDAP service uses SSL, you will also need to add a link:#ca-certificates[CA Certficate] for the LDAP communications.
 
 == Using Custom Yum Repositories
 
@@ -480,17 +555,20 @@ The above DNS records should be set on the DNS server authoritative for the
 domain used in OpenShift cluster (`example.com` in the example above).
 ====
 
-[NOTE]
-====
-A DNS server is set also on bastion node during deployment but this
-server is used only by OpenShift nodes internally and should not be used
-for resolving OpenShift user entry points. We plan to use Designate service
-in near future. Alternatively `skip_dns=true` parameter can be used, then
-instead of DNS server on bastion node openshift-ansible deploys dnsmasq on
-each node.
-====
 
-== Retrieving the CA certificate
+=== Dynamic DNS Updates
+
+If your DNS servers support dynamic updates (as defined in RFC 2136),
+you can pass the update key in the `dns_update_key` parameter and each
+node will register its internal IP address to all the DNS servers in
+the `dns_nameserver` list.
+
+In addition, if you use the *dedicated load balancer*, the API and
+wildcard entries will be created as well. Otherwise, you will need to
+set them manually.
+
+
+== Retrieving the OpenShift CA certificate
 
 You can retrieve the CA certificate that was generated during the OpenShift
 installation by running

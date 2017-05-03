@@ -5,12 +5,12 @@ description: >
 
 parameters:
 
-  # What version of OpenShift Enterprise to install
-  # This value is used to select the RPM repo for the OSE release to install
-  ose_version:
+  # What version of OpenShift Container Platform to install
+  # This value is used to select the RPM repo for the OCP release to install
+  ocp_version:
     type: string
     description: >
-      The version of OpenShift Enterprise to deploy
+      The version of OpenShift Container Platform to deploy
 
   key_name:
     description: >
@@ -42,6 +42,9 @@ parameters:
   domain_name:
     description: >
       All VMs will be placed in this domain
+    type: string
+
+  app_subdomain:
     type: string
 
   rhn_username:
@@ -85,10 +88,6 @@ parameters:
     description: List of rhn pools which will be installed on each node.
     default: ''
 
-  dns_ip:
-    description: IP address of the DNS server
-    type: string
-
   ssh_user:
     description: >
       The user for SSH access to the VM hosts
@@ -114,6 +113,9 @@ parameters:
     type: string
 
   floatingip_id:
+    type: string
+
+  floatingip:
     type: string
 
   fixed_network:
@@ -164,8 +166,17 @@ parameters:
       The name or ID of the bastion instance.
     default: ''
 
-  skip_dns:
-    type: boolean
+  dns_servers:
+    type: comma_delimited_list
+    description: address of dns nameservers reachable in your environment
+
+  dns_update_key:
+    type: string
+    hidden: true
+
+  ca_cert:
+    type: string
+    description: Certificate Authority Certificate to be added to trust chain
 
 outputs:
   console_url:
