@@ -1,0 +1,225 @@
+heat_template_version: 2014-10-16
+
+description: >
+  A template which provides a creates a loadbalancer using neutron's LBaaS.
+
+parameters:
+
+  key_name:
+    description: >
+      A pre-submitted SSH key to access the VM hosts
+    type: string
+    constraints:
+    - custom_constraint: nova.keypair
+
+  image:
+    type: string
+    default: ''
+
+  flavor:
+    description: >
+      Define the hardware characteristics for the VMs: CPU, Memory, base disk
+    type: string
+    constraints:
+    - custom_constraint: nova.flavor
+
+  hostname:
+    description: >
+      The load balancer hostname portion of the FQDN
+    type: string
+    constraints:
+    - allowed_pattern: '[a-z0-9\-]*'
+      description: Hostname must contain only characters [a-z0-9\-].
+
+  domain_name:
+    description: >
+      All VMs will be placed in this domain
+    type: string
+
+  rhn_username:
+    description: >
+      A valid user with entitlements to RHEL and OpenShift software repos
+    type: string
+
+  rhn_password:
+    description: >
+      The password for the RHN user
+    type: string
+    hidden: true
+
+  # Red Hat satellite subscription parameters
+  sat6_hostname:
+    type: string
+    description: >
+      The hostname of the Satellite 6 server which will provide software updates
+    default: ''
+
+  sat6_organization:
+    type: string
+    description: >
+      An organization string provided by Sat6 to group subscriptions
+    default: ''
+
+  sat6_activationkey:
+    type: string
+    description: >
+      An activation key string provided by Sat6 to enable subscriptions
+
+  rhn_pool:
+    description: >
+      A subscription pool containing the RHEL and OpenShift software repos
+      OPTIONAL
+    type: string
+    hidden: true
+
+  extra_rhn_pools:
+    type: comma_delimited_list
+    description: List of rhn pools which will be installed on each node.
+    default: ''
+
+  ssh_user:
+    description: >
+      The user for SSH access to the VM hosts
+    type: string
+
+  ansible_public_key:
+    description: >
+      The SSH public key that Ansible will use to access master and node hosts
+      This will be placed on each VM host in /root/.ssh/authorized_keys
+    type: string
+
+  single_lb_member_address:
+    type: string
+
+  master_ips:
+    type: comma_delimited_list
+    
+  master_count:
+    type: number
+
+  master_hostname:
+    type: string
+
+  fixed_network:
+    description: >
+      The name or ID of the internal network
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
+
+  fixed_subnet:
+    description: >
+      The name or ID of the internal IPv4 space
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+    
+  external_network_subnet:
+    description: >
+      The name or ID of the external IPv4 space
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  extra_repository_urls:
+    type: comma_delimited_list
+    description: List of repository URLs which will be installed on each node.
+    default: ''
+
+  extra_docker_repository_urls:
+    type: comma_delimited_list
+    description: List of docker repository URLs which will be installed on each node, if a repo is insecure use '#insecure' suffix.
+    default: ''
+
+  stack_name:
+    type: string
+    default: ''
+
+  bastion_node:
+    type: string
+    description: >
+      The name or ID of the bastion instance.
+    default: ''
+
+resources:
+  lb:
+    type: OS::Neutron::LBaaS::LoadBalancer
+    properties:
+        name:
+          list_join: ['-', [ {get_param: stack_name}, 'loadbalancer']]
+        vip_subnet: {get_param: fixed_subnet}
+
+  listener:
+    type: OS::Neutron::LBaaS::Listener
+    properties:
+      loadbalancer: {get_resource: lb}
+      name:
+        list_join: ['-', [ {get_param: stack_name}, 'loadbalancer-listener']]
+      protocol: HTTPS
+      protocol_port: 8443
+
+  lb_pool:
+    type: OS::Neutron::LBaaS::Pool
+    properties:
+      listener: {get_resource: listener}
+      name:
+        list_join: ['-', [ {get_param: stack_name}, 'loadbalancer-listener-pool']]
+      description: Load balancer for OpenShift hosts.
+      lb_algorithm: ROUND_ROBIN
+      protocol: HTTPS
+      session_persistence:
+        type: SOURCE_IP
+ 
+  pool_members:
+    depends_on: [lb_pool]
+    type: OS::Heat::ResourceGroup
+    properties:
+      count: {get_param: master_count}
+      resource_def:
+        type: loadbalancer_lbaasv2_poolmember.yaml
+        properties:
+          # Note you have to pass the index and the entire list into the
+          # nested template, resolving via %index% doesn't work directly
+          # in the get_param here
+          index: "%index%"
+          lb_pool: {get_resource: lb_pool}
+          protocol_port: 8443
+          master_ips: {get_param: master_ips}
+          fixed_subnet: {get_param: fixed_subnet}
+          external_network_subnet: {get_param: external_network_subnet}
+
+  lb_monitor:
+    type: OS::Neutron::LBaaS::HealthMonitor
+    properties:
+      pool: { get_resource: lb_pool }
+      type: TCP
+      delay: 15
+      max_retries: 5
+      timeout: 10
+
+outputs:
+  console_url:
+    description: URL of the OpenShift web console
+    value:
+      str_replace:
+        template: "https://%hostname%.%domainname%:8443/console/"
+        params:
+          '%hostname%': {get_param: hostname}
+          '%domainname%': {get_param: domain_name}
+
+  api_url:
+    description: URL entrypoint to the OpenShift API
+    value:
+      str_replace:
+        template: "https://%hostname%.%domainname%:8443/"
+        params:
+          '%hostname%': {get_param: hostname}
+          '%domainname%': {get_param: domain_name}
+
+  loadbalancer_ip:
+    description: Load Balancer IP
+    value: {get_attr: [lb, vip_address ]} 
+
+  loadbalancer_port_id:
+    description: Load Balaner port id for floating ip association
+    value: {get_attr: [lb, vip_port_id]} 

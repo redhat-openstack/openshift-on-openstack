@@ -1,0 +1,37 @@
+heat_template_version: 2014-10-16
+
+parameters:
+
+  lb_pool:
+    type: string
+
+  index:
+    type: number
+
+  protocol_port:
+    type: number
+
+  master_ips:
+    type: comma_delimited_list
+    
+  fixed_subnet:
+    type: string
+    
+  external_network_subnet:
+    description: >
+      The name or ID of the internal IPv4 space
+    type: string
+
+resources:
+
+  pool_member:
+    type: OS::Neutron::LBaaS::PoolMember
+    properties:
+      pool: {get_param: lb_pool}
+      protocol_port: {get_param: protocol_port}
+      address: {get_param: [master_ips, {get_param: index}]}
+      subnet: {get_param: external_network_subnet}
+
+outputs:
+  lb_member:
+    value: { get_attr: [pool_member, show] }
