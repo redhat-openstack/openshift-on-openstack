@@ -53,6 +53,13 @@ parameters:
     type: string
     hidden: true
 
+  rhn_config_options:
+    type: string
+    description: >
+      Further arguments for subscription-manager config, eg. --server.proxy_hostname
+    hidden: true
+    default: ''
+
   # Red Hat satellite subscription parameters
   sat6_hostname:
     type: string
@@ -366,6 +373,7 @@ resources:
             $OCP_VERSION: {get_param: ocp_version}
             $RHN_USERNAME: {get_param: rhn_username}
             $RHN_PASSWORD: {get_param: rhn_password}
+            $RHN_CONFIG_OPTIONS: {get_param: rhn_config_options}
             $SAT6_HOSTNAME: {get_param: sat6_hostname}
             $SAT6_ORGANIZATION: {get_param: sat6_organization}
             $SAT6_ACTIVATIONKEY: {get_param: sat6_activationkey}

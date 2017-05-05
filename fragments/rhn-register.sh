@@ -32,6 +32,12 @@ function use_rhn() {
 function register_rhn() {
     # RHN_USERNAME=$1
     # RHN_PASSWORD=$2
+    # RHN_CONFIG_OPTIONS=$3
+
+    if [ -n "$3" ]; then
+        subscription-manager config  $3
+    fi
+
     retry subscription-manager register --username="$1" --password="$2"
 }
 
@@ -60,7 +66,7 @@ if use_satellite6 ; then
     install_sat6_ca_certs $SAT6_HOSTNAME
     register_sat6 $SAT6_ORGANIZATION $SAT6_ACTIVATIONKEY
 elif use_rhn ; then
-    register_rhn $RHN_USERNAME $RHN_PASSWORD
+    register_rhn $RHN_USERNAME $RHN_PASSWORD "$RHN_CONFIG_OPTIONS"
 else
     exit 0
 fi
