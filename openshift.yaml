@@ -1007,9 +1007,7 @@ resources:
       dns_servers: {get_param: dns_nameserver}
       dns_update_key: {get_param: dns_update_key}
       ca_cert: {get_param: ca_cert}
-      # lbaasv2 
       master_ips: {get_attr: [openshift_masters, ip_address]}
-      single_lb_member_address: {get_attr: [ openshift_masters, resource.0.private_ip_address ]}
       master_count: {get_param: master_count}
       external_network_subnet: {get_param: external_network_subnet}
 

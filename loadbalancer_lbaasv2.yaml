@@ -120,9 +120,6 @@ parameters:
       This will be placed on each VM host in /root/.ssh/authorized_keys
     type: string
 
-  single_lb_member_address:
-    type: string
-
   master_ips:
     type: comma_delimited_list
     

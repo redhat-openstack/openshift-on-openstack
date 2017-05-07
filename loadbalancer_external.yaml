@@ -62,6 +62,19 @@ parameters:
     type: string
     hidden: true
 
+  master_ips:
+    type: comma_delimited_list
+
+  master_count:
+    type: number
+
+  external_network_subnet:
+    description: >
+      The name or ID of the external IPv4 space
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
 # Red Hat satellite subscription parameters
   sat6_hostname:
     type: string

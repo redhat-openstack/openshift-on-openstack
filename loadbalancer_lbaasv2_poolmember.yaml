@@ -22,6 +22,19 @@ parameters:
       The name or ID of the internal IPv4 space
     type: string
 
+  master_ips:
+    type: comma_delimited_list
+
+  master_count:
+    type: number
+
+  external_network_subnet:
+    description: >
+      The name or ID of the external IPv4 space
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
 resources:
 
   pool_member:
