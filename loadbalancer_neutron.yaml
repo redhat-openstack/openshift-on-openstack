@@ -42,6 +42,12 @@ parameters:
     description: Top level stack name.
     type: string
 
+  timezone:
+    description: >
+      The server timezone
+    type: string
+    default: 'Etc/UTC'
+
   domain_name:
     description: >
       All VMs will be placed in this domain

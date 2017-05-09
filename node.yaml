@@ -109,6 +109,12 @@ parameters:
       unique random substring attached
     type: string
 
+  timezone:
+    description: >
+      The server timezone
+    type: string
+    default: 'Etc/UTC'
+
   domain_name:
     description: >
       The DNS domain suffix. All VMs will be placed in this domain
@@ -419,6 +425,7 @@ resources:
     type: OS::Heat::CloudConfig
     properties:
       cloud_config:
+        timezone: {get_param: timezone}
         hostname:
           str_replace:
             template: "HOST-SUFFIX"
