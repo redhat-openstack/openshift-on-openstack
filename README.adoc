@@ -294,6 +294,7 @@ parameters:
   os_password: <password>
   os_region_name: regionOne
   os_tenant_name: <tenant name>
+  os_domain_name: <domain name>
 ----
 
 When invoking the stack creation, include this by adding `-e

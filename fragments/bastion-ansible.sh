@@ -48,6 +48,7 @@ function create_metadata_json() {
     "os_auth_url":"$os_auth_url",
     "os_tenant_name":"$os_tenant_name",
     "os_region_name":"$os_region_name",
+    "os_domain_name":"$os_domain_name",
     "dedicated_lb": $([ "$lb_type" == "dedicated" ] && echo true || echo false),
     "no_lb": $([ "$lb_type" == "none" ] && echo true || echo false),
     "external_lb": $([ "$lb_type" == "external" ] && echo true || echo false),
