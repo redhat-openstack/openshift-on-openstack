@@ -453,6 +453,13 @@ parameters:
       The Openstack tenant to by used by Openshift
     default: ''
 
+  os_domain_name:
+    description: >
+      The name of the OpenStack domain for OpenShift to use. Leave it
+      empty for v2 authentication.
+    type: string
+    default: ''
+
   os_region_name:
     type: string
     description: >
@@ -744,6 +751,7 @@ resources:
           os_username: {get_param: os_username}
           os_password: {get_param: os_password}
           os_tenant_name: {get_param: os_tenant_name}
+          os_domain_name: {get_param: os_domain_name}
           os_region_name: {get_param: os_region_name}
           loadbalancer_type: {get_param: loadbalancer_type}
           dns_servers: {get_param: dns_nameserver}
