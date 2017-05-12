@@ -105,7 +105,8 @@ subscription account used for installation.
 |rhel-7-server-extras-rpms | Supporting RPMs
 |rhel-7-server-optional-rpms | Supporting RPMs
 |rhel-7-server-openstack-10-rpms | OpenStack client and data collection RPMs
-|rhel-7-server-ose-3.4-rpms | OpenShift Container Platform RPMs
+|rhel-7-server-ose-3.5-rpms | OpenShift Container Platform RPMs
+|rhel-7-fast-datapath-rpms | Required for OSP 3.5+ and OVS 2.6+
 |===
 
 == Creating an All-In-One Demo Environment
