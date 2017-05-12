@@ -92,6 +92,12 @@ parameters:
     - allowed_pattern: '[a-z0-9\-]*'
       description: Hostname must contain only characters [a-z0-9\-].
 
+  timezone:
+    description: >
+      The server timezone
+    type: string
+    default: 'Etc/UTC'
+
   domain_name:
     description: >
       The DNS domain suffix. All VMs will be placed in this domain
@@ -308,6 +314,7 @@ resources:
     type: OS::Heat::CloudConfig
     properties:
       cloud_config:
+        timezone: {get_param: timezone}
         hostname: {get_param: hostname}
         fqdn:
           str_replace:

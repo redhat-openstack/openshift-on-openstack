@@ -30,6 +30,12 @@ parameters:
     constraints:
     - custom_constraint: nova.flavor
 
+  timezone:
+    description: >
+      The server timezone
+    type: string
+    default: 'Etc/UTC'
+
   hostname:
     description: >
       The load balancer hostname portion of the FQDN

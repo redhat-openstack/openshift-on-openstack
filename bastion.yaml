@@ -68,6 +68,12 @@ parameters:
       All VMs will be placed in this domain
     type: string
 
+  timezone:
+    description: >
+      The server timezone
+    type: string
+    default: 'Etc/UTC'
+
   # Software Subscription information
   rhn_username:
     description: >
@@ -267,6 +273,7 @@ resources:
     type: OS::Heat::CloudConfig
     properties:
       cloud_config:
+        timezone: {get_param: timezone}
         hostname: {get_param: hostname}
         fqdn:
           str_replace:

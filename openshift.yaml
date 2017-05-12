@@ -208,6 +208,12 @@ parameters:
       Number of non-master nodes to create.
     default: 1
 
+  timezone:
+    description: >
+      The server timezone
+    type: string
+    default: 'Etc/UTC'
+
   # VM Host naming: root domain and host names
   domain_name:
     type: string
@@ -582,6 +588,7 @@ resources:
           params:
             '%stackname%': {get_param: 'OS::stack_name'}
             '%hostname%': {get_param: bastion_hostname}
+      timezone: {get_param: timezone}
       domain_name: {get_param: domain_name}
       fixed_network: {get_resource: fixed_network}
       fixed_subnet: {get_resource: fixed_subnet}
@@ -624,6 +631,7 @@ resources:
               params:
                 '%stackname%': {get_param: 'OS::stack_name'}
                 '%hostname%': {get_param: master_hostname}
+          timezone: {get_param: timezone}
           domain_name: {get_param: domain_name}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
           bastion_node: {get_attr: [bastion_host, resource.host]}
@@ -668,6 +676,7 @@ resources:
               params:
                 '%stackname%': {get_param: 'OS::stack_name'}
                 '%hostname%': {get_param: infra_hostname}
+          timezone: {get_param: timezone}
           domain_name: {get_param: domain_name}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
           bastion_node: {get_attr: [bastion_host, resource.host]}
@@ -721,6 +730,7 @@ resources:
               params:
                 '%stackname%': {get_param: 'OS::stack_name'}
                 '%hostname%': {get_param: node_hostname}
+          timezone: {get_param: timezone}
           domain_name: {get_param: domain_name}
           app_subdomain: {get_param: app_subdomain}
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
@@ -997,6 +1007,7 @@ resources:
       rhn_pool: {get_param: rhn_pool}
       extra_rhn_pools: {get_param: extra_rhn_pools}
       hostname: {get_param: lb_hostname}
+      timezone: {get_param: timezone}
       domain_name: {get_param: domain_name}
       app_subdomain: {get_param: app_subdomain}
       stack_name: {get_param: 'OS::stack_name'}
