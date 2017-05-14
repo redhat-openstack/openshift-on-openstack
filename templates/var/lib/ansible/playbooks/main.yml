@@ -61,7 +61,7 @@ cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/main
   - action: shell oc get pod | grep -v deploy | grep registry | grep Running
     register: result
     until: result.rc == 0
-    retries: 15
+    retries: 120
     delay: 60
 <%/deploy_registry%>
 
@@ -72,7 +72,7 @@ cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/main
   - action: shell oc get pod | grep -v deploy | grep router | grep Running
     register: result
     until: result.rc == 0
-    retries: 15
+    retries: 120
     delay: 60
 
 <%#router_vip%>
