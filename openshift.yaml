@@ -1,4 +1,4 @@
-heat_template_version: 2014-10-16
+heat_template_version: newton
 
 description: >
   Deploy Atomic/OpenShift 3 on OpenStack.
@@ -1052,13 +1052,29 @@ outputs:
       this URL; no body nor extra headers are needed.
     value: {get_attr: [scale_down_policy, alarm_url]}
 
+  # Get data via yaql as get_attr with AutoScalingGroup outputs_list 
+  #   works per-element. Eg.
+  #   get_attr: [ outputs_list, key1, key2, ..] yields
+  #   [ item[key1][key2] for item in outputs_list ]
   ca_cert:
     description: Openshift CA certificate.
-    value: {"Fn::Select": ["0", {get_attr: [openshift_nodes, outputs_list, ca_cert]}]}
+    value:
+      yaql:
+        expression: $.data.items[0]
+        data:
+          items: {get_attr: [openshift_nodes, outputs_list, ca_cert]}
 
+  # Get data via yaql as get_attr with AutoScalingGroup outputs_list
+  #   works per-element. Eg.
+  #   get_attr: [ outputs_list, key1, key2, ..] yields
+  #   [ item[key1][key2] for item in outputs_list ]
   ca_key:
     description: Openshift CA certificate key.
-    value: {"Fn::Select": ["0", {get_attr: [openshift_nodes, outputs_list, ca_key]}]}
+    value:
+      yaql:
+        expression: $.data.items[0]
+        data:
+          items: {get_attr: [openshift_nodes, outputs_list, ca_key]}
 
   master_ips:
     description: List of openshift master node IPs
