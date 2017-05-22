@@ -507,6 +507,21 @@ parameters:
 
 resources:
 
+  # Common host configs
+  common_cloud_config:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        timezone: Europe/Rome
+
+  # This multipart will be applied to
+  #   all the openshift hosts.
+  common_config:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: common_cloud_config}
+
   # Network Components
   fixed_network:
     type: OS::Neutron::Net
@@ -596,6 +611,7 @@ resources:
       extra_repository_urls: {get_param: extra_repository_urls}
       extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
       ca_cert: {get_param: ca_cert}
+      host_config: {get_resource: common_config}
 
   openshift_masters:
     depends_on: [external_router_interface, fixed_network, fixed_subnet]
@@ -640,6 +656,7 @@ resources:
           dns_servers: {get_param: dns_nameserver}
           dns_update_key: {get_param: dns_update_key}
           ca_cert: {get_param: ca_cert}
+          host_config: {get_resource: common_config}
 
   openshift_infra_nodes:
     depends_on: [external_router_interface, fixed_network, fixed_subnet]
@@ -685,6 +702,7 @@ resources:
           dns_servers: {get_param: dns_nameserver}
           dns_update_key: {get_param: dns_update_key}
           ca_cert: {get_param: ca_cert}
+          host_config: {get_resource: common_config}
 
   openshift_nodes:
     depends_on: [external_router_interface, fixed_network, fixed_subnet]
@@ -764,6 +782,7 @@ resources:
           execute_ansible: {get_param: execute_ansible}
           extra_openshift_ansible_params: {get_param: extra_openshift_ansible_params}
           ca_cert: {get_param: ca_cert}
+          host_config: {get_resource: common_config}
 
   # Define the network access policy for openshift nodes
   node_security_group:
