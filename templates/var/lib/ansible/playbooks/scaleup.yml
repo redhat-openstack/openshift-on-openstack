@@ -16,6 +16,14 @@ cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/scal
     shell: iptables -A DOCKER -p tcp -j ACCEPT
     when: openshift_use_flannel
 
+  - name: Set up masquerading on flannel interface
+    shell: iptables -t nat -A POSTROUTING -o {{ flannel_interface }} -j MASQUERADE
+    when: openshift_use_flannel
+
+  - name: Make iptables rule permanent
+    shell: /usr/libexec/iptables/iptables.init save
+    when: openshift_use_flannel
+ 
 - hosts: new_nodes
   sudo: yes
   tasks:
