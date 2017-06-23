@@ -801,33 +801,44 @@ resources:
       cooldown: 60
       scaling_adjustment: '-1'
 
+
   cpu_alarm_high:
-    type: OS::Ceilometer::Alarm
+    type: OS::Ceilometer::GnocchiAggregationByResourcesAlarm
+    description : Increase the number of slaves when all of them are loaded
     properties:
-      meter_name: cpu_util
-      statistic: avg
-      period: 60
-      evaluation_periods: 1
+      metric: cpu_util
+      comparison_operator: gt
       threshold: 50
-      enabled: {get_param: autoscaling}
+      granularity: 300
+      evaluation_periods: 1
+      aggregation_method: last
+      resource_type: instance
       alarm_actions:
         - {get_attr: [scale_up_policy, alarm_url]}
-      matching_metadata: {'metadata.user_metadata.stack': {get_param: "OS::stack_id"}}
-      comparison_operator: gt
+      query:
+        str_replace:
+          template: '{"=": {"server_group": "stack_id"}}'
+          params:
+            stack_id: {get_param: "OS::stack_id"}
 
   cpu_alarm_low:
-    type: OS::Ceilometer::Alarm
+    type: OS::Ceilometer::GnocchiAggregationByResourcesAlarm
+    description : Increase the number of slaves when all of them are loaded
     properties:
-      meter_name: cpu_util
-      statistic: avg
-      period: 600
-      evaluation_periods: 1
-      threshold: 15
-      enabled: {get_param: autoscaling}
-      alarm_actions:
-        - {get_attr: [scale_down_policy, alarm_url]}
-      matching_metadata: {'metadata.user_metadata.stack': {get_param: "OS::stack_id"}}
+      metric: cpu_util
       comparison_operator: lt
+      threshold: 15
+      granularity: 300
+      evaluation_periods: 1
+      aggregation_method: last
+      resource_type: instance
+      alarm_actions:
+        - {get_attr: [scale_up_policy, alarm_url]}
+      query:
+        str_replace:
+          template: '{"=": {"server_group": "stack_id"}}'
+          params:
+            stack_id: {get_param: "OS::stack_id"}
 
   bastion_port:
     type: OS::Neutron::Port
@@ -1054,11 +1065,11 @@ outputs:
 
   ca_cert:
     description: Openshift CA certificate.
-    value: {"Fn::Select": ["0", {get_attr: [openshift_nodes, outputs_list, ca_cert]}]}
+    value: {get_attr: [openshift_nodes, ca_cert]}
 
   ca_key:
     description: Openshift CA certificate key.
-    value: {"Fn::Select": ["0", {get_attr: [openshift_nodes, outputs_list, ca_key]}]}
+    value: {get_attr: [openshift_nodes, ca_key]}
 
   master_ips:
     description: List of openshift master node IPs
