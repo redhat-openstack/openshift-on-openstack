@@ -1054,11 +1054,11 @@ outputs:
 
   ca_cert:
     description: Openshift CA certificate.
-    value: {"Fn::Select": ["0", {get_attr: [openshift_nodes, outputs_list, ca_cert]}]}
+    value: {get_attr: [openshift_nodes, ca_cert]}
 
   ca_key:
     description: Openshift CA certificate key.
-    value: {"Fn::Select": ["0", {get_attr: [openshift_nodes, outputs_list, ca_key]}]}
+    value: {get_attr: [openshift_nodes, ca_key]}
 
   master_ips:
     description: List of openshift master node IPs
