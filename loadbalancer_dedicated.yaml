@@ -231,6 +231,7 @@ resources:
       networks:
       - port: {get_resource: port}
       user_data_format: SOFTWARE_CONFIG
+      user_data_update_policy: IGNORE
       user_data: {get_resource: init}
 
   # Collect a set of host configuration information in a single structure

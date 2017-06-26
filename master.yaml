@@ -264,6 +264,7 @@ resources:
       - port: {get_resource: port}
       - port: {get_attr: [internal_port, port]}
       user_data_format: SOFTWARE_CONFIG
+      user_data_update_policy: IGNORE
       user_data: {get_resource: init}
       scheduler_hints:
         group: {get_param: master_server_group}
