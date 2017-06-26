@@ -803,7 +803,7 @@ resources:
 
 
   cpu_alarm_high:
-    type: OS::Ceilometer::GnocchiAggregationByResourcesAlarm
+    type: OS::Aodh::GnocchiAggregationByResourcesAlarm
     description : Increase the number of slaves when all of them are loaded
     properties:
       metric: cpu_util
@@ -811,18 +811,20 @@ resources:
       threshold: 50
       granularity: 300
       evaluation_periods: 1
-      aggregation_method: last
+      aggregation_method: mean
       resource_type: instance
       alarm_actions:
-        - {get_attr: [scale_up_policy, alarm_url]}
+        - str_replace:
+            template: trust+url
+            params:
+              url: {get_attr: [scale_up_policy, signal_url]}
       query:
-        str_replace:
-          template: '{"=": {"server_group": "stack_id"}}'
-          params:
-            stack_id: {get_param: "OS::stack_id"}
+        list_join:
+          - ''
+          - - {'=': {server_group: {get_param: "OS::stack_id"}}}
 
   cpu_alarm_low:
-    type: OS::Ceilometer::GnocchiAggregationByResourcesAlarm
+    type: OS::Aodh::GnocchiAggregationByResourcesAlarm
     description : Increase the number of slaves when all of them are loaded
     properties:
       metric: cpu_util
@@ -830,15 +832,17 @@ resources:
       threshold: 15
       granularity: 300
       evaluation_periods: 1
-      aggregation_method: last
+      aggregation_method: mean
       resource_type: instance
       alarm_actions:
-        - {get_attr: [scale_up_policy, alarm_url]}
+        - str_replace:
+            template: trust+url
+            params:
+              url: {get_attr: [scale_down_policy, signal_url]}
       query:
-        str_replace:
-          template: '{"=": {"server_group": "stack_id"}}'
-          params:
-            stack_id: {get_param: "OS::stack_id"}
+        list_join:
+          - ''
+          - - {'=': {server_group: {get_param: "OS::stack_id"}}}
 
   bastion_port:
     type: OS::Neutron::Port
