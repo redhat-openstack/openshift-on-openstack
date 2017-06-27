@@ -298,7 +298,7 @@ resources:
   disable_ipv6:
     type: OS::Heat::SoftwareConfig
     properties:
-      config:{get_file: fragments/disable_ipv6.sh}
+      config: {get_file: fragments/disable_ipv6.sh}
 
   # Add CA Cert to trust chain
   update_ca_cert:
