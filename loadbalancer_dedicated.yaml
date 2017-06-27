@@ -240,6 +240,7 @@ resources:
       parts:
       - config: {get_resource: set_hostname}
       - config: {get_resource: included_files}
+      - config: {get_resource: disable_ipv6}
       - config: {get_resource: update_ca_cert}
       - config: {get_resource: rhn_register}
       - config: {get_resource: set_extra_repos}
@@ -292,6 +293,12 @@ resources:
           content: {get_param: ca_cert}
         ssh_authorized_keys:
         - {get_param: ansible_public_key}
+
+  # Disable IPv6 in the kernel
+  disable_ipv6:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:{get_file: fragments/disable_ipv6.sh}
 
   # Add CA Cert to trust chain
   update_ca_cert:
