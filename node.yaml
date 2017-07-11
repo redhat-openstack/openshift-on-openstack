@@ -587,6 +587,7 @@ resources:
     properties:
       group: script
       inputs:
+      - name: node_id
       - name: node_name
       - name: node_type
       - name: ssh_user
@@ -603,6 +604,7 @@ resources:
     properties:
       actions: ['DELETE']
       input_values:
+        node_id: {get_resource: host}
         node_type: node
         node_name:
           str_replace:
