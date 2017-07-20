@@ -22,6 +22,10 @@ function docker_set_storage_device() {
     # By default the cinder volume is mapped to virtio-first_20_chars of cinder
     # volume ID under /dev/disk/by-id/
     devlink=/dev/disk/by-id/virtio-${1:0:20}
+    if ! [ -e "$devlink" ];then
+        # support for virtio-scsi
+        devlink=/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_${1:0:20}
+    fi
     docker_dev=""
     if ! [ -e "$devlink" ];then
         # It might be that disk is not present under /dev/disk/by-id/
