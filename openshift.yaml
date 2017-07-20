@@ -697,6 +697,7 @@ resources:
         type: node.yaml
         properties:
           autoscaling: {get_param: autoscaling}
+          metadata: {"metering.server_group": {get_param: "OS::stack_id"}}
           ocp_version: {get_param: ocp_version}
           image: {get_param: node_image}
           flavor: {get_param: node_flavor}
@@ -726,7 +727,6 @@ resources:
           ansible_public_key: {get_attr: [ansible_keys, public_key]}
           bastion_node: {get_attr: [bastion_host, resource.host]}
           system_update: {get_param: system_update}
-          metadata: {"metering.stack": {get_param: "OS::stack_id"}}
           extra_repository_urls: {get_param: extra_repository_urls}
           extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
           all_master_nodes:
@@ -802,33 +802,43 @@ resources:
       scaling_adjustment: '-1'
 
   cpu_alarm_high:
-    type: OS::Ceilometer::Alarm
+    type: OS::Aodh::GnocchiAggregationByResourcesAlarm
     properties:
-      meter_name: cpu_util
-      statistic: avg
-      period: 60
-      evaluation_periods: 1
+      metric: cpu_util
       threshold: 50
+      comparison_operator: gt
+      resource_type: instance
+      aggregation_method: mean
+      granularity: 300
+      evaluation_periods: 1
       enabled: {get_param: autoscaling}
       alarm_actions:
         - {get_attr: [scale_up_policy, alarm_url]}
-      matching_metadata: {'metadata.user_metadata.stack': {get_param: "OS::stack_id"}}
-      comparison_operator: gt
+      query:
+        str_replace:
+          template: '{"=": {"server_group": "stack_id"}}'
+          params:
+            stack_id: {get_param: "OS::stack_id"}
 
   cpu_alarm_low:
-    type: OS::Ceilometer::Alarm
+    type: OS::Aodh::GnocchiAggregationByResourcesAlarm
     properties:
-      meter_name: cpu_util
-      statistic: avg
-      period: 600
-      evaluation_periods: 1
+      metric: cpu_util
       threshold: 15
+      comparison_operator: lt
+      resource_type: instance
+      aggregation_method: mean
+      granularity: 300
+      evaluation_periods: 1
       enabled: {get_param: autoscaling}
       alarm_actions:
         - {get_attr: [scale_down_policy, alarm_url]}
-      matching_metadata: {'metadata.user_metadata.stack': {get_param: "OS::stack_id"}}
-      comparison_operator: lt
-
+      query:
+        str_replace:
+          template: '{"=": {"server_group": "stack_id"}}'
+          params:
+            stack_id: {get_param: "OS::stack_id"}
+        
   bastion_port:
     type: OS::Neutron::Port
     properties:
