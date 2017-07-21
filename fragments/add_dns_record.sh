@@ -26,5 +26,4 @@ if [ -n "$NAME" -a "${NAME:0:1}" = "%" -a "${NAME: -1}" = "%" ]; then
     NAME="$(hostname)"
 fi
 
-# NOTE: the dot after the hostname is necessary
-/usr/local/bin/update_dns -z "%ZONE%" -s "%DNS_SERVER%" -k "$DNS_UPDATE_KEY" "$NAME." "%IP_ADDRESS%"
+/usr/local/bin/update_dns -z "%ZONE%" -s "%DNS_SERVER%" -k "$DNS_UPDATE_KEY" "$NAME" "%IP_ADDRESS%"
