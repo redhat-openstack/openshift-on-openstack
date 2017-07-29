@@ -16,13 +16,8 @@ parameters:
       Size of the Openshift registry persistent volume
     type: number
 
-resources:
-  volume:
-    type: OS::Cinder::Volume
-    properties:
-      size: {get_param: volume_size}
 
 outputs:
   volume_id:
     description: cinder volume id
-    value: {get_resource: volume}
+    value: {get_param: volume_id}
