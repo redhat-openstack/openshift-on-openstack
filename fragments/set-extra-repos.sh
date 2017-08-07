@@ -23,5 +23,5 @@ for repofile_url in $REPOLIST; do
     # Create a path from the URL file and a hash to avoid conflict
     url_filename=$(basename $repofile_url)
     url_checksum=$(echo "$repofile_url" | md5sum | cut -f1 -d' ')
-    curl -L -o ${REPODIR}/${url_filename}-${url_checksum}.repo $repofile_url
+    curl -L -o ${REPODIR}/${url_filename}-${url_checksum}.repo $repofile_url || notify_failure "Failed to add extra repo"
 done
