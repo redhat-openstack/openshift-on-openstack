@@ -451,7 +451,7 @@ resources:
           content:
             str_replace:
               params:
-                $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
+                $WC_NOTIFY: { get_resource: wait_handle }
               template: {get_file: fragments/common_functions.sh}
         - path: /usr/local/share/openshift-on-openstack/common_openshift_functions.sh
           permissions: 0755
@@ -766,7 +766,7 @@ resources:
   # Provide a curl CLI command to the cloud-init script.  Called on completion
   # to indicate the status of the cloud-init process
   wait_handle:
-    type: OS::Heat::WaitConditionHandle
+    type: OS::Heat::UpdateWaitConditionHandle
 
 outputs:
   hostname:
