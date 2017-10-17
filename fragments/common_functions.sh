@@ -1,14 +1,25 @@
 # Send success status to OpenStack WaitCondition
+#  or UpdateWaitConditionHandle
 function notify_success() {
-    $WC_NOTIFY --data-binary \
-               "{\"status\": \"SUCCESS\", \"reason\": \"$1\", \"data\": \"$1\"}"
+    if [[ "$WC_NOTIFY" =~ ^curl ]]; then
+        $WC_NOTIFY -k --data-binary \
+                "{\"status\": \"SUCCESS\", \"reason\": \"$1\", \"data\": \"$1\"}"
+    else
+        /usr/bin/cfn-signal -e 0 -r "$1" -s "SUCCESS" --id "00000" -d "$1" "$WC_NOTIFY"
+    fi
     exit 0
 }
 
-# Send success status to OpenStack WaitCondition
+# Send failure status to OpenStack WaitCondition
+#  or UpdateWaitConditionHandle
 function notify_failure() {
-    $WC_NOTIFY --data-binary \
+    if [[ "$WC_NOTIFY" =~ ^curl ]]; then
+
+        $WC_NOTIFY -k  --data-binary \
                "{\"status\": \"FAILURE\", \"reason\": \"$1\", \"data\": \"$1\"}"
+    else
+        /usr/bin/cfn-signal -r "$1" -s "FAILURE" -r "$1"  --id "00000" -d "$1" "$WC_NOTIFY"
+    fi
     exit 1
 }
 
