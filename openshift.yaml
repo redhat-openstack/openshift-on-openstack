@@ -492,7 +492,11 @@ parameters:
 
   container_quota:
     type: number
-    description: Quota for container in GB
+    description: >
+      Quota for container in GB  via docker dm.basesize.
+      Limits the size of images and containers. Docker default of 10GB is used when
+      this parameter defaults to 0.
+      See docker dm.basesize documentation for further info and limitations.
     default: 0
 
   extra_openshift_ansible_params:
