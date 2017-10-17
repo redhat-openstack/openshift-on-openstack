@@ -130,7 +130,9 @@ function is_scaleup() {
     # check if diff between old and new inventory file contains only
     # node changes (ignore 'new_nodes' changes because nodes
     # are removed from [new_nodes] on the next stack-update run
-    (diff $ANSDIR/inventory ${ANSDIR}.deployed/inventory | grep '^[<>]' |
+    # NOTE: disable pipefail or it will always return 0.
+    (set +o pipefail;
+     diff $ANSDIR/inventory ${ANSDIR}.deployed/inventory | grep '^[<>]' |
         grep -v new_nodes | grep -v '[<>] $' |
         grep -v '.*-node') && return 1 || return 0
 }
