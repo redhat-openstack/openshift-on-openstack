@@ -232,6 +232,12 @@ parameters:
     type: string
     description: Certificate Authority Certificate to be added to trust chain
 
+  host_config:
+    type: string
+    description: >
+      An OS::Heat::MultiPartMime containing CloudConfig objects.
+    default: ''
+
 resources:
 
   # Create a network connection on the internal communications network
@@ -302,6 +308,8 @@ resources:
     type: OS::Heat::MultipartMime
     properties:
       parts:
+      - config: {get_param: host_config}
+        type: multipart
       - config: {get_resource: set_hostname}
       - config: {get_resource: included_files}
       - config: {get_resource: update_ca_cert}
