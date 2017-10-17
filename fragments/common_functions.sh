@@ -27,7 +27,7 @@ function docker_set_storage_device() {
         # It might be that disk is not present under /dev/disk/by-id/
         # https://ask.openstack.org/en/question/50882/are-devdiskby-id-symlinks-unreliable/
         # then just find first disk which has no partition
-        for dev in /dev/vdb /dev/vda; do
+        for dev in /dev/vdb /dev/vda /dev/sdb /dev/sda; do
             if [ -b $dev -a ! -b ${dev}1 ]; then
                 docker_dev=$dev
                 break
