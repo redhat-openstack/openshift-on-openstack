@@ -12,6 +12,10 @@ This template uses Heat to create the OpenStack infrastructure
 components, then calls the https://github.com/openshift/openshift-ansible[OpenShift Ansible] installer playbooks to
 install and configure OpenShift on the VMs.
 
+This project is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+
+Also, this project is *NOT SUPPORTED* by Red Hat in any way. Check Scope of Coverage at <https://access.redhat.com/support/offerings/production/soc> for information on what is or not supported.
+
 == Architecture
 
 All of the OpenShift VMs will share a private network. This network is
