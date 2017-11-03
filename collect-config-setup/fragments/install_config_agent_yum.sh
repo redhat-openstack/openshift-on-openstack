@@ -18,7 +18,16 @@ if ! yum info os-collect-config; then
             subscription-manager repos --enable="rhel-7-server-openstack-$OSP_VERSION-director-rpms"
         fi
     else
-        yum -y install centos-release-openstack-liberty
+	case $OSP_VERSION in
+		9)
+        		yum -y install centos-release-openstack-liberty;;
+		10)
+			yum -y install centos-release-openstack-newton;;
+		*)
+			echo "Unsupported version $OSP_VERSION";
+			exit 1;
+			;;
+	esac
     fi
 fi
 yum -y install os-collect-config python-zaqarclient os-refresh-config os-apply-config openstack-heat-templates python-oslo-log python-psutil
