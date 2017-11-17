@@ -159,6 +159,11 @@ parameters:
     type: comma_delimited_list
     description: address of dns nameservers reachable in your environment
 
+  dns_update_master:
+    type: string
+    description: >
+      The DNS server to use for dns updates (can be an hidden master)
+
   dns_update_key:
     type: string
     hidden: true

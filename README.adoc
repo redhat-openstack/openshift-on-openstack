@@ -199,6 +199,11 @@ parameters:
    external_network: public
    dns_nameserver: 8.8.4.4,8.8.8.8
 
+   # Optionnaly set dynamic DNS update
+   #dns_update_master="ns1.example.com"
+   #dns_update_keyname="update-key"
+   #dns_update_key="Bf/sev4534fdfv...="
+
    # Define the host name templates for master and nodes
    domain_name: "example.com"
    master_hostname: "origin-master"
@@ -560,9 +565,10 @@ domain used in OpenShift cluster (`example.com` in the example above).
 === Dynamic DNS Updates
 
 If your DNS servers support dynamic updates (as defined in RFC 2136),
-you can pass the update key in the `dns_update_key` parameter and each
-node will register its internal IP address to all the DNS servers in
-the `dns_nameserver` list.
+you can pass the update key name in the `dns_update_keyname` (default to 
+`update-key`), and the key value in the `dns_update_key` parameter, and each
+node will register its internal IP address to the `dns_update_master` (default
+to first of `dns_servers`) DNS server.
 
 In addition, if you use the *dedicated load balancer*, the API and
 wildcard entries will be created as well. Otherwise, you will need to

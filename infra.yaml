@@ -224,6 +224,16 @@ parameters:
     type: comma_delimited_list
     description: address of dns nameservers reachable in your environment
 
+  dns_update_master:
+    type: string
+    description: >
+      The DNS server to use for dns updates (can be an hidden master)
+
+  dns_update_keyname:
+    type: string
+    description: >
+      Name of the DNS key to use
+
   dns_update_key:
     type: string
     hidden: true
@@ -427,7 +437,8 @@ resources:
         str_replace:
           params:
             '%ZONE%': {get_param: domain_name}
-            '%DNS_SERVER%': {get_param: [dns_servers, 0]}
+            '%DNS_UPDATE_MASTER%': {get_param: dns_update_master}
+            '%DNS_UPDATE_KEYNAME%': {get_param: dns_update_keyname}
             '%DNS_UPDATE_KEY%': {get_param: dns_update_key}
             '%IP_ADDRESS%': {get_attr: [port, fixed_ips, 0, ip_address]}
           template: {get_file: fragments/add_dns_record.sh}

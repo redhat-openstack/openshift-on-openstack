@@ -137,6 +137,16 @@ parameters:
       These will be configured into the OpenStack networks. They are the
       namservers that new OpenShift instances will use.
 
+  dns_update_master:
+    type: string
+    description: >
+      The DNS server to use for dns updates (can be an hidden master)
+
+  dns_update_keyname:
+    type: string
+    description: >
+      Name of the DNS key to use
+
   dns_update_key:
     type: string
     description: >
@@ -505,6 +515,11 @@ parameters:
     description: Certificate Authority Certificate to be added to trust chain
     default: ''
 
+conditions:
+
+  # Update specific dns server, or first used dns 
+  default_dns : {equals: [{get_param: dns_update_master}, ""]}
+
 resources:
 
   # Network Components
@@ -638,7 +653,9 @@ resources:
           extra_repository_urls: {get_param: extra_repository_urls}
           extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
           dns_servers: {get_param: dns_nameserver}
+          dns_update_master: {if: ["default_dns",get_param: [dns_servers, 0],get_param: dns_update_master]}
           dns_update_key: {get_param: dns_update_key}
+          dns_update_keyname: {get_param: dns_update_keyname}
           ca_cert: {get_param: ca_cert}
 
   openshift_infra_nodes:
@@ -683,7 +700,9 @@ resources:
           extra_repository_urls: {get_param: extra_repository_urls}
           extra_docker_repository_urls: {get_param: extra_docker_repository_urls}
           dns_servers: {get_param: dns_nameserver}
+          dns_update_master: {if: ["default_dns",get_param: [dns_servers, 0],get_param: dns_update_master]}
           dns_update_key: {get_param: dns_update_key}
+          dns_update_keyname: {get_param: dns_update_keyname}
           ca_cert: {get_param: ca_cert}
 
   openshift_nodes:
@@ -755,7 +774,9 @@ resources:
           os_region_name: {get_param: os_region_name}
           loadbalancer_type: {get_param: loadbalancer_type}
           dns_servers: {get_param: dns_nameserver}
+          dns_update_master: {if: ["default_dns",get_param: [dns_servers, 0],get_param: dns_update_master]}
           dns_update_key: {get_param: dns_update_key}
+          dns_update_keyname: {get_param: dns_update_keyname}
           lb_ip: {get_attr: [lb_floating_ip, floating_ip_address]}
           master_ip: {get_attr: [openshift_masters, resource.0.ip_address]}
           lb_hostname: {get_attr: [loadbalancer, hostname]}
@@ -1023,7 +1044,9 @@ resources:
       stack_name: {get_param: 'OS::stack_name'}
       bastion_node: {get_attr: [bastion_host, resource.host]}
       dns_servers: {get_param: dns_nameserver}
+      dns_update_master: {if: ["default_dns",get_param: [dns_servers, 0],get_param: dns_update_master]}
       dns_update_key: {get_param: dns_update_key}
+      dns_update_keyname: {get_param: dns_update_keyname}
       ca_cert: {get_param: ca_cert}
 
 outputs:

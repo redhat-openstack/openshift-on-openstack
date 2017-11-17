@@ -168,6 +168,14 @@ parameters:
     type: comma_delimited_list
     description: address of dns nameservers reachable in your environment
 
+  dns_update_master:
+    type: string
+    hidden: true
+
+  dns_update_keyname:
+    type: string
+    hidden: true
+
   dns_update_key:
     type: string
     hidden: true
@@ -363,8 +371,9 @@ resources:
         str_replace:
           params:
             '%ZONE%': {get_param: domain_name}
-            '%DNS_SERVER%': {get_param: [dns_servers, 0]}
+            '%DNS_UPDATE_MASTER%': {get_param: dns_update_master}
             '%DNS_UPDATE_KEY%': {get_param: dns_update_key}
+            '%DNS_UPDATE_KEYNAME%': {get_param: dns_update_keyname}
             '%IP_ADDRESS%': {get_param: floatingip}
           template: {get_file: fragments/add_dns_record.sh}
 
@@ -376,8 +385,9 @@ resources:
           params:
             '%DNS_ENTRY%': {list_join: ["", ["*.", {get_param: app_subdomain}]]}
             '%ZONE%': {get_param: domain_name}
-            '%DNS_SERVER%': {get_param: [dns_servers, 0]}
+            '%DNS_UPDATE_MASTER%': {get_param: dns_update_master}
             '%DNS_UPDATE_KEY%': {get_param: dns_update_key}
+            '%DNS_UPDATE_KEYNAME%': {get_param: dns_update_keyname}
             '%IP_ADDRESS%': {get_param: floatingip}
           template: {get_file: fragments/add_dns_record.sh}
 

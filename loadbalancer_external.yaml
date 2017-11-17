@@ -166,6 +166,14 @@ parameters:
     type: comma_delimited_list
     description: address of dns nameservers reachable in your environment
 
+  dns_update_master:
+    type: string
+    hidden: true
+
+  dns_update_keyname:
+    type: string
+    hidden: true
+
   dns_update_key:
     type: string
     hidden: true
