@@ -23,7 +23,7 @@ NAME="%DNS_ENTRY%"
 
 # If we didn't get an explicit name, use this server's hostname
 if [ -n "$NAME" -a "${NAME:0:1}" = "%" -a "${NAME: -1}" = "%" ]; then
-    NAME="$(hostname)"
+    NAME="$(hostname -s)"
 fi
 
 /usr/local/bin/update_dns -z "%ZONE%" -s "%DNS_SERVER%" -k "$DNS_UPDATE_KEY" "$NAME" "%IP_ADDRESS%"
