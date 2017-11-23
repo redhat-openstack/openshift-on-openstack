@@ -149,6 +149,12 @@ parameters:
     type: number
     default: 25
 
+  os_volume_size:
+    description: >
+      size of a cinder volume in GB to allocate to OS
+    type: number
+    default: 25
+
   floating_ip:
     description: >
       TBD: What is this a floating IP for? For the DNS server?
@@ -218,13 +224,22 @@ resources:
             HOST: {get_param: hostname}
             DOMAIN: {get_param: domain_name}
       admin_user: {get_param: ssh_user}
-      image: {get_param: image}
+      block_device_mapping:
+        - device_name: vda
+          delete_on_termination: false
+          volume_id: { get_resource: os_volume }
       flavor: {get_param: flavor}
       key_name: {get_param: key_name}
       networks:
       - port: {get_param: port}
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
+
+  os_volume:
+    type: OS::Cinder::Volume
+    properties:
+      image: { get_param: image }
+      size: {get_param: os_volume_size}
 
   # Install, configure and enable the Heat configuration agent
   config_agent:

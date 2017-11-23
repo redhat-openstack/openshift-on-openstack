@@ -271,6 +271,36 @@ parameters:
       storage
     default: 25
 
+  master_os_volume_size_gb:
+    type: number
+    description: >
+      size of a cinder volume in GB to allocate to OS
+    default: 25
+
+  infra_os_volume_size_gb:
+    type: number
+    description: >
+      size of a cinder volume in GB to allocate to OS
+    default: 25
+
+  node_os_volume_size_gb:
+    type: number
+    description: >
+      size of a cinder volume in GB to allocate to OS
+    default: 25
+
+  bastion_os_volume_size_gb:
+    type: number
+    description: >
+      size of a cinder volume in GB to allocate to OS
+    default: 25
+
+  lb_os_volume_size_gb:
+    type: number
+    description: >
+      size of a cinder volume in GB to allocate to OS
+    default: 25
+
   # Node scaling parameters
   autoscaling:
     type: boolean
@@ -590,6 +620,7 @@ resources:
       floating_ip: {get_attr: [bastion_floating_ip, floating_ip_address]}
       port: {get_resource: bastion_port}
       docker_volume_size: {get_param: master_docker_volume_size_gb}
+      os_volume_size: {get_param: bastion_os_volume_size_gb}
       openshift_ansible_git_url: {get_param: openshift_ansible_git_url}
       openshift_ansible_git_rev: {get_param: openshift_ansible_git_rev}
       system_update: {get_param: system_update}
@@ -618,6 +649,7 @@ resources:
           rhn_pool: {get_param: rhn_pool}
           extra_rhn_pools: {get_param: extra_rhn_pools}
           docker_volume_size: {get_param: master_docker_volume_size_gb}
+          os_volume_size: {get_param: master_os_volume_size_gb}
           hostname:
             str_replace:
               template: "%stackname%-%hostname%-%index%"
@@ -662,6 +694,7 @@ resources:
           rhn_pool: {get_param: rhn_pool}
           extra_rhn_pools: {get_param: extra_rhn_pools}
           docker_volume_size: {get_param: infra_docker_volume_size_gb}
+          os_volume_size: {get_param: infra_os_volume_size_gb}
           hostname:
             str_replace:
               template: "%stackname%-%hostname%-%index%"
@@ -708,6 +741,7 @@ resources:
           internal_subnet: {get_resource: cluster_subnet}
           security_group: {get_resource: node_security_group}
           docker_volume_size: {get_param: node_docker_volume_size_gb}
+          os_volume_size: {get_param: node_os_volume_size_gb}
           rhn_username: {get_param: rhn_username}
           rhn_password: {get_param: rhn_password}
           sat6_hostname: {get_param: sat6_hostname}

@@ -61,6 +61,12 @@ parameters:
     type: number
     default: 25
 
+  os_volume_size:
+    description: >
+      size of a cinder volume in GB to allocate to OS
+    type: number
+    default: 25
+
   rhn_username:
     description: >
       A valid user with entitlements to RHEL and OpenShift software repos
@@ -384,7 +390,10 @@ resources:
             SUFFIX: {get_attr: [random_hostname_suffix, value]}
             DOMAIN: {get_param: domain_name}
       admin_user: {get_param: ssh_user}
-      image: {get_param: image}
+      block_device_mapping:
+        - device_name: vda
+          delete_on_termination: false
+          volume_id: { get_resource: os_volume }
       flavor: {get_param: flavor}
       key_name: {get_param: key_name}
       networks:
@@ -393,6 +402,12 @@ resources:
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
       metadata: {get_param: metadata}
+
+  os_volume:
+    type: OS::Cinder::Volume
+    properties:
+      image: { get_param: image }
+      size: {get_param: os_volume_size}
 
   # Create an external volume to contain the Docker containers and images
   docker_volume:

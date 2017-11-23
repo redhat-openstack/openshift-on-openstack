@@ -30,6 +30,11 @@ parameters:
   master_docker_volume_size_gb: 25
   infra_docker_volume_size_gb: 25
   node_docker_volume_size_gb: 25
+  master_os_volume_size_gb: 25
+  infra_os_volume_size_gb: 25
+  node_os_volume_size_gb: 25
+  bastion_os_volume_size_gb: 25
+  lb_os_volume_size_gb: 25
 
 resource_registry:
   OOShift::LoadBalancer: loadbalancer_neutron.yaml

@@ -195,6 +195,13 @@ parameters:
    loadbalancer_image: centos72
    loadbalancer_flavor: m1.medium
 
+   # Set Operating System volume size
+   master_os_volume_size_gb: 25
+   infra_os_volume_size_gb: 25
+   node_os_volume_size_gb: 25
+   bastion_os_volume_size_gb: 25
+   lb_os_volume_size_gb: 25
+
    # Set an existing network for inbound and outbound traffic
    external_network: public
    dns_nameserver: 8.8.4.4,8.8.8.8
