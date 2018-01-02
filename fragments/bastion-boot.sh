@@ -148,6 +148,14 @@ else
     retry yum -y install pyOpenSSL ||
         notify_failure "could not install pyOpenSSL"
 
+    # ensure python-passlib is installed on CentOS
+    retry yum -y install python-passlib ||
+        notify_failure "could not install python-passlib"
+
+    # ensure java-1.8.0-openjdk-headless is installed on CentOS
+    retry yum -y install java-1.8.0-openjdk-headless ||
+        notify_failure "could not install java-1.8.0-openjdk-headless"
+
     extra_opts=""
     # Install the EPEL repository, but leave it disabled
     # Used only to install Ansible
