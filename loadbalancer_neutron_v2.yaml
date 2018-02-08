@@ -1,8 +1,7 @@
 heat_template_version: 2016-10-14
 
 description: >
-  A template which doesn't create any resources supposing that an external
-  loadbalancer is used.
+  A template which provides a creates a loadbalancer using neutron's LBaaS.
 
 parameters:
 
@@ -62,7 +61,7 @@ parameters:
     type: string
     hidden: true
 
-# Red Hat satellite subscription parameters
+  # Red Hat satellite subscription parameters
   sat6_hostname:
     type: string
     description: >
@@ -152,12 +151,6 @@ parameters:
     description: List of docker repository URLs which will be installed on each node, if a repo is insecure use '#insecure' suffix.
     default: ''
 
-  # Delay openshift installation until the master is ready to accept
-  timeout:
-    description: Time to wait until the master setup is ready.
-    type: number
-    default: 4000
-
   stack_name:
     type: string
     default: ''
@@ -180,23 +173,85 @@ parameters:
     type: string
     description: Certificate Authority Certificate to be added to trust chain
 
+resources:
+  lb:
+    type: OS::Neutron::LBaaS::LoadBalancer
+    properties:
+      vip_subnet: {get_param: fixed_subnet}
+
+  lb_listener:
+    type: OS::Neutron::LBaaS::Listener
+    properties:
+      protocol: HTTPS
+      protocol_port: 8443
+      loadbalancer: {get_resource: lb}
+
+  lb_pool:
+    type: OS::Neutron::LBaaS::Pool
+    properties:
+      name: lb_pool
+      description: Load balancer for OpenShift hosts.
+      protocol: HTTPS
+      listener: {get_resource: lb_listener}
+      lb_algorithm: ROUND_ROBIN
+      session_persistence:
+        type: SOURCE_IP
+
+  lb_members:
+    type: OS::Heat::ResourceGroup
+    properties:
+      count: {get_param: member_count}
+      resource_def:
+        type: loadbalancer_neutron_v2_member.yaml
+        properties:
+          addresses: {get_param: member_ips}
+          index: "%index%"
+          pool: {get_resource: lb_pool}
+          protocol_port: 8443
+          subnet: {get_param: fixed_subnet}
+
+  lb_monitor:
+    type: OS::Neutron::LBaaS::HealthMonitor
+    properties:
+      type: TCP
+      delay: 15
+      max_retries: 5
+      timeout: 10
+      pool: {get_resource: lb_pool}
+
+  floating_ip_assoc:
+    type: OS::Neutron::FloatingIPAssociation
+    properties:
+      port_id: {get_attr: [lb, vip_port_id]}
+      floatingip_id: {get_param: floatingip_id}
+
 outputs:
   console_url:
     description: URL of the OpenShift web console
     value:
       str_replace:
-        template: "https://%hostname%:8443/console/"
+        template: "https://%stack_name%-%hostname%.%domainname%:8443/console/"
         params:
+          '%stack_name%': {get_param: stack_name}
           '%hostname%': {get_param: hostname}
+          '%domainname%': {get_param: domain_name}
 
   api_url:
     description: URL entrypoint to the OpenShift API
     value:
       str_replace:
-        template: "https://%hostname%:8443/"
+        template: "https://%stack_name%-%hostname%.%domainname%:8443/"
         params:
+          '%stack_name%': {get_param: stack_name}
           '%hostname%': {get_param: hostname}
+          '%domainname%': {get_param: domain_name}
 
   hostname:
     description: Loadbalancer hostname
-    value: {get_param: hostname}
+    value:
+      str_replace:
+        template: "%stack_name%-%hostname%.%domainname%"
+        params:
+          '%stack_name%': {get_param: stack_name}
+          '%hostname%': {get_param: hostname}
+          '%domainname%': {get_param: domain_name}

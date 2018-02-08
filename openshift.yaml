@@ -1012,7 +1012,9 @@ resources:
       stack_name: {get_param: 'OS::stack_name'}
       ansible_public_key: {get_attr: [ansible_keys, public_key]}
       fixed_subnet: {get_resource: fixed_subnet}
+      member_count: {get_param: master_count}
       members: {get_attr: [openshift_masters, host]}
+      member_ips: {get_attr: [openshift_masters, ip_address]}
       master_hostname: {get_attr: [openshift_masters, resource.0.hostname]}
       floatingip_id: {get_resource: lb_floating_ip}
       floatingip: {get_attr: [lb_floating_ip, floating_ip_address]}
