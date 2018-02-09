@@ -11,15 +11,17 @@ set -eux
 if ! yum info os-collect-config; then
     # if os-collect-config package is not available, first check if
     # the repo is available but disabled, otherwise install the package
-    # from epel
+    # from centos or rdoproject
     if yum repolist disabled|grep rhel-7-server-openstack-$OSP_VERSION-rpms; then
         subscription-manager repos --enable="rhel-7-server-openstack-$OSP_VERSION-rpms"
         if [ "$OSP_VERSION" -lt 10 ] ; then
             subscription-manager repos --enable="rhel-7-server-openstack-$OSP_VERSION-director-rpms"
         fi
-    else
+    elif yum info centos-release-openstack-liberty; then
         yum -y install centos-release-openstack-liberty
+    else
+        yum -y install https://rdoproject.org/repos/openstack-pike/rdo-release-pike.rpm
     fi
 fi
-yum -y install os-collect-config python-zaqarclient os-refresh-config os-apply-config openstack-heat-templates python-oslo-log python-psutil
+yum -y install os-collect-config python-zaqarclient os-refresh-config os-apply-config openstack-heat-templates python-oslo-log python-psutil openstack-heat-agents
 #yum-config-manager --disable 'epel*'
