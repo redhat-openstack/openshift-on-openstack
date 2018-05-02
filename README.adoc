@@ -2,6 +2,20 @@
 = OpenShift on OpenStack
 
 
+== Maintenance Status
+
+This project is no longer being developed or maintained by its original
+authors.
+
+The https://github.com/openshift/openshift-ansible[official OpenShift installer]
+now supports various cloud providers including OpenStack so a lot of the development
+effort has moved there:
+
+https://github.com/openshift/openshift-ansible/tree/master/playbooks/openstack
+
+We recommend you take a look at it.
+
+
 == About
 
 A collection of documentation, https://wiki.openstack.org/wiki/Heat[Heat] templates, configuration and everything
