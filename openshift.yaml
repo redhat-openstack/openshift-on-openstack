@@ -1025,6 +1025,9 @@ resources:
       dns_servers: {get_param: dns_nameserver}
       dns_update_key: {get_param: dns_update_key}
       ca_cert: {get_param: ca_cert}
+      master_ips: {get_attr: [openshift_masters, ip_address]}
+      master_count: {get_param: master_count}
+      external_network_subnet: {get_param: external_network_subnet}
 
 outputs:
 

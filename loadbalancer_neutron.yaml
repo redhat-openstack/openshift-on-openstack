@@ -167,6 +167,19 @@ parameters:
     type: string
     description: Certificate Authority Certificate to be added to trust chain
 
+  master_ips:
+    type: comma_delimited_list
+
+  master_count:
+    type: number
+
+  external_network_subnet:
+    description: >
+      The name or ID of the external IPv4 space
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
 resources:
   lb:
     type: OS::Neutron::LoadBalancer

@@ -1,17 +1,42 @@
-heat_template_version: 2016-10-14
+heat_template_version: 2014-10-16
 
 description: >
   A template which provides a creates a loadbalancer using neutron's LBaaS.
 
 parameters:
 
-  # What version of OpenShift Container Platform to install
-  # This value is used to select the RPM repo for the OCP release to install
   ocp_version:
     type: string
     description: >
       The version of OpenShift Container Platform to deploy
+  
+  app_subdomain:
+    type: string
 
+  members:
+    type: comma_delimited_list
+
+  master_hostname:
+    type: string
+
+  floatingip_id:
+    type: string
+
+  dns_servers:
+    type: comma_delimited_list
+    description: address of dns nameservers reachable in your environment
+
+  dns_update_key:
+    type: string
+    hidden: true
+
+  ca_cert:
+    type: string
+    description: Certificate Authority Certificate to be added to trust chain
+
+  floatingip:
+    type: string
+  
   key_name:
     description: >
       A pre-submitted SSH key to access the VM hosts
@@ -34,17 +59,13 @@ parameters:
     description: >
       The load balancer hostname portion of the FQDN
     type: string
-
-  stack_name:
-    description: Top level stack name.
-    type: string
+    constraints:
+    - allowed_pattern: '[a-z0-9\-]*'
+      description: Hostname must contain only characters [a-z0-9\-].
 
   domain_name:
     description: >
       All VMs will be placed in this domain
-    type: string
-
-  app_subdomain:
     type: string
 
   rhn_username:
@@ -99,23 +120,13 @@ parameters:
       This will be placed on each VM host in /root/.ssh/authorized_keys
     type: string
 
-  fixed_subnet:
-    description: >
-      The name or ID of the internal IPv4 space
-    type: string
-    constraints:
-    - custom_constraint: neutron.subnet
-
-  members:
+  master_ips:
     type: comma_delimited_list
+    
+  master_count:
+    type: number
 
   master_hostname:
-    type: string
-
-  floatingip_id:
-    type: string
-
-  floatingip:
     type: string
 
   fixed_network:
@@ -131,6 +142,13 @@ parameters:
     type: string
     constraints:
     - custom_constraint: neutron.subnet
+    
+  external_network_subnet:
+    description: >
+      The name or ID of the external IPv4 space
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
 
   extra_repository_urls:
     type: comma_delimited_list
@@ -142,20 +160,6 @@ parameters:
     description: List of docker repository URLs which will be installed on each node, if a repo is insecure use '#insecure' suffix.
     default: ''
 
-  # Delay openshift installation until the master is ready to accept
-  timeout:
-    description: Time to wait until the master setup is ready.
-    type: number
-    default: 4000
-
-  hostname:
-    description: >
-      The load balancer hostname portion of the FQDN
-    type: string
-    constraints:
-    - allowed_pattern: '[a-z0-9\-\.]*'
-      description: Hostname must contain only characters [a-z0-9\-\.].
-
   stack_name:
     type: string
     default: ''
@@ -166,30 +170,61 @@ parameters:
       The name or ID of the bastion instance.
     default: ''
 
-  dns_servers:
-    type: comma_delimited_list
-    description: address of dns nameservers reachable in your environment
+resources:
+  lb:
+    type: OS::Neutron::LBaaS::LoadBalancer
+    properties:
+        name:
+          list_join: ['-', [ {get_param: stack_name}, 'loadbalancer']]
+        vip_subnet: {get_param: fixed_subnet}
 
-  dns_update_key:
-    type: string
-    hidden: true
+  listener:
+    type: OS::Neutron::LBaaS::Listener
+    properties:
+      loadbalancer: {get_resource: lb}
+      name:
+        list_join: ['-', [ {get_param: stack_name}, 'loadbalancer-listener']]
+      protocol: HTTPS
+      protocol_port: 8443
 
-  ca_cert:
-    type: string
-    description: Certificate Authority Certificate to be added to trust chain
+  lb_pool:
+    type: OS::Neutron::LBaaS::Pool
+    properties:
+      listener: {get_resource: listener}
+      name:
+        list_join: ['-', [ {get_param: stack_name}, 'loadbalancer-listener-pool']]
+      description: Load balancer for OpenShift hosts.
+      lb_algorithm: ROUND_ROBIN
+      protocol: HTTPS
+      session_persistence:
+        type: SOURCE_IP
+ 
+  pool_members:
+    depends_on: [lb_pool]
+    type: OS::Heat::ResourceGroup
+    properties:
+      count: {get_param: master_count}
+      resource_def:
+        type: loadbalancer_lbaasv2_poolmember.yaml
+        properties:
+          # Note you have to pass the index and the entire list into the
+          # nested template, resolving via %index% doesn't work directly
+          # in the get_param here
+          index: "%index%"
+          lb_pool: {get_resource: lb_pool}
+          protocol_port: 8443
+          master_ips: {get_param: master_ips}
+          fixed_subnet: {get_param: fixed_subnet}
+          external_network_subnet: {get_param: external_network_subnet}
 
-  master_ips:
-    type: comma_delimited_list
-
-  master_count:
-    type: number
-
-  external_network_subnet:
-    description: >
-      The name or ID of the external IPv4 space
-    type: string
-    constraints:
-    - custom_constraint: neutron.subnet
+  lb_monitor:
+    type: OS::Neutron::LBaaS::HealthMonitor
+    properties:
+      pool: { get_resource: lb_pool }
+      type: TCP
+      delay: 15
+      max_retries: 5
+      timeout: 10
 
 outputs:
   console_url:
@@ -198,7 +233,7 @@ outputs:
       str_replace:
         template: "https://%hostname%.%domainname%:8443/console/"
         params:
-          '%hostname%': {get_param: master_hostname}
+          '%hostname%': {get_param: hostname}
           '%domainname%': {get_param: domain_name}
 
   api_url:
@@ -207,15 +242,13 @@ outputs:
       str_replace:
         template: "https://%hostname%.%domainname%:8443/"
         params:
-          '%hostname%': {get_param: master_hostname}
-          '%domainname%': {get_param: domain_name}
-
-  hostname:
-    description: Loadbalancer hostname
-    value:
-      str_replace:
-        template: "%stack_name%-%hostname%.%domainname%"
-        params:
-          '%stack_name%': {get_param: stack_name}
           '%hostname%': {get_param: hostname}
           '%domainname%': {get_param: domain_name}
+
+  loadbalancer_ip:
+    description: Load Balancer IP
+    value: {get_attr: [lb, vip_address ]} 
+
+  loadbalancer_port_id:
+    description: Load Balaner port id for floating ip association
+    value: {get_attr: [lb, vip_port_id]} 
