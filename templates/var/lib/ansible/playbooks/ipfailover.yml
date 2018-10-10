@@ -4,15 +4,19 @@ cat << 'EOF' > /var/lib/os-apply-config/templates/var/lib/ansible/playbooks/ipfa
 {{=<% %>=}}
 - hosts: masters[0]
   sudo: yes
-  roles:
-  - role: openshift_serviceaccounts
-    openshift_serviceaccounts_names:
-    - ipfailover
-    openshift_serviceaccounts_namespace: default
-    openshift_serviceaccounts_sccs:
-    - privileged
-
   tasks:
+  - name: Create the ipfailover service account
+    oc_serviceaccount:
+      name: ipfailover
+      namespace: default
+
+  - name: Grant the ipfailover service account the appropriate scc
+    oc_adm_policy_user:
+      user: ipfailover
+      namespace: default
+      resource_kind: scc
+      resource_name: privileged
+
   - name: Deploy Openshift IP failover for router
     command: oadm ipfailover --create --service-account=ipfailover --interface=eth0 --selector='region=infra' --replicas={{ num_infra }} --virtual-ips="{{ router_vip }}" --credentials=/etc/origin/master/openshift-router.kubeconfig
     when: ansible_first_run | default(false) | bool
