@@ -197,6 +197,9 @@ parameters:
    ssh_user: centos
    ssh_key_name: default
 
+   # List of prefixes allowed to SSH to nodes
+   allowed_ssh_prefixes: "192.168.0.0/24,10.0.1.0/24"
+
    # Set the image type and size for the VMs
    bastion_image: centos72
    bastion_flavor: m1.medium

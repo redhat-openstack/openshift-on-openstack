@@ -505,6 +505,11 @@ parameters:
     description: Certificate Authority Certificate to be added to trust chain
     default: ''
 
+  allowed_ssh_prefixes:
+    description: Prefixes to allow in ingress security group rule for SSH
+    type: comma_delimited_list
+    default: "0.0.0.0/0"
+
 resources:
 
   # Network Components
@@ -770,19 +775,49 @@ resources:
     type: OS::Neutron::SecurityGroup
     properties:
       rules:
-      - protocol: icmp
-      - direction: ingress
-        protocol: tcp
-        port_range_min: 22
-        port_range_max: 22
-      - direction: ingress
-        protocol: tcp
-        port_range_min: 10250
-        port_range_max: 10250
-      - direction: ingress
-        protocol: udp
-        port_range_min: 4789
-        port_range_max: 4789
+        repeat:
+          for_each:
+            <%prefix%>: { get_param: allowed_ssh_prefixes }
+          template:
+            direction: ingress
+            remote_ip_prefix: <%prefix%>
+            protocol: tcp
+            port_range_min: 22
+            port_range_max: 22
+
+  node_security_group_rules_ssh_bastion:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: tcp
+      port_range_min: 22
+      port_range_max: 22
+      remote_group: {get_resource: bastion_security_group }
+      security_group: {get_resource: node_security_group }
+
+  node_security_group_rules_icmp:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      protocol: icmp
+      security_group: {get_resource: node_security_group }
+
+  node_security_group_rules_10250:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: tcp
+      port_range_min: 10250
+      port_range_max: 10250
+      security_group: {get_resource: node_security_group }
+
+  node_security_group_rules_4789:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: udp
+      port_range_min: 4789
+      port_range_max: 4789
+      security_group: {get_resource: node_security_group }
 
   # Scaling and Operational Controls
   scale_up_policy:
@@ -853,16 +888,47 @@ resources:
     type: OS::Neutron::SecurityGroup
     properties:
       rules:
-      - protocol: icmp
-      - protocol: tcp
-        port_range_min: 22
-        port_range_max: 22
-      - protocol: tcp
-        port_range_min: 53
-        port_range_max: 53
-      - protocol: udp
-        port_range_min: 53
-        port_range_max: 53
+        repeat:
+          for_each:
+            <%prefix%>: { get_param: allowed_ssh_prefixes }
+          template:
+            direction: ingress
+            remote_ip_prefix: <%prefix%>
+            protocol: tcp
+            port_range_min: 22
+            port_range_max: 22
+
+  bastion_security_group_rules_ssh_bastion:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: tcp
+      port_range_min: 22
+      port_range_max: 22
+      remote_group: {get_resource: bastion_security_group }
+      security_group: {get_resource: bastion_security_group }
+
+  bastion_security_group_rules:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      protocol: icmp
+      security_group: {get_resource: bastion_security_group }
+
+  bastion_security_group_rules_icmp:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      protocol: tcp
+      port_range_min: 53
+      port_range_max: 53
+      security_group: {get_resource: bastion_security_group }
+
+  bastion_security_group_rules_53:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      protocol: udp
+      port_range_min: 53
+      port_range_max: 53
+      security_group: {get_resource: bastion_security_group }
 
   bastion_floating_ip:
     type: OS::Neutron::FloatingIP
@@ -891,61 +957,141 @@ resources:
     type: OS::Neutron::SecurityGroup
     properties:
       rules:
-      - protocol: icmp
-      - direction: ingress
-        protocol: tcp
-        port_range_min: 22
-        port_range_max: 22
-      - direction: ingress
-        protocol: tcp
-        port_range_min: 4001
-        port_range_max: 4001
-      - direction: ingress
-        protocol: tcp
-        port_range_min: 8443
-        port_range_max: 8443
-      - direction: ingress
-        protocol: tcp
-        port_range_min: 53
-        port_range_max: 53
-      - direction: ingress
-        protocol: udp
-        port_range_min: 53
-        port_range_max: 53
-      - direction: ingress
-        protocol: udp
-        port_range_min: 4789
-        port_range_max: 4789
-      - direction: ingress
-        protocol: tcp
-        port_range_min: 8053
-        port_range_max: 8053
-      - direction: ingress
-        protocol: udp
-        port_range_min: 8053
-        port_range_max: 8053
-      - direction: ingress
-        protocol: tcp
-        port_range_min: 10250
-        port_range_max: 10250
-      - direction: ingress
-        protocol: tcp
-        port_range_min: 24224
-        port_range_max: 24224
-      - direction: ingress
-        protocol: udp
-        port_range_min: 24224
-        port_range_max: 24224
-      # etcd services
-      - direction: ingress
-        protocol: tcp
-        port_range_min: 2379
-        port_range_max: 2379
-      - direction: ingress
-        protocol: tcp
-        port_range_min: 2380
-        port_range_max: 2380
-        remote_mode: remote_group_id
+        repeat:
+          for_each:
+            <%prefix%>: { get_param: allowed_ssh_prefixes }
+          template:
+            direction: ingress
+            remote_ip_prefix: <%prefix%>
+            protocol: tcp
+            port_range_min: 22
+            port_range_max: 22
+
+  master_security_group_rules_ssh_bastion:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: tcp
+      port_range_min: 22
+      port_range_max: 22
+      remote_group: {get_resource: bastion_security_group }
+      security_group: {get_resource: master_security_group }
+
+  master_security_group_rules_icmp:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      protocol: icmp
+      security_group: {get_resource: master_security_group }
+
+  master_security_group_rules_4001:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: tcp
+      port_range_min: 4001
+      port_range_max: 4001
+      security_group: {get_resource: master_security_group }
+
+  master_security_group_rules_8443:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: tcp
+      port_range_min: 8443
+      port_range_max: 8443
+      security_group: {get_resource: master_security_group }
+
+  master_security_group_rules_53t:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: tcp
+      port_range_min: 53
+      port_range_max: 53
+      security_group: {get_resource: master_security_group }
+
+  master_security_group_rules_53u:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: udp
+      port_range_min: 53
+      port_range_max: 53
+      security_group: {get_resource: master_security_group }
+
+  master_security_group_rules_4789:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: udp
+      port_range_min: 4789
+      port_range_max: 4789
+      security_group: {get_resource: master_security_group }
+
+  master_security_group_rules_8053t:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: tcp
+      port_range_min: 8053
+      port_range_max: 8053
+      security_group: {get_resource: master_security_group }
+
+  master_security_group_rules_8053u:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: udp
+      port_range_min: 8053
+      port_range_max: 8053
+      security_group: {get_resource: master_security_group }
+
+  master_security_group_rules_10250:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: tcp
+      port_range_min: 10250
+      port_range_max: 10250
+      security_group: {get_resource: master_security_group }
+
+  master_security_group_rules_24224t:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: tcp
+      port_range_min: 24224
+      port_range_max: 24224
+      security_group: {get_resource: master_security_group }
+
+  master_security_group_rules_24224u:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: udp
+      port_range_min: 24224
+      port_range_max: 24224
+      security_group: {get_resource: master_security_group }
+
+  master_security_group_rules_2379:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+    # etcd services
+      direction: ingress
+      protocol: tcp
+      port_range_min: 2379
+      port_range_max: 2379
+      security_group: {get_resource: master_security_group }
+
+  master_security_group_rules_2380:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: tcp
+      port_range_min: 2380
+      port_range_max: 2380
+      remote_group: {get_resource: master_security_group }
+      security_group: {get_resource: master_security_group }
 
   infra_server_group:
     type: OS::Nova::ServerGroup
@@ -957,34 +1103,84 @@ resources:
     type: OS::Neutron::SecurityGroup
     properties:
       rules:
-      - protocol: icmp
-      - direction: ingress
-        protocol: tcp
-        port_range_min: 22
-        port_range_max: 22
-      # bastion node services
-      - direction: ingress
-        protocol: tcp
-        port_range_min: 80
-        port_range_max: 80
-      - direction: ingress
-        protocol: tcp
-        port_range_min: 443
-        port_range_max: 443
-      - direction: ingress
-        protocol: tcp
-        port_range_min: 10250
-        port_range_max: 10250
-      - direction: ingress
-        protocol: udp
-        port_range_min: 4789
-        port_range_max: 4789
-      - direction: ingress
-        protocol: tcp
-        port_range_min: 5000
-        port_range_max: 5000
-      # VRRP
-      - protocol: 112
+        repeat:
+          for_each:
+            <%prefix%>: { get_param: allowed_ssh_prefixes }
+          template:
+              direction: ingress
+              remote_ip_prefix: <%prefix%>
+              protocol: tcp
+              port_range_min: 22
+              port_range_max: 22
+
+  infra_security_group_rules_ssh_bastion:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: tcp
+      port_range_min: 22
+      port_range_max: 22
+      remote_group: {get_resource: bastion_security_group }
+      security_group: {get_resource: infra_security_group }
+
+  infra_security_group_rules_icmp:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      protocol: icmp
+      security_group: {get_resource: infra_security_group }
+
+  infra_security_group_rules_80:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+    # bastion node services
+      direction: ingress
+      protocol: tcp
+      port_range_min: 80
+      port_range_max: 80
+      security_group: {get_resource: infra_security_group }
+
+  infra_security_group_rules_443:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: tcp
+      port_range_min: 443
+      port_range_max: 443
+      security_group: {get_resource: infra_security_group }
+
+  infra_security_group_rules_10250:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: tcp
+      port_range_min: 10250
+      port_range_max: 10250
+      security_group: {get_resource: infra_security_group }
+
+  infra_security_group_rules_4789:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: udp
+      port_range_min: 4789
+      port_range_max: 4789
+      security_group: {get_resource: infra_security_group }
+
+  infra_security_group_rules_5000:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+      direction: ingress
+      protocol: tcp
+      port_range_min: 5000
+      port_range_max: 5000
+      security_group: {get_resource: infra_security_group }
+
+  infra_security_group_rules_112:
+    type: OS::Neutron::SecurityGroupRule
+    properties:
+    # VRRP
+      protocol: 112
+      security_group: {get_resource: infra_security_group }
 
   lb_floating_ip:
     type: OS::Neutron::FloatingIP
