@@ -293,7 +293,7 @@ issue.
 == OpenStack Integration
 
 OpenShift on OpenStack takes advantage of the cloud provider to offer
-features such as dymaic storage to the OpenShift users. Auto scaling
+features such as dynamic storage to the OpenShift users. Auto scaling
 also requires communication with the OpenStack service.  You must
 provide a set of OpenStack credentials so that OpenShift and the heat
 scaling mechanism can work correctly.
