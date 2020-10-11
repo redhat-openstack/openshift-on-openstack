@@ -395,6 +395,13 @@ parameters:
     hidden: true
     default: ''
 
+  rhn_config_options:
+    type: string
+    description: >
+      Further arguments for subscription-manager config, eg. --server.proxy_hostname
+    hidden: true
+    default: ''
+
   # Red Hat satellite subscription parameters
   sat6_hostname:
     type: string
@@ -571,6 +578,7 @@ resources:
       ssh_user: {get_param: ssh_user}
       rhn_username: {get_param: rhn_username}
       rhn_password: {get_param: rhn_password}
+      rhn_config_options: {get_param: rhn_config_options}
       sat6_hostname: {get_param: sat6_hostname}
       sat6_organization: {get_param: sat6_organization}
       sat6_activationkey: {get_param: sat6_activationkey}
@@ -612,6 +620,7 @@ resources:
           ssh_user: {get_param: ssh_user}
           rhn_username: {get_param: rhn_username}
           rhn_password: {get_param: rhn_password}
+          rhn_config_options: {get_param: rhn_config_options}
           sat6_hostname: {get_param: sat6_hostname}
           sat6_organization: {get_param: sat6_organization}
           sat6_activationkey: {get_param: sat6_activationkey}
@@ -656,6 +665,7 @@ resources:
           ssh_user: {get_param: ssh_user}
           rhn_username: {get_param: rhn_username}
           rhn_password: {get_param: rhn_password}
+          rhn_config_options: {get_param: rhn_config_options}
           sat6_hostname: {get_param: sat6_hostname}
           sat6_organization: {get_param: sat6_organization}
           sat6_activationkey: {get_param: sat6_activationkey}
@@ -711,6 +721,7 @@ resources:
           docker_volume_size: {get_param: node_docker_volume_size_gb}
           rhn_username: {get_param: rhn_username}
           rhn_password: {get_param: rhn_password}
+          rhn_config_options: {get_param: rhn_config_options}
           sat6_hostname: {get_param: sat6_hostname}
           sat6_organization: {get_param: sat6_organization}
           sat6_activationkey: {get_param: sat6_activationkey}
@@ -1001,6 +1012,7 @@ resources:
       ssh_user: {get_param: ssh_user}
       rhn_username: {get_param: rhn_username}
       rhn_password: {get_param: rhn_password}
+      rhn_config_options: {get_param: rhn_config_options}
       sat6_hostname: {get_param: sat6_hostname}
       sat6_organization: {get_param: sat6_organization}
       sat6_activationkey: {get_param: sat6_activationkey}

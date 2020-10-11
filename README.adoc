@@ -231,6 +231,7 @@ parameters:
    deploy_registry: False
 
    # If using RHEL image, add RHN credentials for RPM installation on VMs
+   #  and check openshift.yaml for further RHN options
    rhn_username: ""
    rhn_password: ""
    rhn_pool: '' # OPTIONAL
