@@ -1,0 +1,60 @@
+heat_template_version: 2016-10-14
+
+description: >
+  A template which provides a neutron’s LBaaS loadbalancer member
+
+parameters:
+
+  addresses:
+    type: comma_delimited_list
+
+  index:
+    type: number
+
+  pool:
+    type: string
+    constraints:
+    - custom_constraint: neutron.lbaas.pool
+
+  protocol_port:
+    type: number
+    constraints:
+    - range:
+        min: 1
+        max: 65535
+
+  subnet:
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  weight:
+    type: number
+    constraints:
+    - range:
+        min: 0
+        max: 256
+    default: 1
+
+resources:
+  lb_member:
+    type: OS::Neutron::LBaaS::PoolMember
+    properties:
+      address: {get_param: [addresses, {get_param: index}]}
+      pool: {get_param: pool}
+      protocol_port: {get_param: protocol_port}
+      subnet: {get_param: subnet}
+      weight: {get_param: weight}
+
+outputs:
+  address:
+    description: The IP address of the pool member
+    value: {get_attr: [lb_member, address]}
+
+  pool_id:
+    description: The ID of the pool to which the pool member belongs
+    value: {get_attr: [lb_member, pool_id]}
+
+  show:
+    description: Detailed information about resource
+    value: {get_attr: [lb_member, show]}

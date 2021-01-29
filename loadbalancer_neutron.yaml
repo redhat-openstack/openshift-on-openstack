@@ -109,7 +109,13 @@ parameters:
     constraints:
     - custom_constraint: neutron.subnet
 
+  member_count:
+    type: number
+
   members:
+    type: comma_delimited_list
+
+  member_ips:
     type: comma_delimited_list
 
   master_hostname:
